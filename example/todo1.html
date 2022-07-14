@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>ToDo List</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+    <style>
+        .navbar {
+            background: #205081;
+        }
+        .container a img {
+            width: 135px;
+            height: 34px;
+        }
+        .navbar .navbar-brand {
+            color: #fff;
+        }
+        .container.main {
+            margin: 80px auto;
+        }
+        .credit {
+            font-size: 12px;
+            color: #999;
+        }
+        .half {
+            width: 50%;
+            display: inline-block;
+        }
+        form{
+            margin-bottom: 10px;
+        }
+        #warning, #success {
+            display: none;
+        }
+        .inline-b {
+            display: inline-block;
+        }
+        label.message {
+            display: inline;
+            font-weight: normal;
+        }
+        .middle {
+            padding: 7px 0 0 5px;
+        }
+        .form-control {
+            margin-bottom: 5px;
+        }
+        .checked {
+            color: #ccc;
+            text-decoration: line-through;
+        }
+        .del {
+            text-decoration: underline;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .pr {
+            font-size: 10px;
+            color: #aaa;
+        }
+        .message textarea {
+            min-width: 300px;
+            min-height: 40px;
+        }
+
+    </style>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.2/html5shiv.js"></script>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.3.0/respond.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+    <!--[if lt IE 7]>
+    <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">To Do List</a>
+
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a id="import" data-toggle="modal" href="#m_import">Import</a></li>
+                    <li><a id="export" data-toggle="modal" href="#m_export">Export</a></li>
+                </ul>
+                <a href="#" class="navbar-btn pull-right" onclick="TogetherJS(this); return false;"><img src="https://togetherjs.com/images/start-togetherjs-blue.png"></a>
+            </div><!--/.nav-collapse -->
+
+        </div>
+
+
+
+    </div>
+
+    <div class="container main">
+
+        <p class="alert alert-warning alert-dismissable" id="warning">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <b>Oops:</b> <span></span>
+        </p>
+        <p class="alert alert-success alert-dismissable" id="success">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <b>Yaay:</b> <span></span>
+        </p>
+        <form action="#" class="form">
+            <textarea id="message" class="form-control half" rows="2" placeholder="Add some message here"></textarea>
+            <div class="inline-b text-center">
+                Priority: <br/>
+                <select class="form-control" id="priority" title="Priority">
+                    <option value="0">Low</option>
+                    <option value="1">Normal</option>
+                    <option value="2">High</option>
+                </select>
+            </div>
+            <input class="btn btn-primary" id="add" type="submit" value="Add">
+            <input class="btn btn-danger" id="delAll" type="submit" value="Clear All">
+
+            <div class="row">
+                <div class="col-md-1 text-center middle">
+                    Sort By
+                </div>
+                <div class="col-lg-2">
+                    <select id="sortby" class="form-control">
+                        <option value="0">Priority</option>
+                        <option value="1">Message</option>
+                        <option value="2">Id</option>
+                    </select>
+                </div>
+                <div class="col-lg-2">
+                    <select id="ord" class="form-control">
+                        <option value="1">Asc</option>
+                        <option value="-1">Desc</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+        <hr>
+        <ul class="list-group messages">
+            <!-- The messages will be displayed here -->
+        </ul>
+
+        <h6 class="text-center credit">Made with ♥ by <a href="https://github.com/ionutvmi">Mihai Ionut Vilcu</a></h6>
+    </div>
+
+      <!-- Modal -->
+      <div class="modal" id="m_import">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" id="close-import" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">Import</h4>
+            </div>
+            <div class="modal-body">
+              <textarea rows='10' class="form-control" placeholder='Paste JSON here'></textarea>
+            </div>
+            <div class="modal-footer">
+              <a data-dismiss="modal" aria-hidden="true" class="btn">Close</a>
+              <a href="#" id="import_ok" class="btn btn-primary">Import JSON</a>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
+      <!-- Modal -->
+      <div class="modal" id="m_export">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">Export</h4>
+            </div>
+            <div class="modal-body">
+              <textarea rows='10' class="form-control"></textarea>
+            </div>
+            <div class="modal-footer">
+              <a data-dismiss="modal" aria-hidden="true" class="btn">Close</a>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
+
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jeditable.js/1.7.3/jeditable.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <!-- Some magic :) -->
+    <script src="https://togetherjs.com/togetherjs-min.js"></script>
+    <script>
+        (function(){
+            var _messages = []; // will hold all the messages
+            var _id = 1; // will hold the id of the leatest message
+
+            // let's register some events on togetherJS :)
+            TogetherJS.hub.on("new-item", function (msg) {
+                _id++;
+                addMessage(msg.id, msg.text, msg.priority);
+            });
+
+            TogetherJS.hub.on("init-items", function (msg) {
+                _messages = msg.items; // we replace the current results if any with the received ones
+                _id = msg._id;
+                render(); //we show them on the page
+            });
+
+            TogetherJS.hub.on("togetherjs.hello", function () {
+                TogetherJS.send({type: "init-items", items : _messages, _id : _id});
+            });
+
+            // jEditable live
+            // $(document).on("click", ".message", function(e){
+
+            //     if(!$(this).attr('title')) {
+            //         $(this).editable(function(val, set){
+            //             var i = $(this).attr('for');
+            //             $.each(_messages, function(index, val) {
+            //                 if(i == val.mid) {
+            //                     val.message = val;
+            //                     _messages[index] = val;
+            //                     // send the data to the rest of the users
+            //                      if (TogetherJS.running) {
+            //                        TogetherJS.send({type: "init-items", items : _messages, _id : _id});
+            //                     }
+            //                     render();
+            //                 }
+            //             });
+            //             return val;
+            //         },{
+            //             tooltip   : "Ctrl + Click to edit",
+            //             event     : "ctrlClick",
+            //             style  : "inherit",
+            //             type      : "textarea",
+            //             submit    : "OK",
+            //             cancel    : "Cancel",
+            //         }).bind('click', function(event) {
+            //             if(event.ctrlKey){
+            //                 $(this).trigger('ctrlClick');
+            //                 event.preventDefault();
+            //             }
+
+            //         });
+            //     }
+            //     if($(this).children('form').length && ($(e.toElement).prop("tagName").toLowerCase() != 'button'))
+            //         e.preventDefault();
+            // });
+            // handle some events
+            $("#add").on('click', function(event) {
+                $message = $("#message");
+
+                if(!$message.val()) { // make sure it's not empty
+                    warning("You have to add some message !");
+                    return;
+                }
+                var id = _id++,
+                    msg = $message.val(),
+                    priority = $("#priority").val();
+                // add the message to our list
+                addMessage(id, msg, priority);
+                // send them to the rest of the users
+                if (TogetherJS.running) {
+                   TogetherJS.send({type: "new-item", id: id, text : msg, priority : priority});
+                }
+                $message.select();
+            });
+
+            $("#sortby").on('change', render);
+            $("#ord").on('change', render);
+
+            $(document).on('change', '.check', function(event) {
+                if($(this).is(":checked") && !$(this).hasClass('checked')) {
+                    $(this).parent().addClass('checked');
+                    var id = $(this).val();
+                    $.each(_messages, function(index, val) {
+                         if(id == val.mid){
+                            val.checked = 1;
+                            _messages[index] = val;
+                         }
+                    });
+                } else if(!$(this).is(":checked")){
+                    $(this).parent().removeClass('checked');
+                    var id = $(this).val();
+                    $.each(_messages, function(index, val) {
+                         if(id == val.mid){
+                            val.checked = 0;
+                            _messages[index] = val;
+                         }
+                    });
+                }
+            });
+
+
+            // delete
+            $(document).on('click', '.del', function(event) {
+                event.preventDefault();
+                delete_item($(this).attr('data-id'));
+            });
+
+            $("#delAll").on('click', function(event) {
+                event.preventDefault();
+                _messages = [];
+                if (TogetherJS.running) {
+                   TogetherJS.send({type: "init-items", items : _messages, _id : _id});
+                }
+                render();
+
+            });
+
+            $("#export").on('click', function() {
+                _m = _messages;
+                // we sort it by id
+                _m.sort(function(a, b) {
+                    x = a.mid;
+                    y = b.mid;
+                    ord = 1;
+
+                    var numberRegex = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+                    if(numberRegex.test(x) && numberRegex.test(y)){ // if they are numbers
+                        return ord * (x - y);
+                    }
+                    else
+                        return ord * ((x == y) ? 0 : (x > y) ? 1 : -1); // string
+                });
+                $("#m_export .modal-body textarea").val(JSON.stringify(_m));
+            });
+
+            $("#import").on('click', function() {
+                $("#m_import .modal-body textarea").val('');
+            });
+
+            $("#import_ok").on('click', function() {
+                try {
+                    var c = $.parseJSON($("#m_import .modal-body textarea").val());
+                }
+                catch (err) {
+                    alert("The pasted string is not valid !")
+                    return;
+                }
+
+                _messages = c;
+                _id = c[c.length-1].mid+1;
+                render();
+                $("#close-import").click(); // close the modal
+                if (TogetherJS.running) { // send data to the rest of the users
+                   TogetherJS.send({type: "init-items", items : _messages, _id : _id});
+                }
+            });
+
+
+            $(".form").on('submit', function(event) {
+                event.preventDefault();
+            });
+
+            // showes a warning message
+            function warning(message) {
+                $w = $("#warning span");
+                if(!$w.is(":visible"))
+                    $w.html(message).parent().show('slow').delay(2000).hide('slow');
+            }
+            // showes a success message
+            function success(message) {
+                $w = $("#success span");
+                if(!$w.is(":visible"))
+                    $w.html(message).parent().show('slow').delay(2000).hide('slow');
+            }
+
+            // adds a message to the array that holds them
+            function addMessage(id, text, p) {
+                new_message = {
+                    mid : id,
+                    priority : p,
+                    message : text,
+                    checked : 0
+                };
+                // we make sure this message wasn't added before
+                exists = false;
+                $.each(_messages, function(index, val) {
+                     if(val.message === text) {
+                        warning("This message was already added !");
+                        exists = true;
+                     }
+                });
+                if(exists)
+                    return;
+
+                _messages.push(new_message);
+                success("Message was added successfully !");
+                render();
+            }
+
+            // sorts and displays the messages
+            function render() {
+                // sort the messages
+                var x,y,result = '';
+                _messages.sort(function(a, b) {
+                    sortby = $("#sortby").val();
+                    if(sortby == 1){
+                        x = a.message;
+                        y = b.message;
+                    }else if(sortby == 2) {
+                        x = a.mid;
+                        y = b.mid;
+                    } else {
+                        x = a.priority;
+                        y = b.priority;
+                    }
+                    ord = $("#ord").val();
+
+                    var numberRegex = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+                    if(numberRegex.test(x) && numberRegex.test(y)){ // if they are numbers
+                        return ord * (x - y);
+                    }
+                    else
+                        return ord * ((x == y) ? 0 : (x > y) ? 1 : -1); // string
+                });
+
+                // display them on the page
+                $.each(_messages, function(index, val) {
+                    result += "<li class='list-group-item {2}'><a class='del' data-id='{0}' title='Delete' href='#'>[x]</a> <small class='pr'>{3}</small> <input type='checkbox' value='{0}' id='{0}' class='check' {2}/> <label class='message' for='{0}'>{1}</label></li>".format(val.mid, nl2br(val.message), (val.checked == 1 ? 'checked' : ''), get_priority(val.priority));
+                });
+                $(".messages").html(result);
+            }
+
+            // will delete a message based on it's id
+            function delete_item(id) {
+                var _i = false;
+                $.each(_messages, function(index, val) {
+                    if(id == val.mid) {
+                        _messages.splice(index, 1);
+                        if (TogetherJS.running) {
+                           TogetherJS.send({type: "init-items", items : _messages, _id : _id});
+                        }
+                        render();
+                        return;
+                    }
+                });
+            }
+
+            // gets the name of the priority
+
+            function get_priority(p) {
+                if(p == 1)
+                    return "(Normal)";
+                else if(p == 2)
+                    return "(High)";
+                else
+                    return "(Low)";
+            }
+
+            // helpers
+            // credits: http://stackoverflow.com/a/4673436/1579481
+            if (!String.prototype.format) {
+              String.prototype.format = function() {
+                var args = arguments;
+                return this.replace(/{(\d+)}/g, function(match, number) {
+                  return typeof args[number] != 'undefined'
+                    ? args[number]
+                    : match
+                  ;
+                });
+              };
+            }
+
+            function nl2br (str, is_xhtml) {
+
+              var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br ' + '/>' : '<br>'; // Adjust comment to avoid issue on phpjs.org display
+
+              return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
+            }
+
+        })();
+
+    </script>
+</body>
+</html>
