@@ -1,0 +1,57 @@
+<html>
+<head>
+<style>
+body {
+  padding: 50px;
+  font-family: arial;
+  font-size: 12px;
+}
+div {
+  width: 500px;
+  margin: 0 auto;
+  padding: 10px 0;
+}
+</style>
+<script>
+
+var catalog = []
+
+var query = {
+  "v": 3,
+  "q": {
+    "find": { "out.s2": "1P8FmmWdyRY1bmHJso6nGc7smBSvwvFoje", "out.s3": "/b/" },
+    "project": { "out.$": 1, "tx.h": 1, "blk.i": 1 }
+  },
+  "r": {
+    "f": "[ .[] | { txid: .tx.h, type: .out[0].s4, msg: .out[0].s5, replyto: .out[0].s7} ]"
+  }
+}
+
+// Turn the query into base64 encoded string.
+// This is required for accessing a public bitdb node
+var b64 = btoa(JSON.stringify(query));
+var url = "https://genesis.bitdb.network/q/1FnauZ9aUH2Bex6JzdcV4eNX7oLSSEbxtN/" + b64;
+
+// Attach API KEY as header
+var header = {
+  headers: { key: "14vh94jHtehKbyw5trQwzpUkFkRb3tyGqf" }
+};
+
+fetch(url, header).then(function(r) {
+  return r.json()
+}).then(function(r) {
+let res = r.u.concat(r.c)
+ res.forEach(function(output) {
+    if (output.type == "THREAD") {
+    catalog.push(output.txid);
+  	} else {
+    catalog.push(output.replyto)
+    };
+  })
+console.log(catalog);
+})
+</script>
+</head>
+<body>
+</body>
+</html>
