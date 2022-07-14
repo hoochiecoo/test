@@ -1,0 +1,71 @@
+<html>
+<head>
+  <style type="text/css">
+    h2 {
+      text-align: center;
+    }
+    div#minute-converter {
+      background: #cfcfcf;
+      width: 500px;
+      height: 725px;
+      margin: 10px auto;
+      border: 2px solid #8f8f8f;
+      font-size: 4em;
+      text-align: center;
+    }
+    input#minutes {
+      width: 300px;
+      font-size: 2em;
+      text-align: center;
+    }
+    button.hundredths {
+      font-size: 1em;
+      margin: auto;
+      background-color: lime;
+    }
+    div#button-wrap {
+      margin: auto;
+      width: 400px;
+      margin-top: 10px;
+    }
+    div#result {
+      width: 500px;
+      height: 300px;
+      border-top: 3px solid red;
+      background: #3f3f3f;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      font-size: 250px;
+      margin: auto;
+      margin-top: 20px;
+    }
+  </style>
+  
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+</head>
+<body>
+  <h2>Convert minutes to hundredths of an hour</h2>
+  <div id="minute-converter">
+    Minutes:<br/>
+    <input id="minutes" value="0" />
+    <div id="button-wrap">
+      <button id="to_hundredths" class="hundredths">To hundredths!</button>
+    </div>
+    <div id="result">0</div>
+  </div>
+</body>
+<script type="text/javascript">
+  $('#to_hundredths').click(function() {
+    $('#result').html(convert($('#minutes').val()));
+  });
+  $('#minutes').keypress(function(e) {
+    var code = (e.keyCode ? e.keyCode : e.which);
+    if (code == 13) $('#to_hundredths').click();
+  });
+  $('#minutes').focus(function() { $('#minutes').val('');$('#result').html('-'); })
+  function convert(mins) {
+    return Math.floor((mins * 100)/60);
+  }
+</script>
+</html>
