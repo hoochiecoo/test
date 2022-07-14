@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Currency Converter</title>
+	<style type="text/css">
+		body{
+			background: #4Aa350;
+			font-family: calibri;
+			color: #eeeeee;
+		}
+		.container{
+			margin: auto;
+			width: 20%;
+		}
+		input[type=text]{
+			width: 100px;
+			height: 15px;
+			padding: 3px;
+			padding-left: 8px;
+			border-radius: 5px;
+			border-color: none;
+		}
+		#ans{
+			color: black;
+		}
+		button{
+			min-width: 30px;
+		}
+	</style>
+	<script type="text/javascript">
+		function ff(x){
+			document.getElementById("rupee").value = x*64;
+			document.getElementById("taka").value = x*82;
+		}
+		function add(){
+			let x = document.getElementById("op1").value;
+			let y = document.getElementById("op2").value;
+			document.getElementById("ans").innerHTML=parseInt(x)+parseInt(y);
+		}
+		function sub(){
+			let x = document.getElementById("op1").value;
+			let y = document.getElementById("op2").value;
+			document.getElementById("ans").innerHTML=x-y;
+		}
+		function mul(){
+			let x = document.getElementById("op1").value;
+			let y = document.getElementById("op2").value;
+			document.getElementById("ans").innerHTML=x*y;
+		}
+		function div(){
+			let x = document.getElementById("op1").value;
+			let y = document.getElementById("op2").value;
+			document.getElementById("ans").innerHTML=x/y;
+		}
+	</script>
+</head>
+<body>
+	<div class="container">
+		<fieldset>
+			<legend>Currency Converter</legend>
+			<table>
+				<tr>
+					<td>USD</td>
+					<td><input type="text" name="" id="dollar" oninput="ff(this.value)"></td>
+				</tr>
+				<tr>
+					<td>INR</td>
+					<td><input type="text" name="" id="rupee"></td>
+				</tr>
+				<tr>
+					<td>BDT</td>
+					<td><input type="text" name="" id="taka"></td>
+				</tr>
+			</table>
+		</fieldset>
+		<fieldset>
+			<legend>Calc</legend>
+			<table>
+				<tr>
+					<td>OP1</td>
+					<td colspan="3"><input type="text" id="op1"></td>
+				</tr>
+				<tr>
+					<td>OP2</td>
+					<td colspan="3"><input type="text" id="op2"></td>
+				</tr>
+				<tr>
+					<td><button onclick="add()">+</button></td>
+					<td><button onclick="sub()">-</button></td>
+					<td><button onclick="mul()">*</button></td>
+					<td><button onclick="div()">/</button></td>
+				</tr>
+				<tr>
+					<td>ANS</td>
+					<td colspan="3"><p id="ans" style="background: white; width: 100%;height: 25px;"></p></td>
+				</tr>
+			</table>
+		</fieldset>
+	</div>
+</body>
+</html>
