@@ -1,0 +1,103 @@
+<form id="campaign-{{id}}" novalidate class="{{ns}}" method="POST" action="submit.php">
+	<input id="name" type="text" placeholder="First and Last Name" required />
+	<input id="email" type="email" placeholder="Email" required />
+	<span class="error"></span>
+	<input type="submit" name="submit" value="Submit" />
+</form>
+<script>
+	(function() {
+		const form = document.getElementById('campaign-{{id}}');
+
+		const email = document.querySelector('form#campaign-{{id}} #email');
+		const name = document.querySelector('form#campaign-{{id}} #name');
+		const error = document.querySelector('form#campaign-{{id}} span.error');
+
+		function validateForm() {
+			// Removes the invalid class
+			name.className = name.className.replace(/\binvalid\b/g, "");
+			email.className = email.className.replace(/\binvalid\b/g, "");
+
+			// Clears the error span
+			toggleErrorMsg();
+
+			// Validates the name field
+			if (name.validity.valueMissing || name.value.split(' ').length < 2) {
+				// If the name field is empty or it doesn't contain a value for first and last name
+				// display the following error message.
+				name.className += ' invalid';
+				toggleErrorMsg('You need to enter a value for first and last name.');
+				return false;
+			}
+
+			// Validates the email field
+			if (email.validity.valueMissing || email.validity.typeMismatch) {
+				// If the email field is empty or it doesn't contain an email address
+				// display the following error message.
+				email.className += ' invalid';
+				toggleErrorMsg('You need to enter a valid e-mail address.');
+				return false;
+			}
+
+			return true;
+		}
+
+		function toggleErrorMsg(errorMsg) {
+			error.className = error.className.replace(/\bshow\b/g, "");
+
+			error.textContent = errorMsg;
+
+			if (!!errorMsg) {
+				error.className += ' show';
+			}
+		}
+
+		form.addEventListener('submit', function (event) {
+			if (!validateForm()) {
+				 // Then we prevent the form from being sent by canceling the event
+				event.preventDefault();
+				return;
+			}
+
+			// Insert this line to track your conversions only when your visitor input valid information - You may remove the tracking conversion class of your submit button when adding this line
+			om{{id}}.Listeners.convert();
+
+			// Display the Success View to inform the visitor its information has been captured correctly
+			om{{id}}.changeView('success');
+		})
+	})()
+</script>
+<style>
+	#campaign-{{id}} span.error {
+		color: white;
+		background-color: #fb7d7d;
+		border: 1px solid #8c0606 !important;
+
+		font-size: 80% !important;
+
+		padding: 5px !important;
+		margin-top: 5px !important;
+
+		box-sizing: border-box;
+
+		display: none;
+	}
+	#campaign-{{id}} span.error.show {
+		display: block;
+	}
+	#campaign-{{id}} input.invalid {
+		border-color: #900 !important;
+		background-color: #FDD !important;
+	}
+	#campaign-{{id}} input[type=text], #campaign-{{id}} input[type=email] {
+		margin-top: 10px !important;
+	}
+	#campaign-{{id}} input[type=submit] {
+		color: #fff;
+		background-color: #3770d6;
+		border: 0;
+
+		margin-top: 20px;
+
+		padding: 10px;
+	}
+</style>
