@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>AJAX unit Converter</title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <style>
+      #myForm div{margin-bottom:15px;}
+      #result{border:solid 1px green; background: #6F9; margin-top:25px; padding:7px; display:none;}
+    </style>
+  </head>
+  
+  <body>
+    <h1>Digital Storage Converter</h1>   
+    <form action="convert.php" method="post" id="myForm">
+      <div>
+        <label for="amount">Amount:</label>
+        <input type="text" id="amount" name="amount" />
+      </div>   
+      <div>
+        <label for="from">From:</label>
+        <select name="from" id="from">
+          <option value="0" selected="selected">Select unit</option>
+          <option value="1">kilobytes</option>
+          <option value="2">megabytes</option>
+          <option value="3">gigabytes</option>
+          <option value="4">terabytes</option>
+          <option value="5">petabytes</option>
+          <option value="6">exabytes</option>
+        </select>      
+        <label for="into">Into:</label>
+        <select name="into" id="into">
+          <option value="0" selected="selected">Select unit</option>
+          <option value="1">kilobytes</option>
+          <option value="2">megabytes</option>
+          <option value="3">gigabytes</option>
+          <option value="4">terabytes</option>
+          <option value="5">petabytes</option>
+          <option value="6">exabytes</option>
+        </select>
+      </div>
+      <input type="submit" value="Convert">
+    </form>
+    
+    <p id="result"></p>
+    
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $("#myForm").submit(function(e) {
+          e.preventDefault();
+          amount = $("#amount").val();
+          from = $("#from").val();
+          into = $("#into").val();
+          if (amount == "" || from == "0" || into == "0"){
+            alert("Please fill out all of the fields!");
+            return false;
+          }
+          
+          $.ajax({
+            type : "POST",
+            url : "convert.php",
+            data  : 'amount=' + amount + '&from=' + from + '&into=' + into,
+            success : function(res) {
+              $("#result").html(amount + " " + $('#from option:selected').text() + " = " + res + " " + $('#into option:selected').text()).css("display", "inline-block");
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
