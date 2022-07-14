@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+    <head>
+		<title>Google/Bing Translator</title>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+		<script type="text/javascript" src="..\rx.js" type="text/javascript"></script>
+		<script type="text/javascript" src="..\rx.jquery.js" type="text/javascript"></script>
+		<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+		<script type="text/javascript">
+
+			google.load("language", "1");
+			var serviceUrl = "http://api.microsofttranslator.com/V2/Ajax.svc/";
+			var appId = "appId";
+
+			function bingDetect(text) {
+
+				return $.ajaxAsObservable({
+					type : "GET",
+					url : serviceUrl + "Detect",
+					dataType : "jsonp",
+					jsonp : "oncomplete",
+					data : {
+						appId : appId,
+					  	text : text } })
+					.Select(function(d) { return d.data; });
+			}
+
+			function bingTranslate(text, from, to) {
+
+				return $.ajaxAsObservable({
+					type : "GET",
+					url : serviceUrl + "Translate",
+					dataType : "jsonp",
+					jsonp : "oncomplete",
+					data : {
+						appId : appId,
+					  	from : from,
+					  	to : to,
+					  	text : text } })
+					.Select(function(d) { return d.data; });
+			}
+
+			function detectAndTranslate(text, language, detect, translate) {
+				return detect(text)
+					.SelectMany(function(detected) {
+						return translate(text, detected, language)
+							.Select(function(translated) { return { from : detected , to : language, original : text, translated : translated }; })
+				});
+			}
+
+			function bingDetectAndTranslate(text, language) {
+				return detectAndTranslate(text, language, bingDetect, bingTranslate);
+			}
+
+			function googleDetect(text) {
+				var subject = new Rx.AsyncSubject();
+
+				var onDetect = function(result) {
+					if (result.error) {
+						subject.OnError(error);
+					}
+					else {
+						subject.OnNext(result.language);
+						subject.OnCompleted();
+					}
+				};
+
+				google.language.detect(text, onDetect);
+
+				return subject;
+			}
+
+			function googleTranslate(text, from, to) {
+				var subject = new Rx.AsyncSubject();
+
+				var onTranslate = function(result) {
+					if (result.error) {
+						subject.OnError(error);
+					}
+					else {
+						subject.OnNext(result.translation);
+						subject.OnCompleted();
+					}
+				};
+
+				google.language.translate(text, from, to, onTranslate);
+
+				return subject;
+			}
+
+			function googleDetectAndTranslate(text, language) {
+				return detectAndTranslate(text, language, googleDetect, googleTranslate);
+			}
+
+			$(document).ready(function() {
+
+				$("#textToTranslate").toObservable("keyup")
+					.Throttle(250)
+					.Select(function() { return $("#textToTranslate").val(); })
+					.Where(function(text) { return text.length > 0; })
+					.SelectMany(
+						function(text) {
+							var lang = "fr";
+
+							return googleDetectAndTranslate(text, lang)
+								.SelectMany(
+									function(g) {
+										return bingDetectAndTranslate(text, lang)
+											.Select(function(b) { return { google : g, bing : b }; })
+									});
+						})
+					.Subscribe(
+						function(trans) {
+							$("#googleTranslated").html(trans.google.translated);
+							$("#bingTranslated").html(trans.bing.translated);
+						});
+			});
+
+		</script>
+	</head>
+	<body>
+		<div>Enter some text</div>
+		<textarea id="textToTranslate" rows="5" cols="60"></textarea>
+		<div>Bing Translated</div>
+		<textarea id="bingTranslated" rows="5" cols="60"></textarea>
+		<div>Google Translated</div>
+		<textarea id="googleTranslated" rows="5" cols="60"></textarea>
+	</body>
+</html>
