@@ -1,0 +1,26 @@
+<html>
+
+<head>
+    <title>Page Title</title>
+</head>
+
+<body>
+<pre id="result"></pre>
+<script>
+
+async function fetchTest() {
+    let url = 'https://jsonplaceholder.typicode.com/posts'
+    let response = await fetch(url);
+    let responseText = await response.text();
+
+    document.getElementById('result').innerHTML = responseText;
+}
+
+(async() => {
+    await fetchTest();
+})();
+    </script>
+
+</body>
+
+</html>
