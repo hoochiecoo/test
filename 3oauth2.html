@@ -8,7 +8,7 @@
     <script>
 	
       	var url = window.location.search;
-      	url = url.replace("?code=", ''); // remove the ?
+      	url = url.replace("#", ''); // remove the ?
       	alert(url); //alerts ProjectID=462 is your case
 
         const uri = 'https://jsonplaceholder.typicode.com/posts';
