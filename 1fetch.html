@@ -1,0 +1,49 @@
+<html>
+
+<head>
+    <title>Page Title</title>
+</head>
+
+<body>
+    <script>
+
+        const uri = 'https://jsonplaceholder.typicode.com/posts';
+        const initDetails = {
+            method: 'get',
+            headers: {
+                "Content-Type": "application/json; charset=utf-8"
+            },
+            mode: "cors"
+        }
+
+        function GetData() {
+
+            fetch( uri, initDetails )
+                .then( response =>
+                {
+                    if ( response.status !== 200 )
+                    {
+                        console.log( 'Looks like there was a problem. Status Code: ' +
+                            response.status );
+                        return;
+                    }
+
+                    console.log( response.headers.get( "Content-Type" ) );
+                    return response.json();
+                }
+                )
+                .then( myJson =>
+                {
+                    console.log( JSON.stringify( myJson ) );
+                } )
+                .catch( err =>
+                {
+                    console.log( 'Fetch Error :-S', err );
+                } );
+        }
+    </script>
+        <button id='getData' onclick="GetData()">Get Data</button>
+
+</body>
+
+</html>
