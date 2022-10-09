@@ -9,7 +9,9 @@
 	
       	var url = window.location.hash;
       	url = url.replace("#", ''); // remove the ?
-      	alert(url); //alerts ProjectID=462 is your case
+ 	searchParams = new URLSearchParams(url);
+	access_token = searchParams.has("access_token");
+      	alert(access_token); //alerts ProjectID=462 is your case
 
         const uri = 'https://jsonplaceholder.typicode.com/posts';
         const initDetails = {
