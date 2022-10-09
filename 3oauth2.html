@@ -10,10 +10,10 @@
       	var url = window.location.hash;
       	url = url.replace("#", ''); // remove the ?
  	searchParams = new URLSearchParams(url);
-	access_token = searchParams.has("access_token");
+	access_token = searchParams.get("access_token");
       	alert(access_token); //alerts ProjectID=462 is your case
 
-        const uri = 'https://jsonplaceholder.typicode.com/posts';
+        const uri = 'https://api.vk.com/method/users.get?&user_id=3057120&v=5.95&access_token='+access_token;
         const initDetails = {
             method: 'get',
             headers: {
