@@ -1,0 +1,18 @@
+<html>
+
+<head>
+    <title>Page Title</title>
+</head>
+
+<body>
+    <script>
+      var url = window.location.search;
+      url = url.replace("?", ''); // remove the ?
+      alert(url); //alerts ProjectID=462 is your case
+    </script>
+        <button id='getData' onclick="GetData()">Get Data</button>
+		<div id="result"></div>
+
+</body>
+
+</html>
