@@ -1,7 +1,3 @@
-let params = new URLSearchParams('q=node&page=2');
-params.get('q'); // 'node'
-params.get('page'); // '2'
-
 <html>
 
 <head>
@@ -10,10 +6,17 @@ params.get('page'); // '2'
 
 <body>
     <script>
-      const searchParams = url.searchParams;
-      searchParams.get('code'); // code
+      var url = window.location.search;
+      url = url.replace("?", ''); // remove the ?
+      alert(url); //alerts ProjectID=462 is your case
+	let url = 'https://jsonplaceholder.typicode.com/posts'
+    	let response = await fetch(url);
+    	let responseText = await response.text();
+    	document.getElementById('result').innerHTML = responseText;
     </script>
-        <button id='getData'>Get Data</button>
+        <button id='getData' onclick="GetData()">Get Data</button>
 	<div id="result"></div>
 
 </body>
+
+</html>
