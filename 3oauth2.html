@@ -8,11 +8,44 @@
     <script>
       	var url = window.location.search;
       	url = url.replace("?", ''); // remove the ?
-      	alert(url); //alerts ProjectID=462 is your case
-	let urll = 'https://jsonplaceholder.typicode.com/posts'
-    	let response = fetch(urll);
-    	let responseText = response.text();
-    	document.getElementById('result').innerHTML = responseText;
+      	//alert(url); //alerts ProjectID=462 is your case
+        const uri = 'https://jsonplaceholder.typicode.com/posts';
+        const initDetails = {
+            method: 'get',
+            headers: {
+                "Content-Type": "application/json; charset=utf-8"
+            },
+            mode: "cors"
+        }
+
+        function GetData() {
+
+            fetch( uri, initDetails )
+                .then( response =>
+                {
+                    if ( response.status !== 200 )
+                    {
+                        console.log( 'Looks like there was a problem. Status Code: ' +
+                            response.status );
+                        return;
+                    }
+
+                    console.log( response.headers.get( "Content-Type" ) );
+                    return response.json();
+                }
+                )
+                .then( myJson =>
+                {
+                    console.log( JSON.stringify( myJson ) );
+					document.getElementById('result').innerHTML = JSON.stringify( myJson );
+                } )
+                .catch( err =>
+                {
+                    console.log( 'Fetch Error :-S', err );
+                } );
+	
+	GetData();
+        }
     </script>
         <button id='getData' onclick="GetData()">Get Data</button>
 	<div id="result"></div>
