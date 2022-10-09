@@ -10,8 +10,8 @@
       	url = url.replace("?", ''); // remove the ?
       	alert(url); //alerts ProjectID=462 is your case
 	let urll = 'https://jsonplaceholder.typicode.com/posts'
-    	let response = await fetch(urll);
-    	let responseText = await response.text();
+    	let response = fetch(urll);
+    	let responseText = response.text();
     	document.getElementById('result').innerHTML = responseText;
     </script>
         <button id='getData' onclick="GetData()">Get Data</button>
