@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Array Search</title>
+  </head>
+  <body>
+    <h1>Array Search</h1>
+    <label for="search-input">Search:</label>
+    <input type="text" id="search-input">
+    <button type="button" onclick="searchArray()">Search</button>
+    <p id="search-result"></p>
+    
+    <script>
+      const myArray = [
+        { name: 'apple', type: 'fruit' },
+        { name: 'banana', type: 'fruit' },
+        { name: 'carrot', type: 'vegetable' }
+      ];
+
+      function searchArray() {
+        const searchStr = document.getElementById('search-input').value;
+        const searchObj = {};
+
+        // Parse search string to create search object
+        searchStr.split(',').forEach(str => {
+          const [key, value] = str.split(':').map(s => s.trim());
+          searchObj[key] = value;
+        });
+
+        // Call searchArray function with the search object and display result
+        const resultIndex = searchArrayIndex(myArray, searchObj);
+        if (resultIndex !== -1) {
+          document.getElementById('search-result').innerHTML = `Result: ${JSON.stringify(myArray[resultIndex])}`;
+        } else {
+          document.getElementById('search-result').innerHTML = 'No result found';
+        }
+      }
+
+      function searchArrayIndex(arr, searchObj) {
+        for (let i = 0; i < arr.length; i++) {
+          let matchCount = 0;
+          for (let prop in searchObj) {
+            if (arr[i][prop] === searchObj[prop]) {
+              matchCount++;
+            }
+          }
+          if (matchCount === Object.keys(searchObj).length) {
+            return i;
+          }
+        }
+        return -1;
+      }
+    </script>
+  </body>
+</html>
