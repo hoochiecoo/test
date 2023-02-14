@@ -1,26 +1,21 @@
 // Generate array of 20 random film names
 const cardData = [];
 const filmNames = [
-  "The Godfather",
-  "The Shawshank Redemption",
-  "The Dark Knight",
-  "The Godfather: Part II",
-  "12 Angry Men",
-  "Schindler's List",
-  "The Lord of the Rings: The Return of the King",
-  "Pulp Fiction",
-  "The Good, the Bad and the Ugly",
-  "Forrest Gump",
-  "Inception",
-  "The Lord of the Rings: The Fellowship of the Ring",
-  "Star Wars: Episode V - The Empire Strikes Back",
-  "The Lord of the Rings: The Two Towers",
-  "The Matrix",
-  "Goodfellas",
-  "One Flew Over the Cuckoo's Nest",
-  "Seven Samurai",
-  "Se7en",
-  "City of God"
+  {
+    title: "The Godfather",
+    year: 1972,
+    boxOffice: 24698048
+  },
+  {
+    title: "The Shawshank Redemption",
+    year: 1994,
+    boxOffice: 28826203
+  },
+  {
+    title: "The Dark Knight",
+    year: 2008,
+    boxOffice: 535234033
+  }
 ];
 
 while (cardData.length < 3) {
