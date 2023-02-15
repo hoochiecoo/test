@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Search Array Example</title>
+</head>
+<body>
+  <h1>Search Array Example</h1>
+  <label for="search">Search:</label>
+  <input type="text" id="search" name="search">
+  <button onclick="search()">Go</button>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody id="results">
+    </tbody>
+  </table>
+
+  <script>
+    const myArray = [
+      { name: 'apple', type: 'fruit' },
+      { name: 'banana', type: 'fruit' },
+      { name: 'carrot', type: 'vegetable' }
+    ];
+
+    function searchArray(arr, searchObj) {
+      for (let i = 0; i < arr.length; i++) {
+        let matchCount = 0;
+        for (let prop in searchObj) {
+          if (arr[i][prop] === searchObj[prop]) {
+            matchCount++;
+          }
+        }
+        if (matchCount === Object.keys(searchObj).length) {
+          return arr[i];
+        }
+      }
+      return null;
+    }
+
+    function convertStringToKeyValue(str) {
+      const [key, value] = str.split(":").map((s) => s.trim());
+      const cleanedValue = value.replace(/'/g, '');
+      return { [key]: cleanedValue };
+    }
+
+    function search() {
+      const input = document.getElementById('search').value;
+      const keyvalue = convertStringToKeyValue(input);
+      const result = searchArray(myArray, keyvalue);
+      const table = document.getElementById('results');
+      table.innerHTML = '';
+      if (result) {
+        const row = table.insertRow();
+        const nameCell = row.insertCell(0);
+        const typeCell = row.insertCell(1);
+        nameCell.innerText = result.name;
+        typeCell.innerText = result.type;
+      } else {
+        const row = table.insertRow();
+        const messageCell = row.insertCell(0);
+        messageCell.innerText = 'No results found';
+      }
+    }
+  </script>
+</body>
+</html>
