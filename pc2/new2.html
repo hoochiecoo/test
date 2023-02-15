@@ -27,6 +27,7 @@
     ];
 
     function searchArray(arr, searchObj) {
+      const matchingItems = [];
       for (let i = 0; i < arr.length; i++) {
         let matchCount = 0;
         for (let prop in searchObj) {
@@ -35,10 +36,10 @@
           }
         }
         if (matchCount === Object.keys(searchObj).length) {
-          return arr[i];
+          matchingItems.push(arr[i]);
         }
       }
-      return null;
+      return matchingItems;
     }
 
     function convertStringToKeyValue(str) {
@@ -50,15 +51,17 @@
     function search() {
       const input = document.getElementById('search').value;
       const keyvalue = convertStringToKeyValue(input);
-      const result = searchArray(myArray, keyvalue);
+      const results = searchArray(myArray, keyvalue);
       const table = document.getElementById('results');
       table.innerHTML = '';
-      if (result) {
-        const row = table.insertRow();
-        const nameCell = row.insertCell(0);
-        const typeCell = row.insertCell(1);
-        nameCell.innerText = result.name;
-        typeCell.innerText = result.type;
+      if (results.length > 0) {
+        results.forEach((result) => {
+          const row = table.insertRow();
+          const nameCell = row.insertCell(0);
+          const typeCell = row.insertCell(1);
+          nameCell.innerText = result.name;
+          typeCell.innerText = result.type;
+        });
       } else {
         const row = table.insertRow();
         const messageCell = row.insertCell(0);
