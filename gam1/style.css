@@ -1,0 +1,16 @@
+.container {
+  margin: 0 auto;
+  width: 80%;
+}
+
+.player1, .player2 {
+  display: inline-block;
+  vertical-align: top;
+  width: 45%;
+  margin-right: 5%;
+}
+
+.game-controls {
+  margin-top: 20px;
+  text-align: center;
+}
