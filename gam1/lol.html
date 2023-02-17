@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Game</title>
+  </head>
+  <body>
+    <h1>Game</h1>
+    <h2>Player 1</h2>
+    <p>Cards: <span id="player1Cards"></span></p>
+    <button id="player1Keep">Keep cards</button>
+    <button id="player1Change">Change cards</button>
+    <h2>Player 2</h2>
+    <p>Cards: <span id="player2Cards"></span></p>
+    <button id="player2Keep">Keep cards</button>
+    <button id="player2Change">Change cards</button>
+    <br>
+    <button id="endGame">End game</button>
+
+    <script>
+      const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+      const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
+      const cards = [];
+
+      for (let suit of suits) {
+        for (let rank of ranks) {
+          cards.push({suit, rank});
+        }
+      }
+
+      const player1Cards = [];
+      const player2Cards = [];
+
+      for (let i = 0; i < 6; i++) {
+        player1Cards.push(drawCard());
+        player2Cards.push(drawCard());
+      }
+
+      function drawCard() {
+        const index = Math.floor(Math.random() * cards.length);
+        return cards.splice(index, 1)[0];
+      }
+
+      function displayCards(player, cards) {
+        const cardElements = cards.map(card => `${card.rank} of ${card.suit}`).join(', ');
+        document.querySelector(`#player${player}Cards`).textContent = cardElements;
+      }
+
+      displayCards(1, player1Cards);
+      displayCards(2, player2Cards);
+
+      function handleKeepCards(player) {
+        document.querySelector(`#player${player}Change`).disabled = true;
+      }
+
+      function handleEndGame() {
+        const player1Score = calculateScore(player1Cards);
+        const player2Score = calculateScore(player2Cards);
+
+        if (player1Score > player2Score) {
+          alert('Player 1 wins!');
+        } else if (player2Score > player1Score) {
+          alert('Player 2 wins!');
+        } else {
+          alert('It\'s a tie!');
+        }
+      }
+
+      function calculateScore(cards) {
+        let score = 0;
+        const values = {
+          '2': 2,
+          '3': 3,
+          '4': 4,
+          '5': 5,
+          '6': 6,
+          '7': 7,
+          '8': 8,
+          '9': 9,
+          '10': 10,
+          'jack': 10,
+          'queen': 10,
+          'king': 10,
+          'ace': 11
+        };
+
+        for (let card of cards) {
+          score += values[card.rank];
+        }
+
+        return score;
+      }
+
+      document.querySelector('#player1Keep').addEventListener('click', () => handleKeepCards(1));
+      document.querySelector('#player2Keep').addEventListener('click', () => handleKeepCards(2));
+      document.querySelector('#player1Change').addEventListener('click', () => {
+        for (
+          let i = 0;
+          i < document.querySelector('#player1Cards').textContent.split(', ').length;
+          i++
+        ) {
+          player1Cards[i] = drawCard();
+        }
+        displayCards(1, player1Cards);
+      });
+      document.querySelector('#player2Change').addEventListener('click', () => {
+        for (
+          let i = 0;
+          i < document.querySelector('#player2Cards').textContent.split(', ').length;
+          i++
+        ) {
+          player2Cards[i] = drawCard();
+        }
+        displayCards(2, player2Cards);
+      });
+      document.querySelector('#endGame').addEventListener('click', handleEndGame);
+    </script>
+  </body>
+</html>
