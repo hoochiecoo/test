@@ -18,7 +18,7 @@
         $.ajax({
           url: apiUrl,
           headers: {
-            Authorization: `token ${token}`
+            Authorization: `Bearer ${token}`
           },
           success: function(data) {
             data.forEach(item => {
