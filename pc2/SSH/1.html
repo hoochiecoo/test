@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>SSH from Browser to Local Server</title>
+  </head>
+  <body>
+    <h1>SSH from Browser to Local Server</h1>
+    <p>Enter your SSH credentials:</p>
+    <form>
+      <label for="username">Username:</label>
+      <input type="text" id="username"><br>
+      <label for="password">Password:</label>
+      <input type="password" id="password"><br>
+      <label for="hostname">Hostname:</label>
+      <input type="text" id="hostname"><br>
+      <label for="port">Port:</label>
+      <input type="text" id="port" value="22"><br>
+      <input type="button" value="Connect" onclick="connect()">
+    </form>
+    <div id="terminal"></div>
+    <script src="https://unpkg.com/ssh2-web-client/dist/ssh2.js"></script>
+    <script>
+      function connect() {
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        var hostname = document.getElementById("hostname").value;
+        var port = document.getElementById("port").value;
+        var term = new Terminal({ cursorBlink: true });
+        term.open(document.getElementById('terminal'));
+        var conn = new SSH2Shell({
+          server: {
+            host: hostname,
+            port: port,
+            userName: username,
+            password: password
+          },
+          term: 'xterm-color',
+          width: 80,
+          height: 30,
+          colors: {
+            0: '#000000',
+            1: '#800000',
+            2: '#008000',
+            3: '#808000',
+            4: '#000080',
+            5: '#800080',
+            6: '#008080',
+            7: '#c0c0c0',
+            8: '#808080',
+            9: '#ff0000',
+            10: '#00ff00',
+            11: '#ffff00',
+            12: '#0000ff',
+            13: '#ff00ff',
+            14: '#00ffff',
+            15: '#ffffff'
+          }
+        });
+        conn.connect(function() {
+          term._initialized = true;
+          term.writeln('Connected to ' + hostname + ':' + port);
+        });
+        conn.on('data', function(data) {
+          term.write(data);
+        });
+        conn.on('close', function() {
+          term.writeln('Connection closed');
+        });
+      }
+    </script>
+  </body>
+</html>
