@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>GitHub Repo Search</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <input id="search-box" type="text" placeholder="Search...">
+    <button id="search-btn">Search</button>
+    <ul id="search-results"></ul>
+    <script>
+      const token = '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';
+      const repo = 'hoochiecoo/test';
+      const apiUrl = `https://api.github.com/repos/${repo}/contents`;
+      
+      function searchRepo(keyword) {
+        $('#search-results').empty();
+        $.ajax({
+          url: apiUrl,
+          headers: {
+            Authorization: `token ${token}`
+          },
+          success: function(data) {
+            data.forEach(item => {
+              if (item.type === 'file' && item.name.includes(keyword)) {
+                const listItem = $('<li></li>').html(`<a href="${item.html_url}">${item.name}</a>`);
+                $('#search-results').append(listItem);
+              }
+            });
+          }
+        });
+      }
+      
+      $('#search-btn').on('click', function() {
+        const keyword = $('#search-box').val();
+        searchRepo(keyword);
+      });
+    </script>
+  </body>
+</html>
