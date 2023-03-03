@@ -1,0 +1,18 @@
+<html>
+<body>
+<script>
+const vkApiUrl = 'https://oauth.vk.com/authorize';
+const params = {
+  client_id: '51571302',
+  redirect_uri: 'https://it-svalka.ru/verify/', //Доверительный редирект
+  scope: 'email',
+  response_type: 'code',
+  state: 'https://it-svalka.ru/vk.php'
+};
+
+const url = vkApiUrl + '?' + decodeURIComponent(new URLSearchParams(params).toString());
+document.write(`<a href="${url}">Войти на сайт через ВКонтакте</a>`);
+</script>
+
+</body>
+</html>
