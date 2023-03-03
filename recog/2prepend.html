@@ -3,8 +3,9 @@
 <div id="result"></div>
 <script>
 // Initialize audio context and speech recognition
-const audioContext = new AudioContext();
-const recognition = new window.webkitSpeechRecognition();
+var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+
+const recognition = new SpeechRecognition();
 
 // Set up speech recognition settings
 recognition.continuous = true;
@@ -16,8 +17,6 @@ const resultElement = document.getElementById('result');
 // Start speech recognition when user grants permission
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then(stream => {
-    const audioSource = audioContext.createMediaStreamSource(stream);
-    audioSource.connect(audioContext.destination);
 
     recognition.start();
 
