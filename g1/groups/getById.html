@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Get Group Info</title>
+</head>
+<body>
+	<h1>Get Group Info</h1>
+	<div id="result"></div>
+	<script type="text/javascript">
+		// Получаем идентификатор группы из параметров запроса
+		var groupId = getParameterByName('group_id');
+
+		if (groupId) {
+			// Отправляем запрос на метод groups.getById в VK API
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', 'https://api.vk.com/method/groups.getById?group_id=' + groupId + '&v=5.131');
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === XMLHttpRequest.DONE) {
+					if (xhr.status === 200) {
+						// Выводим полученный ответ на страницу
+						document.getElementById('result').textContent = xhr.responseText;
+					} else {
+						// Выводим сообщение об ошибке на страницу
+						document.getElementById('result').textContent = 'Error: ' + xhr.statusText;
+					}
+				}
+			};
+			xhr.send();
+		} else {
+			// Выводим сообщение об ошибке на страницу, если идентификатор группы не был передан в параметрах запроса
+			document.getElementById('result').textContent = 'Error: group_id parameter is missing!';
+		}
+
+		function getParameterByName(name) {
+			name = name.replace(/[\[\]]/g, '\\$&');
+			var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+			var results = regex.exec(window.location.href);
+			if (!results) return null;
+			if (!results[2]) return '';
+			return decodeURIComponent(results[2].replace(/\+/g, ' '));
+		}
+	</script>
+</body>
+</html>
