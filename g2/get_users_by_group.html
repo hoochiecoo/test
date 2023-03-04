@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Get Group Info</title>
+</head>
+<body>
+  <h1>Get Group Info</h1>
+  <div id="result"></div>
+<script type="text/javascript">
+  function getAccessToken() {
+    var cookies = document.cookie.split('; ');
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i].split('=');
+      if (cookie[0] == 'access_token') {
+        return cookie[1];
+      }
+    }
+    return null;
+  }
+
+  function getGroupMembers(group_id, access_token) {
+    // Создаем элемент <script> и добавляем его в <head> документа
+    var script = document.createElement('script');
+    script.src = 'https://api.vk.com/method/groups.getMembers?group_id=' + group_id + '&v=5.131&access_token=' + access_token + '&callback=processResponse';
+    document.head.appendChild(script);
+  }
+
+  // Функция, которая будет вызвана после получения ответа от VK API
+  function processResponse(response) {
+    // Выводим полученный ответ на страницу
+    document.getElementById('result').textContent = JSON.stringify(response);
+  }
+
+  // Получаем Access Token из куков браузера
+  var access_token = getAccessToken();
+
+  // Получаем значение параметра 'group_id' из строки запроса URL
+  const searchParams = new URLSearchParams(window.location.search);
+  const group_id = searchParams.get('group_id');
+
+  // Если Access Token и Group ID были получены успешно, вызываем функцию для получения информации о группе VK API
+  if (access_token && group_id) {
+    getGroupMembers(group_id, access_token);
+  } else {
+    document.getElementById('result').textContent = 'Access Token or Group ID not found';
+  }
+</script>
+
+</body>
+</html>
