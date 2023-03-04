@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Быки и коровы</title>
+</head>
+<body>
+	<h1>Быки и коровы</h1>
+	<p>Задумайте число из уникальных цифр, и я попробую его угадать!</p>
+	<p>Введите количество цифр:</p>
+	<input type="number" id="number-length">
+	<button onclick="startGame()">Начать игру</button>
+	<div id="game-container" style="display: none;">
+		<p>Введите ваше предположение:</p>
+		<input type="number" id="guess-number">
+		<button onclick="makeGuess()">Проверить</button>
+		<p id="result"></p>
+	</div>
+	<script>
+		let secretNumber = "";
+		let numberLength = 0;
+
+		function startGame() {
+			numberLength = parseInt(document.getElementById("number-length").value);
+			if (isNaN(numberLength) || numberLength <= 0 || numberLength > 9) {
+				alert("Пожалуйста, введите корректное количество цифр (от 1 до 9).");
+				return;
+			}
+
+			let digits = "123456789";
+			for (let i = 0; i < numberLength; i++) {
+				let randomIndex = Math.floor(Math.random() * digits.length);
+				secretNumber += digits[randomIndex];
+				digits = digits.slice(0, randomIndex) + digits.slice(randomIndex + 1);
+			}
+
+			document.getElementById("number-length").disabled = true;
+			document.getElementById("game-container").style.display = "block";
+		}
+
+		function makeGuess() {
+			let guess = document.getElementById("guess-number").value;
+			if (guess.length !== numberLength || new Set(guess).size !== numberLength) {
+				alert(`Пожалуйста, введите ${numberLength} уникальных цифр.`);
+				return;
+			}
+
+			let bulls = 0, cows = 0;
+			for (let i = 0; i < numberLength; i++) {
+				if (guess[i] === secretNumber[i]) {
+					bulls++;
+				} else if (secretNumber.includes(guess[i])) {
+					cows++;
+				}
+			}
+
+			if (bulls === numberLength) {
+				alert("Вы выиграли! Число было " + secretNumber);
+				window.location.reload();
+			} else {
+				document.getElementById("result").textContent = `Быки: ${bulls}, Коровы: ${cows}`;
+			}
+		}
+	</script>
+</body>
+</html>
