@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Get Group Info</title>
+</head>
+<body>
+	<h1>Get Group Info</h1>
+	<div id="result"></div>
+	<script type="text/javascript">
+		function getGroupInfo(group_id) {
+			// Создаем элемент <script> и добавляем его в <head> документа
+			var script = document.createElement('script');
+			script.src = 'https://api.vk.com/method/groups.getById?group_id=' + group_id + '&v=5.131&callback=processResponse';
+			document.head.appendChild(script);
+		}
+
+		// Функция, которая будет вызвана после получения ответа от VK API
+		function processResponse(response) {
+			// Выводим полученный ответ на страницу
+			document.getElementById('result').textContent = JSON.stringify(response);
+		}
+
+		// Вызываем функцию для получения информации о группе VK API
+		getGroupInfo('student_bowling');
+	</script>
+</body>
+</html>
