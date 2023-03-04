@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>VK API Client-Side Authorization Example</title>
+	<script type="text/javascript">
+		function getAccessToken() {
+			var hash = window.location.hash.substr(1);
+			var params = hash.split('&');
+			var accessToken = '';
+			for (var i = 0; i < params.length; i++) {
+				var pair = params[i].split('=');
+				if (pair[0] === 'access_token') {
+					accessToken = pair[1];
+					break;
+				}
+			}
+			if (accessToken) {
+				document.cookie = 'access_token=' + accessToken;
+				alert('Access token saved to cookie!');
+			} else {
+				alert('Access token not found!');
+			}
+		}
+	</script>
+</head>
+<body onload="getAccessToken()">
+	<h1>Client-Side Authorization Example</h1>
+	<p>Please wait while we save the access token to cookie...</p>
+</body>
+</html>
