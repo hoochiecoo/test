@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Get Group Info</title>
+</head>
+<body>
+  <h1>Get Group Info</h1>
+  <div id="result"></div>
+  <script type="text/javascript">
+    function getAccessToken() {
+      var cookies = document.cookie.split('; ');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].split('=');
+        if (cookie[0] == 'access_token') {
+          return cookie[1];
+        }
+      }
+      return null;
+    }
+
+    function getGroupInfo(group_id, access_token) {
+      VK.api('execute', {
+        code: 'var group_id = "' + group_id + '";' +
+              'var access_token = "' + access_token + '";' +
+              'var fields = "name,screen_name,description";' +
+              'var group = API.groups.getById({' +
+              '  group_id: group_id,' +
+              '  fields: fields,' +
+              '  access_token: access_token' +
+              '});' +
+              'return group;'
+      }, function(response) {
+        // Выводим полученный ответ на страницу
+        document.getElementById('result').textContent = JSON.stringify(response.response);
+      });
+    }
+
+    // Получаем Access Token из куков браузера
+    var access_token = getAccessToken();
+
+    // Получаем значение параметра 'group_id' из строки запроса URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const group_id = searchParams.get('group_id');
+
+    // Если Access Token и Group ID были получены успешно, вызываем функцию для получения информации о группе VK API
+    if (access_token && group_id) {
+      getGroupInfo(group_id, access_token);
+    } else {
+      document.getElementById('result').textContent = 'Access Token or Group ID not found';
+    }
+  </script>
+</body>
+</html>
