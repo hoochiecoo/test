@@ -64,7 +64,41 @@ function compareNumbers(number1, number2) {
   }
 
   return {
-    bulls:
+    bulls: bulls
+    cows: cows // количество коров
+};
+}
+
+// Функция отправки ответа и вывода результата
+function submitGuess() {
+var guess = document.getElementById("guess-input").value;
+
+if (guess.length != secretNumber.length || isNaN(guess)) {
+alert("Введите число длины " + secretNumber.length);
+return;
+}
+
+var result = compareNumbers(secretNumber, guess);
+attempts++;
+
+if (result.bulls == secretNumber.length) {
+document.getElementById("result").innerHTML = "Вы выиграли за " + attempts + " попыток!";
+document.getElementById("game-board").style.display = "none";
+} else {
+document.getElementById("result").innerHTML = "Быки: " + result.bulls + ", коровы: " + result.cows;
+}
+
+document.getElementById("guess-input").value = "";
+}
+
+// Функция начала игры заново
+function resetGame() {
+secretNumber = "";
+attempts = 0;
+document.getElementById("guess-input").value = "";
+document.getElementById("result").innerHTML = "";
+document.getElementById("game-board").style.display = "none";
+}
 
 </script>
 
