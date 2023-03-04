@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Быки и Коровы</title>
+    <script src="game.js"></script>
+  </head>
+  <body>
+    <h1>Быки и Коровы</h1>
+    <p>Загадайте число длины от 3 до 6 цифр, и я попробую его отгадать!</p>
+    <button onclick="startGame()">Начать игру</button>
+    <div id="game-board" style="display: none;">
+      <p>Моя попытка:</p>
+      <input type="text" id="guess-input">
+      <button onclick="submitGuess()">Отправить</button>
+      <p id="result"></p>
+    </div>
+    <button onclick="resetGame()">Начать заново</button>
+<script>
+// Генерация случайного числа заданной длины с уникальными цифрами
+function generateNumber(length) {
+  var numbers = [];
+
+  while (numbers.length < length) {
+    var random = Math.floor(Math.random() * 10);
+    if (numbers.indexOf(random) == -1) {
+      numbers.push(random);
+    }
+  }
+
+  return numbers.join("");
+}
+
+var secretNumber = "";
+var attempts = 0;
+
+// Функция начала игры
+function startGame() {
+  var length = parseInt(document.getElementById("number-input").value);
+
+  if (length < 1 || length > 10) {
+    alert("Длина числа должна быть от 1 до 10");
+    return;
+  }
+
+  secretNumber = generateNumber(length);
+  attempts = 0;
+
+  document.getElementById("number-input").value = "";
+  document.getElementById("game-board").style.display = "block";
+}
+
+// Функция сравнения чисел и вывода результата
+function compareNumbers(number1, number2) {
+  var bulls = 0;
+  var cows = 0;
+
+  for (var i = 0; i < number1.length; i++) {
+    if (number1.charAt(i) == number2.charAt(i)) {
+      bulls++;
+    } else if (number1.indexOf(number2.charAt(i)) != -1) {
+      cows++;
+    }
+  }
+
+  return {
+    bulls: bulls
+    cows: cows // количество коров
+};
+}
+
+// Функция отправки ответа и вывода результата
+function submitGuess() {
+var guess = document.getElementById("guess-input").value;
+
+if (guess.length != secretNumber.length || isNaN(guess)) {
+alert("Введите число длины " + secretNumber.length);
+return;
+}
+
+var result = compareNumbers(secretNumber, guess);
+attempts++;
+
+if (result.bulls == secretNumber.length) {
+document.getElementById("result").innerHTML = "Вы выиграли за " + attempts + " попыток!";
+document.getElementById("game-board").style.display = "none";
+} else {
+document.getElementById("result").innerHTML = "Быки: " + result.bulls + ", коровы: " + result.cows;
+}
+
+document.getElementById("guess-input").value = "";
+}
+
+// Функция начала игры заново
+function resetGame() {
+secretNumber = "";
+attempts = 0;
+document.getElementById("guess-input").value = "";
+document.getElementById("result").innerHTML = "";
+document.getElementById("game-board").style.display = "none";
+}
+
+</script>
+
+  </body>
+</html>
