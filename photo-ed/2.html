@@ -1,0 +1,33 @@
+<html>
+<body>
+
+<script>
+// Create a 10x10 matrix
+const matrix = [];
+for (let i = 0; i < 10; i++) {
+  matrix.push([]);
+  for (let j = 0; j < 10; j++) {
+    matrix[i].push(i * j);
+  }
+}
+
+// Create an HTML table element
+const table = document.createElement('table');
+
+// Add rows and cells to the table
+for (let i = 0; i < 10; i++) {
+  const row = document.createElement('tr');
+  for (let j = 0; j < 10; j++) {
+    const cell = document.createElement('td');
+    cell.textContent = matrix[i][j];
+    row.appendChild(cell);
+  }
+  table.appendChild(row);
+}
+
+// Add the table to the HTML document
+document.body.appendChild(table);
+
+</script>
+</body>
+</html>
