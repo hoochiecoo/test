@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Speech recognition PWA application">
+  <link rel="manifest" href="./manifest.json">
+  <title>Speech Recognition PWA</title>
+</head>
+<body>
+  <div id="result"></div>
+
+  <script>
+    // Initialize audio context and speech recognition
+    const audioContext = new AudioContext();
+    const recognition = new window.webkitSpeechRecognition();
+
+    // Set up speech recognition settings
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    // Get HTML element to display results
+    const resultElement = document.getElementById('result');
+
+    // Start speech recognition when user grants permission
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const audioSource = audioContext.createMediaStreamSource(stream);
+        //audioSource.connect(audioContext.destination);
+
+        recognition.start();
+
+        // Process speech recognition results
+        recognition.onresult = event => {
+          const speechResult = event.results[event.results.length - 1][0].transcript;
+
+          // Create new result element for each line of text
+          const lines = speechResult.split('\n');
+          lines.forEach(line => {
+            const newLineElement = document.createElement('p');
+            newLineElement.innerText = line;
+            resultElement.prepend(newLineElement);
+          });
+        };
+      })
+      .catch(error => {
+        console.error('Error getting user media: ', error);
+      });
+  </script>
+</body>
+</html>
