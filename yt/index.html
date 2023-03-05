@@ -1,0 +1,45 @@
+<html>
+<head>
+<script src="ytdl-core.js"></script>
+<script src="fluent-ffmpeg.js"></script>
+<script src="fs.js"></script>
+
+
+
+</head>
+<body>
+
+<script>
+// Define input parameters
+const videoLink = 'INSERT_YOUTUBE_VIDEO_LINK_HERE';
+const startSeconds = 30;
+const stopSeconds = 60;
+
+// Create a unique filename for the downloaded video
+const filename = `video-${Date.now()}.mp4`;
+
+// Download the video using ytdl-core
+const videoStream = ytdl(videoLink, { quality: 'highest' });
+
+// Define the start and end times for the cut video
+const startTime = new Date(startSeconds * 1000).toISOString().substr(11, 8);
+const endTime = new Date(stopSeconds * 1000).toISOString().substr(11, 8);
+
+// Use ffmpeg to cut the video
+ffmpeg(videoStream)
+  .setStartTime(startTime)
+  .setDuration(endTime)
+  .outputOptions('-c:v libx264', '-c:a aac')
+  .on('error', (err) => {
+    console.error('An error occurred:', err.message);
+  })
+  .on('end', () => {
+    console.log(`Finished processing ${filename}`);
+  })
+  .pipe(fs.createWriteStream(filename));
+
+</script>
+
+</body>
+</html>
+
