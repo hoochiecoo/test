@@ -1,0 +1,73 @@
+<html>
+<head>
+
+
+
+
+</head>
+<body>
+
+<script>
+// Define input parameters
+const videoLink = 'INSERT_YOUTUBE_VIDEO_LINK_HERE';
+const startSeconds = 30;
+const stopSeconds = 60;
+
+// Create a video element to play the video
+const video = document.createElement('video');
+video.controls = true;
+document.body.appendChild(video);
+
+// Create a download button to download the cut video
+const downloadBtn = document.createElement('button');
+downloadBtn.innerText = 'Download';
+document.body.appendChild(downloadBtn);
+
+// Download the video using fetch()
+fetch(`https://cors-anywhere.herokuapp.com/${videoLink}`)
+  .then(response => response.blob())
+  .then(videoBlob => {
+    // Create a URL for the video blob
+    const videoUrl = URL.createObjectURL(videoBlob);
+    video.src = videoUrl;
+
+    // Add click event listener to the download button
+    downloadBtn.addEventListener('click', () => {
+      // Create a unique filename for the downloaded video
+      const filename = `video-${Date.now()}.mp4`;
+
+      // Use MediaSource API to cut the video
+      const mediaSource = new MediaSource();
+      video.src = URL.createObjectURL(mediaSource);
+      mediaSource.addEventListener('sourceopen', () => {
+        const sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
+
+        // Fetch the video segments for the desired time range
+        fetch(videoUrl, {
+          headers: { Range: `bytes=${startSeconds * 1000000}-${stopSeconds * 1000000}` }
+        })
+        .then(response => response.arrayBuffer())
+        .then(segmentBuffer => {
+          // Append the video segment to the source buffer
+          sourceBuffer.appendBuffer(segmentBuffer);
+
+          // Wait for the video to finish downloading and cutting
+          sourceBuffer.addEventListener('updateend', () => {
+            // Create a download link for the cut video and click it
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(new Blob([segmentBuffer], { type: 'video/mp4' }));
+            downloadLink.download = filename;
+            downloadLink.click();
+          });
+        });
+      });
+    });
+  });
+
+</script>
+
+ <script src="ytdl-core.js"></script>
+<script src="fluent-ffmpeg.js"></script>
+<script src="fs.js"></script>
+</body>
+</html>
