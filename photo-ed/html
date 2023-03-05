@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Upload Example</title>
+    <style>
+      #image-container {
+        width: 1000px;
+      }
+      #image-preview {
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Select a File</h1>
+    <input type="file" id="fileToUpload" onchange="previewImage()">
+    <br><br>
+    <div id="image-container"></div>
+    <script>
+      function previewImage() {
+        var file = document.getElementById("fileToUpload").files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var image = document.createElement("img");
+          image.src = e.target.result;
+          image.alt = "uploaded image";
+          image.id = "image-preview";
+          document.getElementById("image-container").innerHTML = "";
+          document.getElementById("image-container").appendChild(image);
+        }
+        reader.readAsDataURL(file);
+      }
+    </script>
+  </body>
+</html>
