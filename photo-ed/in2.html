@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Upload Example</title>
+    <style>
+      .image-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+      }
+      .image-preview {
+        max-width: 100%;
+        margin: 10px;
+      }
+      .small {
+        width: 300px;
+        height: 300px;
+      }
+      .medium {
+        width: 500px;
+        height: 500px;
+      }
+      .large {
+        width: 800px;
+        height: 800px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Select a File</h1>
+    <input type="file" id="fileToUpload" onchange="previewImage()">
+    <br><br>
+    <div class="image-container">
+      <div class="image-preview small"></div>
+      <div class="image-preview medium"></div>
+      <div class="image-preview large"></div>
+    </div>
+    <script>
+      function previewImage() {
+        var file = document.getElementById("fileToUpload").files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var image = document.createElement("img");
+          image.src = e.target.result;
+          image.alt = "uploaded image";
+          var smallImage = image.cloneNode(true);
+          smallImage.classList.add("small");
+          var mediumImage = image.cloneNode(true);
+          mediumImage.classList.add("medium");
+          var largeImage = image.cloneNode(true);
+          largeImage.classList.add("large");
+          document.querySelectorAll(".image-preview").forEach(function(container) {
+            container.innerHTML = "";
+            container.appendChild(eval(container.classList[1] + "Image"));
+          });
+        }
+        reader.readAsDataURL(file);
+      }
+    </script>
+  </body>
+</html>
