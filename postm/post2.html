@@ -15,25 +15,7 @@
         headers:
           accept: application/json
           Content-Type: application/json
-        body: |
-          {
-            "id": 0,
-            "category": {
-              "id": 0,
-              "name": "string"
-            },
-            "name": "doggie",
-            "photoUrls": [
-              "string"
-            ],
-            "tags": [
-              {
-                "id": 0,
-                "name": "string"
-              }
-            ],
-            "status": "available"
-          }`;
+        body: {"id":0,"category":{"id":0,"name":"string"},"name":"doggie","photoUrls":["string"],"tags":[{"id":0,"name":"string"}],"status":"available"}`;
 
       // Parse the YAML into a JavaScript object
       const obj = yaml.load(yamlString);
