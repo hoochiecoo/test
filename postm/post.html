@@ -2,36 +2,39 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>POST Request Form</title>
+    <title>HTTP POST Request Form</title>
   </head>
   <body>
-    <h1>POST Request Form</h1>
+    <h1>HTTP POST Request Form</h1>
     <form>
-      <label for="name">Name:</label>
-      <input type="text" id="name" name="name"><br><br>
-      <label for="email">Email:</label>
-      <input type="email" id="email" name="email"><br><br>
-      <label for="message">Message:</label>
-      <textarea id="message" name="message"></textarea><br><br>
-      <input type="submit" value="Send" id="submit">
+      <label for="url">URL:</label>
+      <input type="url" id="url" name="url" required><br><br>
+      <label for="headers">Headers:</label>
+      <textarea id="headers" name="headers"></textarea><br><br>
+      <label for="body">Body:</label>
+      <textarea id="body" name="body"></textarea><br><br>
+      <input type="submit" value="Send">
     </form>
     <script>
       const form = document.querySelector('form');
       form.addEventListener('submit', e => {
         e.preventDefault();
-        const formData = new FormData(form);
-        fetch('/', {
+        const url = form.querySelector('#url').value;
+        const headers = form.querySelector('#headers').value;
+        const body = form.querySelector('#body').value;
+        fetch(url, {
           method: 'POST',
-          body: formData
+          headers: new Headers(headers),
+          body: body
         })
         .then(response => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
           }
-          console.log('POST request sent successfully!');
+          console.log('HTTP POST request sent successfully!');
         })
         .catch(error => {
-          console.error('There was a problem with the POST request:', error);
+          console.error('There was a problem with the HTTP POST request:', error);
         });
       });
     </script>
