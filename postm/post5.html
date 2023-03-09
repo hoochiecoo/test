@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cURL to Fetch Converter</title>
+</head>
+<body>
+    <label for="curl-command">cURL Command:</label>
+    <br>
+    <textarea id="curl-command" rows="10" cols="50">curl --location 'https://petstore.swagger.io/v2/pet' \
+--header 'accept: application/json' \
+--header 'Content-Type: application/json' \
+--data '{
+  "id": 0,
+  "category": {
+    "id": 0,
+    "name": "string"
+  },
+  "name": "doggie",
+  "photoUrls": [
+    "string"
+  ],
+  "tags": [
+    {
+      "id": 0,
+      "name": "string"
+    }
+  ],
+  "status": "available"
+}'</textarea>
+    <br>
+    <button id="convert-btn">Convert to Fetch</button>
+    <br>
+    <label for="fetch-command">Fetch Command:</label>
+    <br>
+    <textarea id="fetch-command" rows="10" cols="50" readonly></textarea>
+    
+    <script>
+        const convertBtn = document.querySelector('#convert-btn');
+        const curlCommand = document.querySelector('#curl-command');
+        const fetchCommand = document.querySelector('#fetch-command');
+
+        convertBtn.addEventListener('click', () => {
+            const curlCommandText = curlCommand.value;
+            const curlCommandParts = curlCommandText.split(' ');
+
+            const url = curlCommandParts[2].replace(/'/g, '');
+            const method = curlCommandParts[0].toUpperCase();
+
+            const headers = {};
+            curlCommandParts.slice(3, -2).forEach((header, index, arr) => {
+                if (index % 2 === 0) {
+                    headers[header.replace(/'/g, '')] = arr[index + 1].replace(/'/g, '');
+                }
+            });
+
+            const data = curlCommandParts.slice(-1)[0];
+
+            const fetchCommandText = `fetch('${url}', {
+                method: '${method}',
+                headers: ${JSON.stringify(headers, null, 4)},
+                body: ${data}
+            }).then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error(error));`;
+
+            fetchCommand.value = fetchCommandText;
+        });
+    </script>
+</body>
+</html>
