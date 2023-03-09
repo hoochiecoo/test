@@ -5,54 +5,33 @@
     <title>Fetch request from YAML</title>
   </head>
   <body>
+    <textarea id="yamlString" rows="10" cols="50"></textarea>
+    <br />
+    <button onclick="sendYaml()">Send YAML</button>
+
     <script type="module">
       import yaml from 'https://cdn.skypack.dev/js-yaml';
 
-      // The YAML string
-      const yamlString = `curl:
-        method: POST
-        url: https://petstore.swagger.io/v2/pet
-        headers:
-          accept: application/json
-          Content-Type: application/json
-        body: |
-          {
-            "id": 0,
-            "category": {
-              "id": 0,
-              "name": "string"
-            },
-            "name": "doggie",
-            "photoUrls": [
-              "string"
-            ],
-            "tags": [
-              {
-                "id": 0,
-                "name": "string"
-              }
-            ],
-            "status": "available"
-          }`;
+      function sendYaml() {
+        // Get the YAML string from the textarea
+        const yamlString = document.getElementById('yamlString').value;
 
-      // Parse the YAML into a JavaScript object
-      const obj = yaml.load(yamlString);
+        // Parse the YAML into a JavaScript object
+        const obj = yaml.load(yamlString);
 
-      // Extract the request information
-      const { method, url, headers, body } = obj.curl;
+        // Extract the request information
+        const { method, url, headers, body } = obj.curl;
 
-      // Remove new lines from the body
-      const requestBody = body.replace(/\n/g, '');
-
-      // Perform the fetch request
-      fetch(url, {
-        method,
-        headers,
-        body: JSON.stringify(requestBody),
-      })
-        .then((response) => response.json())
-        .then((data) => console.log(data))
-        .catch((error) => console.error(error));
+        // Perform the fetch request
+        fetch(url, {
+          method,
+          headers,
+          body: JSON.stringify(body),
+        })
+          .then((response) => response.json())
+          .then((data) => console.log(data))
+          .catch((error) => console.error(error));
+      }
     </script>
   </body>
 </html>
