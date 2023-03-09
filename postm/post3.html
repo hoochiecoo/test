@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Fetch request from YAML</title>
+  </head>
+  <body>
+    <div>
+      <textarea id="yaml-input" rows="10" cols="50"></textarea>
+      <br />
+      <button onclick="sendYaml()">Send YAML</button>
+    </div>
+
+    <script type="module">
+      import yaml from 'https://cdn.skypack.dev/js-yaml';
+
+      function sendYaml() {
+        // Get the YAML string from the textarea
+        const yamlString = document.getElementById('yaml-input').value;
+
+        // Parse the YAML into a JavaScript object
+        const obj = yaml.load(yamlString);
+
+        // Extract the request information
+        const { method, url, headers, body } = obj.curl;
+
+        // Perform the fetch request
+        fetch(url, {
+          method,
+          headers,
+          body: JSON.stringify(body),
+        })
+          .then((response) => response.json())
+          .then((data) => console.log(data))
+          .catch((error) => console.error(error));
+      }
+    </script>
+  </body>
+</html>
