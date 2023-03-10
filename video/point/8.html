@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Accelerometer Demo</title>
+</head>
+<body>
+  <p>x: <span id="x-value"></span></p>
+  <p>y: <span id="y-value"></span></p>
+  <p>z: <span id="z-value"></span></p>
+
+  <script>
+    // Check if the device supports the DeviceOrientationEvent
+    if (window.DeviceOrientationEvent) {
+      // Add an event listener to the window object
+      window.addEventListener("deviceorientation", function(event) {
+        // Get the x, y, and z values
+        var x = event.beta; // The x value (in degrees)
+        var y = event.gamma; // The y value (in degrees)
+        var z = event.alpha; // The z value (in degrees)
+
+        // Update the text on the web page
+        document.getElementById("x-value").textContent = x.toFixed(2);
+        document.getElementById("y-value").textContent = y.toFixed(2);
+        document.getElementById("z-value").textContent = z.toFixed(2);
+      });
+    } else {
+      alert("Device orientation not supported");
+    }
+  </script>
+</body>
+</html>
