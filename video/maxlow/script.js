@@ -64,6 +64,35 @@ const features = {
     const y = Math.floor((minIndex / 4) / canvasElement.width);
 
     console.log(`Darkest pixel location: (${x}, ${y})`);
+  },  
+  surroundMaxBrightness: () => {
+    // Get image data from the canvas
+    const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+    const data = imageData.data;
+
+    // Find the location of the whitest pixel
+    let maxBrightness = 0;
+    let maxIndex = -1;
+    for (let i = 0; i < data.length; i += 4) {
+      const brightness = (0.2126 * data[i]) + (0.7152 * data[i + 1]) + (0.0722 * data[i + 2]); // Calculate pixel brightness
+      if (brightness > maxBrightness) {
+        maxBrightness = brightness;
+        maxIndex = i;
+      }
+    }
+    const x = (maxIndex / 4) % canvasElement.width;
+    const y = Math.floor((maxIndex / 4) / canvasElement.width);
+
+    // Surround the maxBrightness pixel with a red circle
+    const circleRadius = 10;
+    const lineWidth = 2;
+    canvasContext.beginPath();
+    canvasContext.arc(x, y, circleRadius, 0, 2 * Math.PI);
+    canvasContext.strokeStyle = 'red';
+    canvasContext.lineWidth = lineWidth;
+    canvasContext.stroke();
+
+    console.log(`Whitest pixel location: (${x}, ${y})`);
   }
 };
 
