@@ -1,0 +1,67 @@
+<html> <head>
+	<title>VK API Client-Side Authorization Example</title>
+</head>
+<body>
+
+<script>
+// Create buttons
+const startBtn = document.createElement('button');
+startBtn.innerText = 'Start Recording';
+const stopBtn = document.createElement('button');
+stopBtn.innerText = 'Stop Recording';
+stopBtn.disabled = true; // Disabled by default
+const downloadBtn = document.createElement('a'); // Change button to link
+downloadBtn.innerText = 'Download Recording';
+downloadBtn.disabled = true; // Disabled by default
+
+// Add buttons to the document
+document.body.prepend(startBtn, stopBtn, downloadBtn);
+
+// Initialize MediaRecorder
+let mediaRecorder;
+let recordedChunks = [];
+
+startBtn.addEventListener('click', () => {
+  // Request audio input from user
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((stream) => {
+      // Create MediaRecorder object
+      mediaRecorder = new MediaRecorder(stream);
+      
+      // Register event handlers
+      mediaRecorder.addEventListener('dataavailable', (e) => {
+        recordedChunks.push(e.data);
+      });
+      mediaRecorder.addEventListener('stop', () => {
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        downloadBtn.href = url; // Set the link's href attribute
+        downloadBtn.download = 'recording.webm'; // Set the filename
+      });
+
+      // Start recording
+      mediaRecorder.start();
+      
+      // Update button states
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      downloadBtn.disabled = true;
+    })
+    .catch((err) => {
+      console.error('Failed to get user media:', err);
+    });
+});
+
+stopBtn.addEventListener('click', () => {
+  // Stop recording
+  mediaRecorder.stop();
+
+  // Update button states
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  downloadBtn.disabled = false;
+});
+
+</script>
+</body>
+</html>
