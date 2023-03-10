@@ -65,7 +65,7 @@ const features = {
 
     console.log(`Darkest pixel location: (${x}, ${y})`);
   },  
-  surroundMaxBrightness: () => {
+  maxBrightness2: () => {
     // Get image data from the canvas
     const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
     const data = imageData.data;
