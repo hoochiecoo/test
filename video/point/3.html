@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Camera Brightness Capture</title>
+</head>
+<body>
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // get user's camera
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then(function (stream) {
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.onloadedmetadata = function(e) {
+          video.play();
+          captureBrightness(video);
+        };
+      })
+      .catch(function (err) {
+        console.error(err);
+      });
+
+    function captureBrightness(video) {
+      // set video properties for brightness detection
+      const settings = video.getVideoTracks()[0].getSettings();
+      settings.exposureCompensation = -8;
+      settings.whiteBalanceMode = 'fixed';
+      settings.colorEffect = { contrast: 200 };
+
+      const constraints = { video: settings };
+
+      // create another video element with updated settings
+      const video2 = document.createElement('video');
+      video2.setAttribute('playsinline', '');
+      video2.setAttribute('muted', '');
+      video2.setAttribute('autoplay', '');
+      video2.style.display = 'none';
+      document.body.appendChild(video2);
+
+      // capture frame from camera and find brightest pixel
+      video2.srcObject = null;
+      video2.srcObject = new MediaStream([video.getVideoTracks()[0]]);
+      video2.onloadedmetadata = function() {
+        canvas.width = video2.videoWidth;
+        canvas.height = video2.videoHeight;
+
+        const interval = setInterval(function() {
+          ctx.drawImage(video2, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const brightestPixel = getBrightestPixel(imageData);
+          moveSquare(brightestPixel.x, brightestPixel.y);
+        }, 100);
+      }
+    }
+
+    function getBrightestPixel(imageData) {
+      let brightestPixel = { x: 0, y: 0, brightness: 0 };
+
+      for (let y = 0; y < imageData.height; y++) {
+        for (let x = 0; x < imageData.width; x++) {
+          const index = (y * imageData.width + x) * 4;
+          const brightness = (imageData.data[index] + imageData.data[index + 1] + imageData.data[index + 2]) / 3;
+
+          if (brightness > brightestPixel.brightness) {
+            brightestPixel.x = x;
+            brightestPixel.y = y;
+            brightestPixel.brightness = brightness;
+          }
+        }
+      }
+
+      return brightestPixel;
+    }
+
+    function moveSquare(x, y) {
+      // clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // draw square at brightest point
+      const squareSize = 50;
+      ctx.fillStyle = 'red';
+      ctx.fillRect(x - squareSize / 2, y - squareSize / 2, squareSize, squareSize);
+    }
+  </script>
+</body>
+</html>
