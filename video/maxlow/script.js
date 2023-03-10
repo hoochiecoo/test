@@ -44,6 +44,13 @@ const features = {
     const y = Math.floor((maxIndex / 4) / canvasElement.width);
 
     console.log(`Whitest pixel location: (${x}, ${y})`);
+    const circleRadius = 10;
+    const lineWidth = 2;
+    canvasContext.beginPath();
+    canvasContext.arc(x, y, circleRadius, 0, 2 * Math.PI);
+    canvasContext.strokeStyle = 'red';
+    canvasContext.lineWidth = lineWidth;
+    canvasContext.stroke();
   },
   lowBrightness: () => {
     // Get image data from the canvas
