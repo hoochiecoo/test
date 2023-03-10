@@ -4,6 +4,7 @@ const videoElement = document.querySelector('video');
 // Create canvas element to draw video frames
 const canvasElement = document.createElement('canvas');
 const canvasContext = canvasElement.getContext('2d');
+canvasElement.willReadFrequently = true;
 
 // Get user permission to access camera and start video stream
 navigator.mediaDevices.getUserMedia({ video: true })
