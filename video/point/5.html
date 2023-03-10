@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Video Stream Controls</title>
+  </head>
+  <body>
+    <div>
+      <label for="width">Width:</label>
+      <input type="range" id="width" min="0" max="1920" value="640">
+    </div>
+    <div>
+      <label for="height">Height:</label>
+      <input type="range" id="height" min="0" max="1080" value="480">
+    </div>
+    <div>
+      <label for="aspectRatio">Aspect Ratio:</label>
+      <input type="range" id="aspectRatio" min="0" max="2" step="0.1" value="1.777">
+    </div>
+    <div>
+      <label for="frameRate">Frame Rate:</label>
+      <input type="range" id="frameRate" min="0" max="60" step="5" value="30">
+    </div>
+    <div>
+      <label for="facingMode">Facing Mode:</label>
+      <select id="facingMode">
+        <option value="user">Front-Facing Camera</option>
+        <option value="environment">Rear-Facing Camera</option>
+      </select>
+    </div>
+    <div>
+      <label for="brightness">Brightness:</label>
+      <input type="range" id="brightness" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="contrast">Contrast:</label>
+      <input type="range" id="contrast" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="saturation">Saturation:</label>
+      <input type="range" id="saturation" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="sharpness">Sharpness:</label>
+      <input type="range" id="sharpness" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="exposureMode">Exposure Mode:</label>
+      <select id="exposureMode">
+        <option value="auto">Auto</option>
+        <option value="manual">Manual</option>
+      </select>
+    </div>
+    <div>
+      <label for="exposureCompensation">Exposure Compensation:</label>
+      <input type="range" id="exposureCompensation" min="-2" max="2" step="0.1" value="0">
+    </div>
+    <div>
+      <label for="focusMode">Focus Mode:</label>
+      <select id="focusMode">
+        <option value="auto">Auto</option>
+        <option value="manual">Manual</option>
+      </select>
+    </div>
+    <div>
+      <label for="zoom">Zoom:</label>
+      <input type="range" id="zoom" min="0" max="1" step="0.1" value="0">
+    </div>
+    <div>
+      <label for="torch">Torch:</label>
+      <input type="checkbox" id="torch">
+    </div>
+    <div
