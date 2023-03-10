@@ -115,4 +115,4 @@ setInterval(() => {
       feature();
     }
   }
-}, 100); // Repeat every 100 milliseconds (10 frames per second)
+}, 1000); // Repeat every 100 milliseconds (10 frames per second)
