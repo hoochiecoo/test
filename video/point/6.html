@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Video Stream Controls</title>
+  </head>
+  <body>
+    <div>
+      <label for="width">Width:</label>
+      <input type="range" id="width" min="0" max="1920" value="640">
+    </div>
+    <div>
+      <label for="height">Height:</label>
+      <input type="range" id="height" min="0" max="1080" value="480">
+    </div>
+    <div>
+      <label for="aspectRatio">Aspect Ratio:</label>
+      <input type="range" id="aspectRatio" min="0" max="2" step="0.1" value="1.777">
+    </div>
+    <div>
+      <label for="frameRate">Frame Rate:</label>
+      <input type="range" id="frameRate" min="0" max="60" step="5" value="30">
+    </div>
+    <div>
+      <label for="facingMode">Facing Mode:</label>
+      <select id="facingMode">
+        <option value="user">Front-Facing Camera</option>
+        <option value="environment">Rear-Facing Camera</option>
+      </select>
+    </div>
+    <div>
+      <label for="brightness">Brightness:</label>
+      <input type="range" id="brightness" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="contrast">Contrast:</label>
+      <input type="range" id="contrast" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="saturation">Saturation:</label>
+      <input type="range" id="saturation" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="sharpness">Sharpness:</label>
+      <input type="range" id="sharpness" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div>
+      <label for="exposureMode">Exposure Mode:</label>
+      <select id="exposureMode">
+        <option value="auto">Auto</option>
+        <option value="manual">Manual</option>
+      </select>
+    </div>
+    <div>
+      <label for="exposureCompensation">Exposure Compensation:</label>
+      <input type="range" id="exposureCompensation" min="-2" max="2" step="0.1" value="0">
+    </div>
+    <div>
+      <label for="focusMode">Focus Mode:</label>
+      <select id="focusMode">
+        <option value="auto">Auto</option>
+        <option value="manual">Manual</option>
+      </select>
+    </div>
+    <div>
+      <label for="zoom">Zoom:</label>
+      <input type="range" id="zoom" min="0" max="1" step="0.1" value="0">
+    </div>
+    <div>
+      <label for="torch">Torch:</label>
+      <input type="checkbox" id="torch">
+    </div>
+    <video id="video" autoplay></video>
+<script>
+  const video = document.getElementById('video');
+  const constraints = {
+    video: {
+      width: { exact: 640 },
+      height: { exact: 480 },
+      aspectRatio: { exact: 1.777 },
+      frameRate: { exact: 30 },
+      facingMode: 'user',
+      brightness: 0.5,
+      contrast: 0.5,
+      saturation: 0.5,
+      sharpness: 0.5,
+      exposureMode: 'auto',
+      exposureCompensation: 0,
+      focusMode: 'auto',
+      zoom: 0,
+      torch: false
+    }
+  };
+
+  function updateConstraints() {
+    constraints.video.width = { exact: parseInt(document.getElementById('width').value) };
+    constraints.video.height = { exact: parseInt(document.getElementById('height').value) };
+    constraints.video.aspectRatio = { exact: parseFloat(document.getElementById('aspectRatio').value) };
+    constraints.video.frameRate = { exact: parseInt(document.getElementById('frameRate').value) };
+    constraints.video.facingMode = document.getElementById('facingMode').value;
+    constraints.video.brightness = parseFloat(document.getElementById('brightness').value);
+    constraints.video.contrast = parseFloat(document.getElementById('contrast').value);
+    constraints.video.saturation = parseFloat(document.getElementById('saturation').value);
+    constraints.video.sharpness = parseFloat(document.getElementById('sharpness').value);
+    constraints.video.exposureMode = document.getElementById('exposureMode').value;
+    constraints.video.exposureCompensation = parseFloat(document.getElementById('exposureCompensation').value);
+    constraints.video.focusMode = document.getElementById('focusMode').value;
+    constraints.video.zoom = parseFloat(document.getElementById('zoom').value);
+    constraints.video.torch = document.getElementById('torch').checked;
+  }
+
+  async function startStream() {
+    updateConstraints();
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+  }
+
+  startStream();
+</script>
+  </body>
+</html>
