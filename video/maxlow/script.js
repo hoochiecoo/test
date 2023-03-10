@@ -29,6 +29,8 @@ const features = {
   maxBrightness: () => {
     // Get image data from the canvas
     const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+    imageData.willReadFrequently = true;
+    canvasContext.willReadFrequently = true;
     const data = imageData.data;
 
     // Find the location of the whitest pixel
