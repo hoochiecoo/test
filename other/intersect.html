@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Text Intersection</title>
+</head>
+<body>
+	<h1>Text Intersection</h1>
+	<p>Type or paste your text into the first two fields, then click the button to find the lines that appear in both lists:</p>
+	<textarea id="text1" rows="10" cols="50"></textarea>
+	<textarea id="text2" rows="10" cols="50"></textarea>
+	<br>
+	<button onclick="intersect()">Intersect</button>
+	<br>
+	<textarea id="result" rows="10" cols="50"></textarea>
+
+	<script>
+		function intersect() {
+			// Get the text from the first two text areas
+			var text1 = document.getElementById("text1").value;
+			var text2 = document.getElementById("text2").value;
+
+			// Split the text into lines
+			var lines1 = text1.split("\n");
+			var lines2 = text2.split("\n");
+
+			// Create a new array to store the lines that appear in both lists
+			var resultLines = [];
+
+			// Loop through the lines in the first list
+			for (var i = 0; i < lines1.length; i++) {
+				var line1 = lines1[i];
+
+				// Check if this line is also in the second list
+				var found = false;
+				for (var j = 0; j < lines2.length; j++) {
+					var line2 = lines2[j];
+					if (line1 == line2) {
+						found = true;
+						break;
+					}
+				}
+
+				// If the line was found in the second list, add it to the result list
+				if (found) {
+					resultLines.push(line1);
+				}
+			}
+
+			// Join the result lines back into a string and display them in the third text area
+			var resultText = resultLines.join("\n");
+			document.getElementById("result").value = resultText;
+		}
+	</script>
+</body>
+</html>
