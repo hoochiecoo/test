@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Code to Flowchart</title>
+</head>
+<body>
+	<h1>Code to Flowchart</h1>
+	<p>Paste your code into the textarea below:</p>
+	<textarea id="code"></textarea>
+	<button onclick="createFlowchart()">Create Flowchart</button>
+	<div id="flowchart"></div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.4/raphael-min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flowchart/1.14.0/flowchart.min.js"></script>
+	<script>
+		function createFlowchart() {
+			var code = $('#code').val();
+
+			// Parse the code and create a flowchart
+			var diagram = flowchart.parse(code);
+			diagram.drawSVG('flowchart');
+		}
+	</script>
+</body>
+</html>
