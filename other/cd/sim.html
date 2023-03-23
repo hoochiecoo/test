@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Load Photo</title>
+  </head>
+  <body>
+    <form>
+      <label for="photo-input">Load your photo:</label>
+      <input type="file" id="photo-input">
+      <button type="button" onclick="loadPhoto()">Load</button>
+    </form>
+
+    <div id="photo-container"></div>
+
+    <script>
+      function loadPhoto() {
+        const input = document.getElementById('photo-input');
+        const file = input.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+          const photoContainer = document.getElementById('photo-container');
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          photoContainer.appendChild(img);
+        }
+
+        reader.readAsDataURL(file);
+      }
+    </script>
+  </body>
+</html>
