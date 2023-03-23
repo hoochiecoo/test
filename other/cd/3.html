@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OpenCV in the browser</title>
+</head>
+<body>
+  <img id="imageSrc" src="./vc_logo.jpg">
+  <canvas id="canvasOutput"></canvas>
+
+  <script async src="./opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+  <script type="text/javascript">
+    function onOpenCvReady() {
+        // Load the image
+        let imgElement = document.getElementById('imageSrc');
+        let img = cv.imread(imgElement);
+
+        // Apply a filter
+        cv.cvtColor(img, img, cv.COLOR_RGBA2GRAY);
+        cv.medianBlur(img, img, 5);
+        cv.threshold(img, img, 128, 255, cv.THRESH_BINARY);
+        cv.cvtColor(img, img, cv.COLOR_GRAY2RGBA);
+        cv.bilateralFilter(img, img, 9, 75, 75);
+        cv.blur(img, img, [5, 5]);
+        cv.Canny(img, img, 100, 200);
+        cv.dilate(img, img, cv.getStructuringElement(cv.MORPH_RECT, [3, 3]));
+        cv.erode(img, img, cv.getStructuringElement(cv.MORPH_RECT, [3, 3]));
+        cv.equalizeHist(img, img);
+
+        // Display the result
+        cv.imshow('canvasOutput', img);
+        img.delete();
+    }
+  </script>
+</body>
+</html>
