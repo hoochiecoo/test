@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Установка и отображение кукис</title>
+</head>
+<body>
+  <input type="text" id="cookieInput" placeholder="Введите значение кукис">
+  <button onclick="setCookie()">Установить кукис</button>
+  <br>
+  <div id="cookieDisplay"></div>
+
+  <script>
+    function setCookie() {
+      var cookieValue = document.getElementById("cookieInput").value;
+      document.cookie = "myCookie=" + cookieValue + "; expires=Thu, 01 Jan 2026 00:00:00 UTC; path=/";
+      displayCookie();
+    }
+
+    function displayCookie() {
+      var cookies = document.cookie.split(";");
+      var cookieDisplay = document.getElementById("cookieDisplay");
+      cookieDisplay.innerHTML = "";
+
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        var cookieName = cookie.split("=")[0];
+        var cookieValue = cookie.split("=")[1];
+
+        if (cookieName === "myCookie") {
+          cookieDisplay.innerHTML = "Текущий кукис: " + cookieValue;
+        }
+      }
+    }
+
+    displayCookie(); // Отображение текущего кукис при загрузке страницы
+  </script>
+</body>
+</html>
