@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scoreboard</title>
+</head>
+<body>
+    <h1>Scoreboard</h1>
+    <div id="player1">Player 1: 0 points</div>
+    <div id="player2">Player 2: 0 points</div>
+    <div id="wins">Wins: Player 1 - 0, Player 2 - 0</div>
+    <div id="games">Game Wins: Player 1 - 0, Player 2 - 0</div>
+    <div id="sets">Set Wins: Player 1 - 0, Player 2 - 0</div>
+    <div id="step">Step: 0</div>
+    <input type="number" id="player1Input" placeholder="Player 1 Score">
+    <input type="number" id="player2Input" placeholder="Player 2 Score">
+    <button onclick="nextStep()">Next Step</button>
+
+    <!-- Buttons to choose values -->
+    <div>
+        <button onclick="setPlayer1Score(0)">0</button>
+        <button onclick="setPlayer1Score(1)">1</button>
+        <button onclick="setPlayer1Score(2)">2</button>
+        <button onclick="setPlayer1Score(3)">3</button>
+        <button onclick="setPlayer1Score(4)">4</button>
+        <button onclick="setPlayer1Score(5)">5</button>
+        <button onclick="setPlayer1Score(6)">6</button>
+        <button onclick="setPlayer1Score(7)">7</button>
+        <button onclick="setPlayer1Score(8)">8</button>
+        <button onclick="setPlayer1Score(9)">9</button>
+        <button onclick="setPlayer1Score(10)">10</button>
+    </div>
+    
+    <div>
+        <button onclick="setPlayer2Score(0)">0</button>
+        <button onclick="setPlayer2Score(1)">1</button>
+        <button onclick="setPlayer2Score(2)">2</button>
+        <button onclick="setPlayer2Score(3)">3</button>
+        <button onclick="setPlayer2Score(4)">4</button>
+        <button onclick="setPlayer2Score(5)">5</button>
+        <button onclick="setPlayer2Score(6)">6</button>
+        <button onclick="setPlayer2Score(7)">7</button>
+        <button onclick="setPlayer2Score(8)">8</button>
+        <button onclick="setPlayer2Score(9)">9</button>
+        <button onclick="setPlayer2Score(10)">10</button>
+    </div>
+
+    <script>
+        let player1Score = 0;
+        let player2Score = 0;
+        let player1Wins = 0;
+        let player2Wins = 0;
+        let player1GameWins = 0;
+        let player2GameWins = 0;
+        let player1SetsWins = 0;
+        let player2SetsWins = 0;
+        let stepIndex = 0;
+
+        function setPlayer1Score(score) {
+            player1Score = score;
+            document.getElementById("player1Input").value = player1Score;
+        }
+
+        function setPlayer2Score(score) {
+            player2Score = score;
+            document.getElementById("player2Input").value = player2Score;
+        }
+
+        function nextStep() {
+            updateScores();
+        }
+
+        function updateScores() {
+            stepIndex++;
+
+            document.getElementById("player1").innerText = `Player 1: ${player1Score} points`;
+            document.getElementById("player2").innerText = `Player 2: ${player2Score} points`;
+
+            if (player1Score > player2Score) {
+                player1Wins++;
+            } else if (player2Score > player1Score) {
+                player2Wins++;
+            }
+
+            document.getElementById("wins").innerText = `\nWins: \nPlayer 1 - ${player1Wins}, \nPlayer 2 - ${player2Wins}`;
+            document.getElementById("step").innerText = `\nStep: ${stepIndex}`;
+
+            if (player1Wins === 4) {
+                player1GameWins++;
+                player1Wins = 0;
+                player2Wins = 0;
+            } else if (player2Wins === 4) {
+                player2GameWins++;
+                player1Wins = 0;
+                player2Wins = 0;
+            }
+
+            if (player1GameWins === 7) {
+                player1SetsWins++;
+                player1GameWins = 0;
+                player2GameWins = 0;
+            } else if (player2GameWins === 7) {
+                player2SetsWins++;
+                player1GameWins = 0;
+                player2GameWins = 0;
+            }
+
+            document.getElementById("games").innerText = `\nGame Wins: \nPlayer 1 - ${player1GameWins}, \nPlayer 2 - ${player2GameWins}`;
+            document.getElementById("sets").innerText = `\nSet Wins: \nPlayer 1 - ${player1SetsWins}, \nPlayer 2 - ${player2SetsWins}`;
+			
+			
+        }
+    </script>
+</body>
+</html>
