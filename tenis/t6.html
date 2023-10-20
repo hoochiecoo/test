@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scoreboard</title>
+</head>
+<body>
+    <h1>Scoreboard</h1>
+    <div id="player1">Player 1: 0 points</div>
+    <div id="player2">Player 2: 0 points</div>
+    <div id="wins">Wins: Player 1 - 0, Player 2 - 0</div>
+    <div id="games">Game Wins: Player 1 - 0, Player 2 - 0</div>
+    <div id="sets">Set Wins: Player 1 - 0, Player 2 - 0</div>
+    <div id="step">Step: 0</div>
+    <button onclick="startGame()">Start Game</button>
+    
+    <script>
+        let player1Score = 0;
+        let player2Score = 0;
+        let player1Wins = 0;
+        let player2Wins = 0;
+        let player1GameWins = 0;
+        let player2GameWins = 0;
+        let player1SetsWins = 0;
+        let player2SetsWins = 0;
+        let stepIndex = 0;
+        let gameInterval;
+
+        function startGame() {
+            document.querySelector("button").disabled = true; // Disable the start button
+            gameInterval = setInterval(updateScores, 100); // Update scores every 1000ms (1 second)
+        }
+
+        function updateScores() {
+            stepIndex++;
+            player1Score = getRandomPoints();
+            player2Score = getRandomPoints();
+
+            document.getElementById("player1").innerText = `Player 1: ${player1Score} points`;
+            document.getElementById("player2").innerText = `Player 2: ${player2Score} points`;
+
+            if (player1Score > player2Score) {
+                player1Wins++;
+            } else if (player2Score > player1Score) {
+                player2Wins++;
+            }
+
+            document.getElementById("wins").innerText = `\nWins: \nPlayer 1 - ${player1Wins}, \nPlayer 2 - ${player2Wins}`;
+            document.getElementById("step").innerText = `\nStep: ${stepIndex}`;
+
+            if (player1Wins === 4) {
+                player1GameWins++;
+                player1Wins = 0;
+                player2Wins = 0;
+            } else if (player2Wins === 4) {
+                player2GameWins++;
+                player1Wins = 0;
+                player2Wins = 0;
+            }
+
+            if (player1GameWins === 7) {
+                player1SetsWins++;
+                player1GameWins = 0;
+                player2GameWins = 0;
+            } else if (player2GameWins === 7) {
+                player2SetsWins++;
+                player1GameWins = 0;
+                player2GameWins = 0;
+            }
+
+            document.getElementById("games").innerText = `\nGame Wins:\nPlayer 1 - ${player1GameWins}\nPlayer 2 - ${player2GameWins}`;
+            document.getElementById("sets").innerText = `\nSet Wins: \nPlayer 1 - ${player1SetsWins}, \nPlayer 2 - ${player2SetsWins}`;
+        }
+
+        function getRandomPoints() {
+            return Math.floor(Math.random() * 11); // Generates a random number between 0 and 10
+        }
+    </script>
+</body>
+</html>
