@@ -5,8 +5,9 @@
 </head>
 <body>
     <h1>Scoreboard</h1>
-    <div id="player1">Player 1: 0 points</div>
-    <div id="player2">Player 2: 0 points</div>
+    <div id="rolls">Rolls:</div>
+    <div id="player1">Player 1: 0 pins</div>
+    <div id="player2">Player 2: 0 pins</div>
     <div id="wins">Wins: Player 1 - 0, Player 2 - 0</div>
     <div id="games">Game Wins: Player 1 - 0, Player 2 - 0</div>
     <div id="sets">Set Wins: Player 1 - 0, Player 2 - 0</div>
@@ -35,8 +36,8 @@
             player1Score = getRandomPoints();
             player2Score = getRandomPoints();
 
-            document.getElementById("player1").innerText = `Player 1: ${player1Score} points`;
-            document.getElementById("player2").innerText = `Player 2: ${player2Score} points`;
+            document.getElementById("player1").innerText = `Player 1: ${player1Score} pins`;
+            document.getElementById("player2").innerText = `Player 2: ${player2Score} pins`;
 
             if (player1Score > player2Score) {
                 player1Wins++;
