@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tennis Score Emulation</title>
+</head>
+<body>
+    <h1>Tennis Score</h1>
+    <p>Player 1: <span id="player1Score">0</span></p>
+    <p>Player 2: <span id="player2Score">0</span></p>
+    <button id="player1Button">Player 1 Scores</button>
+    <button id="player2Button">Player 2 Scores</button>
+    <button id="resetButton">Reset</button>
+
+    <script>
+        // Initialize scores
+        let player1Score = 0;
+        let player2Score = 0;
+
+        // Get elements by ID
+        const player1ScoreDisplay = document.getElementById("player1Score");
+        const player2ScoreDisplay = document.getElementById("player2Score");
+        const player1Button = document.getElementById("player1Button");
+        const player2Button = document.getElementById("player2Button");
+        const resetButton = document.getElementById("resetButton");
+
+        // Function to update the score
+        function updateScore(player) {
+            if (player === 1) {
+                player1Score++;
+            } else {
+                player2Score++;
+            }
+
+            player1ScoreDisplay.textContent = player1Score;
+            player2ScoreDisplay.textContent = player2Score;
+        }
+
+        // Event listeners for player buttons
+        player1Button.addEventListener("click", () => {
+            updateScore(1);
+        });
+
+        player2Button.addEventListener("click", () => {
+            updateScore(2);
+        });
+
+        // Event listener for the reset button
+        resetButton.addEventListener("click", () => {
+            player1Score = 0;
+            player2Score = 0;
+            player1ScoreDisplay.textContent = player1Score;
+            player2ScoreDisplay.textContent = player2Score;
+        }
+        );
+    </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Game</title>
+    <style>
+        /* CSS for Tennis Game */
+        #tennis-court {
+            width: 600px;
+            height: 300px;
+            background-color: green;
+            position: relative;
+        }
+        #tennis-ball {
+            width: 20px;
+            height: 20px;
+            background-color: yellow;
+            border-radius: 50%;
+            position: absolute;
+        }
+        #player1, #player2 {
+            width: 10px;
+            height: 80px;
+            background-color: white;
+            position: absolute;
+        }
+        #player1 {
+            left: 10px;
+        }
+        #player2 {
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="tennis-court">
+        <div id="tennis-ball"></div>
+        <div id="player1"></div>
+        <div id="player2"></div>
+    </div>
+
+    <script>
+        // JavaScript for Tennis Game
+        const tennisBall = document.getElementById('tennis-ball');
+        const player1 = document.getElementById('player1');
+        const player2 = document.getElementById('player2');
+        const tennisCourt = document.getElementById('tennis-court');
+        
+        // Initial positions
+        let ballX = 290;
+        let ballY = 140;
+        let ballSpeedX = 3;
+        let ballSpeedY = 3;
+        let player1Y = 110;
+        let player2Y = 110;
+        let playerSpeed = 10;
+        let player1Score = 0;
+        let player2Score = 0;
+
+        function update() {
+            // Update ball position
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Ball collisions with top and bottom walls
+            if (ballY <= 0 || ballY >= 280) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // Ball collisions with players
+            if (
+                (ballX <= 20 && ballY >= player1Y && ballY <= player1Y + 80) ||
+                (ballX >= 560 && ballY >= player2Y && ballY <= player2Y + 80)
+            ) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            // Ball out of bounds
+            if (ballX <= 0) {
+                player2Score++;
+                resetBall();
+            } else if (ballX >= 600) {
+                player1Score++;
+                resetBall();
+            }
+
+            // Update player positions
+            if (player1Y < 0) {
+                player1Y = 0;
+            }
+            if (player1Y > 220) {
+                player1Y = 220;
+            }
+            if (player2Y < 0) {
+                player2Y = 0;
+            }
+            if (player2Y > 220) {
+                player2Y = 220;
+            }
+
+            // Update the display
+            tennisBall.style.left = ballX + 'px';
+            tennisBall.style.top = ballY + 'px';
+            player1.style.top = player1Y + 'px';
+            player2.style.top = player2Y + 'px';
+
+            requestAnimationFrame(update);
+        }
+
+        function resetBall() {
+            ballX = 290;
+            ballY = 140;
+            ballSpeedX = 3;
+            ballSpeedY = 3;
+        }
+
+        // Event listeners for player movement
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowUp') {
+                player2Y -= playerSpeed;
+            }
+            if (event.key === 'ArrowDown') {
+                player2Y += playerSpeed;
+            }
+            if (event.key === 'w') {
+                player1Y -= playerSpeed;
+            }
+            if (event.key === 's') {
+                player1Y += playerSpeed;
+            }
+        });
+
+        update(); // Start the game loop
+    </script>
+</body>
+</html>

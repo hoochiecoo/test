@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .score {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        .player {
+            display: inline-block;
+            width: 200px;
+            text-align: center;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tennis Score Emulation</h1>
+
+        <div class="score">
+            <div class="player" id="player1">Player 1: 0</div>
+            <div class="player" id="player2">Player 2: 0</div>
+        </div>
+
+        <button onclick="updateScore(1)">Player 1 Scored</button>
+        <button onclick="updateScore(2)">Player 2 Scored</button>
+        <button onclick="resetScore()">Reset Score</button>
+
+        <script>
+            let player1Score = 0;
+            let player2Score = 0;
+
+            function updateScore(player) {
+                if (player === 1) {
+                    player1Score += 15;
+                } else {
+                    player2Score += 15;
+                }
+
+                document.getElementById("player1").innerHTML = `Player 1: ${player1Score}`;
+                document.getElementById("player2").innerHTML = `Player 2: ${player2Score}`;
+            }
+
+            function resetScore() {
+                player1Score = 0;
+                player2Score = 0;
+                document.getElementById("player1").innerHTML = "Player 1: 0";
+                document.getElementById("player2").innerHTML = "Player 2: 0";
+            }
+        </script>
+    </div>
+</body>
+</html>
