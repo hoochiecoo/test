@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Speech Recognition and Translation</title>
+  </head>
+  <body>
+    <div style="display: flex;">
+      <div style="flex: 1;">
+        <h2>Final result:</h2>
+        <div id="finalResult"></div>
+      </div>
+      <div style="flex: 1;">
+        <h2>Words:</h2>
+        <div id="words"></div>
+      </div>
+      <div style="flex: 1;">
+        <h2>Translation (Serbian to Russian):</h2>
+        <div id="translation"></div>
+      </div>
+      <div style="flex: 1;">
+        <h2>Live:</h2>
+        <div id="live"></div>
+      </div>
+    </div>
+    <div id="error" style="color: red; font-weight: bold; padding: 10px; text-align: center; display: none;"></div>
+
+    <script>
+      const finalResultElement = document.getElementById('finalResult');
+      const wordsElement = document.getElementById('words');
+      const translationElement = document.getElementById('translation');
+      const liveElement = document.getElementById('live');
+      const errorElement = document.getElementById('error');
+
+      const uniqueWords = new Set();
+
+      function logError(message) {
+        console.error(message);
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      }
+
+      function displayFinalResult(speechResult) {
+        const newLineElement = document.createElement('p');
+        newLineElement.innerText = speechResult;
+        finalResultElement.appendChild(newLineElement);
+      }
+
+      function displayLive(speechResult) {
+        liveElement.innerText = speechResult;
+      }
+
+      function displayUniqueWords(speechResult) {
+        const words = speechResult.split(' ');
+        for (const word of words) {
+          if (word.trim() !== '') {
+            uniqueWords.add(word);
+          }
+        }
+        wordsElement.innerText = Array.from(uniqueWords).join(', ');
+        translateToRussian(Array.from(uniqueWords).join(' '));
+      }
+
+      function translateToRussian(text) {
+        const sourceLanguage = 'sr';
+        const targetLanguage = 'ru';
+        const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${text}`;
+
+        fetch(apiUrl)
+          .then(response => response.json())
+          .then(data => {
+            const translatedText = data[0][0][0];
+            translationElement.innerText = translatedText;
+          })
+          .catch(error => {
+            logError(`Translation error: ${error}`);
+          });
+      }
+
+      function initializeSpeechRecognition() {
+        try {
+          const recognition = new webkitSpeechRecognition();
+
+          recognition.continuous = true;
+          recognition.interimResults = false;
+          recognition.lang = 'sr-SR';
+
+          recognition.onresult = event => {
+            const speechResult = event.results[event.results.length - 1][0].transcript;
+            displayLive(speechResult);
+            displayUniqueWords(speechResult);
+          };
+
+          recognition.onstart = () => {
+            errorElement.style.display = 'none';
+          };
+
+          recognition.onerror = event => {
+            logError(`Speech recognition error: ${event.error}`);
+          };
+
+          recognition.onend = () => {
+            // Continue recognition after it ends
+            recognition.start();
+          };
+
+          recognition.start();
+        } catch (error) {
+          logError(`Error initializing speech recognition: ${error.message}`);
+        }
+      }
+
+      // Initialize speech recognition when the page loads
+      window.onload = initializeSpeechRecognition;
+    </script>
+  </body>
+</html>
