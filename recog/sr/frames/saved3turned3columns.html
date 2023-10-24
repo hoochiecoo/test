@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Speech Recognition with Translation</title>
+    <style>
+      /* CSS for the three-column layout */
+      .container {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .column {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        height: 100vh;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="column" id="liveTranslation">
+        <h2>Live Translation</h2>
+        <div id="new"></div>
+      </div>
+      <div class="column" id="savedTranslations">
+        <h2>Saved Translations</h2>
+        <button id="sortButton">Sort Alphabetically</button>
+        <div id="savedLines"></div>
+      </div>
+      <div class="column" id="finalResult">
+        <h2>Final Result</h2>
+      </div>
+    </div>
+    <script>
+      const audioContext = new AudioContext();
+      const recognition = new window.webkitSpeechRecognition();
+
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.lang = 'sr-SR';
+
+      const liveTranslationElement = document.getElementById('liveTranslation');
+      const savedLinesElement = document.getElementById('savedLines');
+      const finalResultElement = document.getElementById('finalResult');
+      const sortButton = document.getElementById('sortButton');
+      const newLineElement = document.getElementById('new');
+
+      const errorElement = document.createElement('div');
+      errorElement.id = 'error';
+      errorElement.style.color = 'red';
+      errorElement.style.fontWeight = 'bold';
+      errorElement.style.padding = '10px';
+      errorElement.style.textAlign = 'center';
+      liveTranslationElement.appendChild(errorElement);
+
+      const translateWord = async (word, targetLang) => {
+        try {
+          const response = await fetch(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(word)}`
+          );
+          const data = await response.json();
+          const translatedWord = data[0][0][0];
+          return translatedWord;
+        } catch (error) {
+          throw error;
+        }
+      };
+
+      let finalRecognitionResult = ''; // Variable to accumulate the final recognition result
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioSource = audioContext.createMediaStreamSource(stream);
+          audioSource.connect(audioContext.destination);
+
+          recognition.start();
+
+          recognition.onresult = async event => {
+            const lastResultIndex = event.results.length - 1;
+            const isFinal = event.results[lastResultIndex].isFinal;
+            const speechResult = event.results[lastResultIndex][0].transcript;
+            const words = speechResult.split(' ');
+
+            const lineElement = document.createElement('div');
+            for (let i = words.length - 1; i >= 0; i--) {
+              const wordElement = document.createElement('span');
+              wordElement.innerText = words[i] + ' ';
+              lineElement.appendChild(wordElement);
+
+              try {
+                const translatedWord = await translateWord(words[i], 'ru');
+                const translationElement = document.createElement('span');
+                translationElement.innerText = ` (${translatedWord}) `;
+                wordElement.appendChild(translationElement);
+
+                wordElement.addEventListener('click', () => {
+                  const savedWord = document.createElement('span');
+                  savedWord.innerText = words[i] + ' ';
+                  savedLinesElement.appendChild(savedWord);
+                });
+              } catch (error) {
+                console.error('Translation error: ', error);
+              }
+            }
+            // Prepend the new translation line to the top
+            newLineElement.prepend(lineElement);
+
+            if (isFinal) {
+              // Append the current recognition result to the final result
+              finalRecognitionResult += speechResult + ' ';
+              finalResultElement.innerText = finalRecognitionResult;
+            }
+          };
+        })
+        .catch(error => {
+          console.error('Error getting user media: ', error);
+          errorElement.innerText = `Error: ${error.message}`;
+          errorElement.style.display = 'block';
+        });
+
+      sortButton.addEventListener('click', () => {
+        const savedWords = Array.from(savedLinesElement.children).map(child => child.innerText.trim());
+        savedWords.sort();
+        savedLinesElement.innerHTML = '';
+        savedWords.forEach(word => {
+          const savedWord = document.createElement('span');
+          savedWord.innerText = word + ' ';
+          savedLinesElement.appendChild(savedWord);
+        });
+      });
+
+      window.onerror = (message, source, lineno, colno, error) => {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      };
+    </script>
+  </body>
+</html>

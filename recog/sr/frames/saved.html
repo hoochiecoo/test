@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Speech Recognition with Translation</title>
+  </head>
+  <body>
+    <div id="new"></div>
+    <div id="savedLines">
+      <h2>Saved Lines</h2>
+    </div>
+    <script>
+      const audioContext = new AudioContext();
+      const recognition = new window.webkitSpeechRecognition();
+
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.lang = 'sr-SR';
+
+      const resultElement = document.createElement('div');
+      resultElement.id = 'result';
+      resultElement.style.display = 'flex';
+      resultElement.style.flexDirection = 'column-reverse';
+      document.body.appendChild(resultElement);
+
+      const savedLinesElement = document.getElementById('savedLines');
+
+      const errorElement = document.createElement('div');
+      errorElement.id = 'error';
+      errorElement.style.color = 'red';
+      errorElement.style.fontWeight = 'bold';
+      errorElement.style.padding = '10px';
+      errorElement.style.textAlign = 'center';
+      errorElement.style.display = 'none';
+      document.body.appendChild(errorElement);
+
+      const translateWord = async (word, targetLang) => {
+        try {
+          const response = await fetch(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(word)}`
+          );
+          const data = await response.json();
+          const translatedWord = data[0][0][0];
+          return translatedWord;
+        } catch (error) {
+          throw error;
+        }
+      };
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioSource = audioContext.createMediaStreamSource(stream);
+          audioSource.connect(audioContext.destination);
+
+          recognition.start();
+
+          recognition.onresult = async event => {
+            const speechResult = event.results[event.results.length - 1][0].transcript;
+            const words = speechResult.split(' ');
+
+            const lineElement = document.createElement('div'); // Create a new line element
+            resultElement.appendChild(lineElement);
+
+            for (let i = words.length - 1; i >= 0; i--) {
+              const wordElement = document.createElement('span');
+              wordElement.innerText = words[i] + ' ';
+              lineElement.appendChild(wordElement);
+
+              try {
+                const translatedWord = await translateWord(words[i], 'ru');
+                const translationElement = document.createElement('span');
+                translationElement.innerText = ` (${translatedWord}) `;
+                wordElement.appendChild(translationElement);
+
+                // Add a click event to save the word when clicked
+                wordElement.addEventListener('click', () => {
+                  const savedWord = document.createElement('span');
+                  savedWord.innerText = words[i] + ' ';
+                  savedLinesElement.appendChild(savedWord);
+                });
+              } catch (error) {
+                console.error('Translation error: ', error);
+              }
+            }
+          };
+        })
+        .catch(error => {
+          console.error('Error getting user media: ', error);
+          errorElement.innerText = `Error: ${error.message}`;
+          errorElement.style.display = 'block';
+        });
+
+      window.onerror = (message, source, lineno, colno, error) => {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      };
+    </script>
+  </body>
+</html>
