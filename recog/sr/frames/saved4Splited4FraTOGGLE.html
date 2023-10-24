@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Speech Recognition without Translation</title>
+    <style>
+      /* CSS for the three-column layout */
+      .container {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .column {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        height: 100vh;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="column" id="frases">
+        <h2>Frases</h2>
+        <div id="sentenceTranslation"></div>
+      </div>
+      <div class="column" id="words">
+        <h2>Words</h2>
+        <div id="wordTranslation"></div>
+      </div>
+      <div class="column" id="savedTranslations">
+        <h2>Saved Translations</h2>
+        <button id="sortButton">Sort Alphabetically</button>
+        <div id="savedLines"></div>
+      </div>
+      <div class="column" id="finalResult">
+        <h2>Final Result</h2>
+      </div>
+    </div>
+    <script>
+      const audioContext = new AudioContext();
+      const recognition = new window.webkitSpeechRecognition();
+
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.lang = 'sr-SR';
+
+      const frasesElement = document.getElementById('frases');
+      const sentenceTranslationElement = document.getElementById('sentenceTranslation');
+      const wordsElement = document.getElementById('words');
+      const wordTranslationElement = document.getElementById('wordTranslation');
+      const savedLinesElement = document.getElementById('savedLines');
+      const finalResultElement = document.getElementById('finalResult');
+      const sortButton = document.getElementById('sortButton');
+      const newLineElement = document.getElementById('new');
+
+      const errorElement = document.createElement('div');
+      errorElement.id = 'error';
+      errorElement.style.color = 'red';
+      errorElement.style.fontWeight = 'bold';
+      errorElement.style.padding = '10px';
+      errorElement.style.textAlign = 'center';
+      frasesElement.appendChild(errorElement);
+
+      let finalRecognitionResult = ''; // Variable to accumulate the final recognition result
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioSource = audioContext.createMediaStreamSource(stream);
+          audioSource.connect(audioContext.destination);
+
+          recognition.start();
+
+          recognition.onresult = async event => {
+            const lastResultIndex = event.results.length - 1;
+            const isFinal = event.results[lastResultIndex].isFinal;
+            const speechResult = event.results[lastResultIndex][0].transcript;
+            const words = speechResult.split(' ');
+
+            const lineElement = document.createElement('div');
+            for (let i = words.length - 1; i >= 0; i--) {
+              const wordElement = document.createElement('span');
+              wordElement.innerText = words[i] + ' ';
+              lineElement.appendChild(wordElement);
+
+              wordElement.addEventListener('click', () => {
+                const savedWord = document.createElement('span');
+                savedWord.innerText = words[i] + ' ';
+                savedLinesElement.appendChild(savedWord);
+              });
+            }
+
+            // Append the current recognition result to the "Words" section
+            wordTranslationElement.prepend(lineElement);
+
+            // Append the original sentence to the "Frases" section
+            const sentenceElement = document.createElement('div');
+            sentenceElement.innerText = speechResult;
+            sentenceTranslationElement.prepend(sentenceElement);
+
+            if (isFinal) {
+              // Append the current recognition result to the final result
+              finalRecognitionResult += speechResult + ' ';
+              finalResultElement.innerText = finalRecognitionResult;
+            }
+          };
+
+          recognition.onspeechend = () => {
+            // Restart the recognition when speech ends to capture additional speech
+            recognition.start();
+          };
+        })
+        .catch(error => {
+          console.error('Error getting user media: ', error);
+          errorElement.innerText = `Error: ${error.message}`;
+          errorElement.style.display = 'block';
+        });
+
+      sortButton.addEventListener('click', () => {
+        const savedWords = Array.from(savedLinesElement.children).map(child => child.innerText.trim());
+        savedWords.sort();
+        savedLinesElement.innerHTML = '';
+        savedWords.forEach(word => {
+          const savedWord = document.createElement('span');
+          savedWord.innerText = word + ' ';
+          savedLinesElement.appendChild(savedWord);
+        });
+      });
+
+      window.onerror = (message, source, lineno, colno, error) => {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      };
+    </script>
+  </body>
+</html>
