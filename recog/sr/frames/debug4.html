@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Speech Recognition Debug</title>
+  </head>
+  <body>
+    <div id="error" style="color: red; font-weight: bold; padding: 10px; text-align: center; display: none;"></div>
+    <div id="result"></div>
+    
+    <script>
+      const resultElement = document.getElementById('result');
+      const errorElement = document.getElementById('error');
+
+      function displayError(message) {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      }
+
+      function displayResult(speechResult) {
+        const lines = speechResult.split('\n');
+        for (let i = lines.length - 1; i >= 0; i--) {
+          const newLineElement = document.createElement('p');
+          newLineElement.innerText = lines[i];
+          resultElement.appendChild(newLineElement);
+        }
+      }
+
+      function initializeSpeechRecognition() {
+        try {
+          const recognition = new webkitSpeechRecognition();
+
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'sr-SR';
+
+          recognition.onresult = event => {
+            const speechResult = event.results[event.results.length - 1][0].transcript;
+            displayResult(speechResult);
+          };
+
+          recognition.onstart = () => {
+            errorElement.style.display = 'none';
+          };
+
+          recognition.onerror = event => {
+            const errorMessage = `Speech recognition error: ${event.error}`;
+            displayError(errorMessage);
+            recognition.start(); // Continue recognition
+          };
+
+          recognition.onend = () => {
+            const errorMessage = 'Speech recognition ended unexpectedly.';
+            displayError(errorMessage);
+            recognition.start(); // Restart recognition
+          };
+
+          recognition.start();
+        } catch (error) {
+          displayError(`Error initializing speech recognition: ${error.message}`);
+        }
+      }
+
+      // Initialize speech recognition when the page loads
+      window.onload = initializeSpeechRecognition;
+    </script>
+  </body>
+</html>
