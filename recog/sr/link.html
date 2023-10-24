@@ -1,6 +1,10 @@
 <html>
   <body>
     <div id="new"></div>
+    <div id="savedWords">
+      <h2>Saved Words:</h2>
+      <ul id="savedWordsList"></ul>
+    </div>
     <script>
       // Initialize audio context and speech recognition
       const audioContext = new AudioContext();
@@ -29,6 +33,9 @@
       errorElement.style.display = 'none';
       document.body.appendChild(errorElement);
 
+      // Create a list to store saved words
+      const savedWordsList = document.getElementById('savedWordsList');
+
       // Start speech recognition when the user grants permission
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
@@ -41,14 +48,19 @@
           recognition.onresult = event => {
             const speechResult = event.results[event.results.length - 1][0].transcript;
 
-            // Split the result into lines
-            const lines = speechResult.split('\n');
+            // Split the result into words
+            const words = speechResult.split(' ');
 
-            // Display lines in reverse order
-            for (let i = lines.length - 1; i >= 0; i--) {
-              const newLineElement = document.createElement('p');
-              newLineElement.innerText = lines[i];
-              resultElement.appendChild(newLineElement);
+            // Display words in reverse order as clickable links
+            for (let i = words.length - 1; i >= 0; i--) {
+              const word = words[i];
+              const wordLink = document.createElement('a');
+              wordLink.innerText = word;
+              wordLink.href = '#';
+              wordLink.addEventListener('click', () => saveWord(word));
+              const wordElement = document.createElement('p');
+              wordElement.appendChild(wordLink);
+              resultElement.appendChild(wordElement);
             }
           };
         })
@@ -57,6 +69,13 @@
           errorElement.innerText = `Error: ${error.message}`;
           errorElement.style.display = 'block';
         });
+
+      // Function to save a clicked word
+      function saveWord(word) {
+        const savedWord = document.createElement('li');
+        savedWord.innerText = word;
+        savedWordsList.appendChild(savedWord);
+      }
 
       // Show errors at the top of the page
       window.onerror = (message, source, lineno, colno, error) => {
