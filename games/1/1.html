@@ -1,7 +1,7 @@
 class Player {
-  constructor(name) {
+  constructor(name, rating) {
     this.name = name;
-    this.rating = 1;
+    this.rating = rating;
     this.money = 0;
     this.wins = 0;
   }
@@ -16,54 +16,51 @@ class Player {
 }
 
 class Game {
-  constructor(player1, player2, totalMatches) {
-    this.player1 = player1;
-    this.player2 = player2;
+  constructor(players, totalMatches) {
+    this.players = players;
     this.totalMatches = totalMatches;
     this.matchesPlayed = 0;
   }
 
-  startMatch() {
-    this.player1.deductMoney(100);
-    this.player2.deductMoney(100);
+  startMatch(player1, player2) {
+    player1.deductMoney(100);
+    player2.deductMoney(100);
 
     const player1Score = Math.floor(Math.random() * 301);
     const player2Score = Math.floor(Math.random() * 301);
 
     if (player1Score > player2Score) {
-      this.player1.addMoney(200);
-      this.player1.wins++;
-      this.player2.rating = 2;
+      player1.addMoney(200);
+      player1.wins++;
+      player2.rating = 2;
     } else if (player2Score > player1Score) {
-      this.player2.addMoney(200);
-      this.player2.wins++;
-      this.player1.rating = 2;
+      player2.addMoney(200);
+      player2.wins++;
+      player1.rating = 2;
     }
 
     this.matchesPlayed++;
-    this.displayMatchResults(player1Score, player2Score);
+    this.displayMatchResults(player1, player2, player1Score, player2Score);
     if (this.matchesPlayed >= this.totalMatches) {
       this.endGame();
     }
   }
 
-  displayMatchResults(player1Score, player2Score) {
+  displayMatchResults(player1, player2, player1Score, player2Score) {
     console.log("Match Results:");
-    console.log(`${this.player1.name} scored: ${player1Score}`);
-    console.log(`${this.player2.name} scored: ${player2Score}`);
-    console.log(`Winner: ${this.determineWinner()}`);
-    console.log(`${this.player1.name} Money: $${this.player1.money}`);
-    console.log(`${this.player2.name} Money: $${this.player2.money}`);
-    console.log(`${this.player1.name} Rating: ${this.player1.rating}`);
-    console.log(`${this.player2.name} Rating: ${this.player2.rating}`);
+    console.log(`${player1.name} (Rating ${player1.rating}) scored: ${player1Score}`);
+    console.log(`${player2.name} (Rating ${player2.rating}) scored: ${player2Score}`);
+    console.log(`Winner: ${this.determineWinner(player1, player2)}`);
+    console.log(`${player1.name} Money: $${player1.money}`);
+    console.log(`${player2.name} Money: $${player2.money}`);
     console.log("------------------------------");
   }
 
-  determineWinner() {
-    if (this.player1.money > this.player2.money) {
-      return this.player1.name;
-    } else if (this.player2.money > this.player1.money) {
-      return this.player2.name;
+  determineWinner(player1, player2) {
+    if (player1.money > player2.money) {
+      return `${player1.name} (Rating ${player1.rating})`;
+    } else if (player2.money > player1.money) {
+      return `${player2.name} (Rating ${player2.rating})`;
     } else {
       return "It's a tie!";
     }
@@ -74,13 +71,34 @@ class Game {
   }
 
   start() {
-    const matchInterval = setInterval(() => this.startMatch(), 5000);
+    const matchInterval = setInterval(() => this.startRandomMatch(), 5000);
+  }
+
+  startRandomMatch() {
+    const eligiblePlayers = this.players.filter(player => player.rating === 1 || player.rating === 3);
+    if (eligiblePlayers.length < 2) {
+      console.log("Not enough players to start a match.");
+      return;
+    }
+
+    const player1 = eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
+    let player2;
+    do {
+      player2 = eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
+    } while (player2 === player1);
+
+    this.startMatch(player1, player2);
   }
 }
 
-const player1 = new Player("Player 1");
-const player2 = new Player("Player 2");
+const players = [
+  new Player("Player 1", 1),
+  new Player("Player 2", 2),
+  new Player("Player 3", 3),
+  new Player("Player 4", 4)
+];
+
 const totalMatches = 10;
 
-const game = new Game(player1, player2, totalMatches);
+const game = new Game(players, totalMatches);
 game.start();
