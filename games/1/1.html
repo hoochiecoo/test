@@ -1,0 +1,86 @@
+class Player {
+  constructor(name) {
+    this.name = name;
+    this.rating = 1;
+    this.money = 0;
+    this.wins = 0;
+  }
+
+  deductMoney(amount) {
+    this.money -= amount;
+  }
+
+  addMoney(amount) {
+    this.money += amount;
+  }
+}
+
+class Game {
+  constructor(player1, player2, totalMatches) {
+    this.player1 = player1;
+    this.player2 = player2;
+    this.totalMatches = totalMatches;
+    this.matchesPlayed = 0;
+  }
+
+  startMatch() {
+    this.player1.deductMoney(100);
+    this.player2.deductMoney(100);
+
+    const player1Score = Math.floor(Math.random() * 301);
+    const player2Score = Math.floor(Math.random() * 301);
+
+    if (player1Score > player2Score) {
+      this.player1.addMoney(200);
+      this.player1.wins++;
+      this.player2.rating = 2;
+    } else if (player2Score > player1Score) {
+      this.player2.addMoney(200);
+      this.player2.wins++;
+      this.player1.rating = 2;
+    }
+
+    this.matchesPlayed++;
+    this.displayMatchResults(player1Score, player2Score);
+    if (this.matchesPlayed >= this.totalMatches) {
+      this.endGame();
+    }
+  }
+
+  displayMatchResults(player1Score, player2Score) {
+    console.log("Match Results:");
+    console.log(`${this.player1.name} scored: ${player1Score}`);
+    console.log(`${this.player2.name} scored: ${player2Score}`);
+    console.log(`Winner: ${this.determineWinner()}`);
+    console.log(`${this.player1.name} Money: $${this.player1.money}`);
+    console.log(`${this.player2.name} Money: $${this.player2.money}`);
+    console.log(`${this.player1.name} Rating: ${this.player1.rating}`);
+    console.log(`${this.player2.name} Rating: ${this.player2.rating}`);
+    console.log("------------------------------");
+  }
+
+  determineWinner() {
+    if (this.player1.money > this.player2.money) {
+      return this.player1.name;
+    } else if (this.player2.money > this.player1.money) {
+      return this.player2.name;
+    } else {
+      return "It's a tie!";
+    }
+  }
+
+  endGame() {
+    console.log("Game Over! All matches have been played.");
+  }
+
+  start() {
+    const matchInterval = setInterval(() => this.startMatch(), 5000);
+  }
+}
+
+const player1 = new Player("Player 1");
+const player2 = new Player("Player 2");
+const totalMatches = 10;
+
+const game = new Game(player1, player2, totalMatches);
+game.start();
