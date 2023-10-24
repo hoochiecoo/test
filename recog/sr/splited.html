@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="results"></div>
+    <script>
+      // Initialize audio context and speech recognition
+      const audioContext = new AudioContext();
+      const recognition = new window.webkitSpeechRecognition();
+
+      // Set up speech recognition settings
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'sr-SR';
+
+      // Create a new HTML element to display results in reverse order
+      const resultsElement = document.getElementById('results');
+      resultsElement.style.display = 'flex';
+      resultsElement.style.flexDirection = 'column-reverse'; // Reverse the order
+
+      // Start speech recognition when the user grants permission
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioSource = audioContext.createMediaStreamSource(stream);
+          audioSource.connect(audioContext.destination);
+
+          recognition.start();
+
+          // Process speech recognition results
+          recognition.onresult = event => {
+            const results = event.results;
+
+            // Iterate through each result
+            for (let i = results.length - 1; i >= 0; i--) {
+              const speechResult = results[i][0].transcript;
+
+              // Create a new paragraph element for the result
+              const resultElement = document.createElement('p');
+              resultElement.innerText = speechResult;
+              resultsElement.appendChild(resultElement);
+            }
+          };
+        })
+        .catch(error => {
+          console.error('Error getting user media: ', error);
+          errorElement.innerText = `Error: ${error.message}`;
+          errorElement.style.display = 'block';
+        });
+
+      // Create a new HTML element to display errors
+      const errorElement = document.createElement('div');
+      errorElement.id = 'error';
+      errorElement.style.color = 'red';
+      errorElement.style.fontWeight = 'bold';
+      errorElement.style.padding = '10px';
+      errorElement.style.textAlign = 'center';
+      errorElement.style.display = 'none';
+      document.body.appendChild(errorElement);
+
+      // Show errors at the top of the page
+      window.onerror = (message, source, lineno, colno, error) => {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      };
+    </script>
+  </body>
+</html>

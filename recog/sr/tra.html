@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Translation App</title>
+</head>
+<body>
+    <h1>Translate Russian to English</h1>
+    <div>
+        <label for="textToTranslate">Enter Russian text:</label>
+        <textarea id="textToTranslate" rows="4" cols="50"></textarea>
+    </div>
+    <button onclick="translateText()">Translate</button>
+    <h2>Translation Result:</h2>
+    <div id="translationResult"></div>
+
+    <script src="https://unpkg.com/translate.js@1.2.4"></script>
+    <script>
+        function translateText() {
+            const textToTranslate = document.getElementById('textToTranslate').value;
+            if (!textToTranslate) {
+                alert('Please enter some text to translate.');
+                return;
+            }
+
+            // Translate from Russian to English
+            const translation = translate(textToTranslate, { from: 'ru', to: 'en' });
+
+            document.getElementById('translationResult').textContent = translation;
+        }
+    </script>
+</body>
+</html>

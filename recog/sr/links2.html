@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Speech Recognition with Translation</title>
+  </head>
+  <body>
+    <div id="new"></div>
+    <script>
+      // Initialize audio context and speech recognition
+      const audioContext = new AudioContext();
+      const recognition = new window.webkitSpeechRecognition();
+
+      // Set up speech recognition settings
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.lang = 'sr-SR';
+
+      // Create a new HTML element to display results in reverse order
+      const resultElement = document.createElement('div');
+      resultElement.id = 'result';
+      resultElement.style.display = 'flex';
+      resultElement.style.flexDirection = 'column-reverse'; // Reverse the order
+      document.body.appendChild(resultElement);
+
+      // Create a new HTML element to display errors
+      const errorElement = document.createElement('div');
+      errorElement.id = 'error';
+      errorElement.style.color = 'red';
+      errorElement.style.fontWeight = 'bold';
+      errorElement.style.padding = '10px';
+      errorElement.style.textAlign = 'center';
+      errorElement.style.display = 'none';
+      document.body.appendChild(errorElement);
+
+      // Start speech recognition when the user grants permission
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioSource = audioContext.createMediaStreamSource(stream);
+          audioSource.connect(audioContext.destination);
+
+          recognition.start();
+
+          // Process speech recognition results
+          recognition.onresult = event => {
+            const speechResult = event.results[event.results.length - 1][0].transcript;
+
+            // Split the result into words
+            const words = speechResult.split(' ');
+
+            // Display words in reverse order
+            for (let i = words.length - 1; i >= 0; i--) {
+              const wordElement = document.createElement('span');
+              wordElement.innerText = words[i] + ' ';
+              resultElement.appendChild(wordElement);
+
+              // Create a translation link for each word
+              const translationLink = document.createElement('a');
+              translationLink.href = `https://translate.google.com/?sl=sr&tl=en&text=${encodeURIComponent(words[i])}`;
+              translationLink.target = '_blank';
+              translationLink.textContent = 'Translate';
+              wordElement.appendChild(translationLink);
+            }
+          };
+        })
+        .catch(error => {
+          console.error('Error getting user media: ', error);
+          errorElement.innerText = `Error: ${error.message}`;
+          errorElement.style.display = 'block';
+        });
+
+      // Show errors at the top of the page
+      window.onerror = (message, source, lineno, colno, error) => {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      };
+    </script>
+  </body>
+</html>

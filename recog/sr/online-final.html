@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="final-result"></div>
+    <script>
+      // Initialize audio context and speech recognition
+      const audioContext = new AudioContext();
+      const recognition = new window.webkitSpeechRecognition();
+
+      // Set up speech recognition settings
+      recognition.continuous = true;
+      recognition.interimResults = false; // Only final results
+      recognition.lang = 'en-US'; // English language
+
+      // Create a new HTML element to display the final result
+      const finalResultElement = document.getElementById('final-result');
+
+      // Start speech recognition when the user grants permission
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioSource = audioContext.createMediaStreamSource(stream);
+          audioSource.connect(audioContext.destination);
+
+          recognition.start();
+
+          // Process speech recognition results
+          recognition.onresult = event => {
+            const finalResult = event.results[0][0].transcript;
+
+            // Display the final result
+            finalResultElement.innerText = finalResult;
+          };
+        })
+        .catch(error => {
+          console.error('Error getting user media: ', error);
+          errorElement.innerText = `Error: ${error.message}`;
+          errorElement.style.display = 'block';
+        });
+
+      // Create a new HTML element to display errors
+      const errorElement = document.createElement('div');
+      errorElement.id = 'error';
+      errorElement.style.color = 'red';
+      errorElement.style.fontWeight = 'bold';
+      errorElement.style.padding = '10px';
+      errorElement.style.textAlign = 'center';
+      errorElement.style.display = 'none';
+      document.body.appendChild(errorElement);
+
+      // Show errors at the top of the page
+      window.onerror = (message, source, lineno, colno, error) => {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      };
+    </script>
+  </body>
+</html>
