@@ -1,0 +1,68 @@
+<html>
+  <body>
+    <div id="new"></div>
+    <script>
+      // Initialize audio context and speech recognition
+      const audioContext = new AudioContext();
+      const recognition = new window.webkitSpeechRecognition();
+
+      // Set up speech recognition settings
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.lang = 'sr-SR';
+
+      // Create a new HTML element to display results in reverse order
+      const resultElement = document.createElement('div');
+      resultElement.id = 'result';
+      resultElement.style.display = 'flex';
+      resultElement.style.flexDirection = 'column-reverse'; // Reverse the order
+      document.body.appendChild(resultElement);
+
+      // Create a new HTML element to display errors
+      const errorElement = document.createElement('div');
+      errorElement.id = 'error';
+      errorElement.style.color = 'red';
+      errorElement.style.fontWeight = 'bold';
+      errorElement.style.padding = '10px';
+      errorElement.style.textAlign = 'center';
+      errorElement.style.display = 'none';
+      document.body.appendChild(errorElement);
+
+      // Start speech recognition when the user grants permission
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const audioSource = audioContext.createMediaStreamSource(stream);
+          audioSource.connect(audioContext.destination);
+
+          recognition.start();
+
+          // Process speech recognition results
+          recognition.onresult = event => {
+            const speechResult = event.results[event.results.length - 1][0].transcript;
+
+            // Split the result into lines
+            const lines = speechResult.split('\n');
+
+            // Display lines in reverse order
+            for (let i = lines.length - 1; i >= 0; i--) {
+              const newLineElement = document.createElement('p');
+              newLineElement.innerText = lines[i];
+              resultElement.appendChild(newLineElement);
+            }
+          };
+        })
+        .catch(error => {
+          console.error('Error getting user media: ', error);
+          errorElement.innerText = `Error: ${error.message}`;
+          errorElement.style.display = 'block';
+        });
+
+      // Show errors at the top of the page
+      window.onerror = (message, source, lineno, colno, error) => {
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      };
+    </script>
+  </body>
+</html>
