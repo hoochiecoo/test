@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Github Repository HTML Links</title>
+</head>
+<body>
+    <h1>Links to HTML Pages in GitHub Repository</h1>
+    <ul id="pageList"></ul>
+
+    <script>
+        // Replace with your GitHub username and repository name
+        const username = 'hoochiecoo';
+        const repo = 'test';
+
+        // Function to fetch the contents of a directory and its subdirectories
+        async function fetchContents(path) {
+            const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`);
+            const data = await response.json();
+            return data;
+        }
+
+        // Function to recursively load and display HTML links
+        async function loadHTMLLinks(path = '') {
+            const data = await fetchContents(path);
+            const pageList = document.getElementById('pageList');
+            
+            for (const item of data) {
+                if (item.type === 'file' && item.name.endsWith('.html')) {
+                    const listItem = document.createElement('li');
+                    const link = document.createElement('a');
+                    
+                    // Build the link to the file on github.io
+                    const html_url = `https://${username}.github.io/${repo}/${path}/${item.name}`;
+                    
+                    link.href = html_url;
+                    link.textContent = item.name;
+                    listItem.appendChild(link);
+                    pageList.appendChild(listItem);
+                } else if (item.type === 'dir') {
+                    // Recursively load contents of subdirectories
+                    await loadHTMLLinks(path + '/' + item.name);
+                }
+            }
+        }
+
+        // Call the recursive function to load and display HTML links
+        loadHTMLLinks();
+    </script>
+</body>
+</html>
