@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Speech Recognition Debug</title>
+  </head>
+  <body>
+    <div style="display: flex;">
+      <div style="flex: 1;">
+        <h2>Final result:</h2>
+        <div id="finalResult"></div>
+      </div>
+      <div style="flex: 1;">
+        <h2>Words:</h2>
+        <div id="words"></div>
+      </div>
+      <div style="flex: 1;">
+        <h2>Live:</h2>
+        <div id="live"></div>
+      </div>
+    </div>
+    <div id="error" style="color: red; font-weight: bold; padding: 10px; text-align: center; display: none;"></div>
+
+    <script>
+      const finalResultElement = document.getElementById('finalResult');
+      const wordsElement = document.getElementById('words');
+      const liveElement = document.getElementById('live');
+      const errorElement = document.getElementById('error');
+
+      const uniqueWords = new Set();
+
+      function logError(message) {
+        console.error(message);
+        errorElement.innerText = `Error: ${message}`;
+        errorElement.style.display = 'block';
+      }
+
+      function displayFinalResult(speechResult, isFinal) {
+        if (isFinal) {
+          const newLineElement = document.createElement('p');
+          newLineElement.innerText = speechResult;
+          finalResultElement.insertBefore(newLineElement, finalResultElement.firstChild);
+        }
+      }
+
+      function displayLive(speechResult) {
+        liveElement.innerText = speechResult;
+      }
+
+      function displayUniqueWords(speechResult) {
+        const words = speechResult.split(' ');
+        for (const word of words) {
+          if (word.trim() !== '') {
+            uniqueWords.add(word);
+          }
+        }
+
+        // Clear the wordsElement
+        wordsElement.innerHTML = '';
+
+        // Add words to the top of the wordsElement
+        for (const word of Array.from(uniqueWords)) {
+          const wordElement = document.createElement('p');
+          wordElement.innerText = word;
+          wordsElement.insertBefore(wordElement, wordsElement.firstChild);
+        }
+      }
+
+      function initializeSpeechRecognition() {
+        try {
+          const recognition = new webkitSpeechRecognition();
+
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'sr-SR';
+
+          recognition.onresult = event => {
+            const isFinal = event.results[event.results.length - 1].isFinal;
+            const speechResult = event.results[event.results.length - 1][0].transcript;
+            displayLive(speechResult);
+            displayUniqueWords(speechResult);
+            displayFinalResult(speechResult, isFinal);
+          };
+
+          recognition.onstart = () => {
+            errorElement.style.display = 'none';
+          };
+
+          recognition.onerror = event => {
+            logError(`Speech recognition error: ${event.error}`);
+          };
+
+          recognition.onend = () => {
+            // Continue recognition after it ends
+            recognition.start();
+          };
+
+          recognition.start();
+        } catch (error) {
+          logError(`Error initializing speech recognition: ${error.message}`);
+        }
+      }
+
+      // Initialize speech recognition when the page loads
+      window.onload = initializeSpeechRecognition;
+    </script>
+  </body>
+</html>
