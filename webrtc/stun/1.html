@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebRTC Text Chat</title>
+</head>
+<body>
+    <h1>WebRTC Text Chat</h1>
+
+    <div>
+        <h2>User 1</h2>
+        <textarea id="user1Input" placeholder="Type a message"></textarea>
+        <button id="user1Send">Send</button>
+        <div id="user1Messages"></div>
+    </div>
+
+    <div>
+        <h2>User 2</h2>
+        <textarea id="user2Input" placeholder="Type a message"></textarea>
+        <button id="user2Send">Send</button>
+        <div id="user2Messages"></div>
+    </div>
+
+    <script>
+        // Initialize WebRTC
+        const configuration = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        const peerConnection = new RTCPeerConnection(configuration);
+
+        const user1Input = document.getElementById("user1Input");
+        const user1Send = document.getElementById("user1Send");
+        const user1Messages = document.getElementById("user1Messages");
+
+        const user2Input = document.getElementById("user2Input");
+        const user2Send = document.getElementById("user2Send");
+        const user2Messages = document.getElementById("user2Messages");
+
+        // User 1 sends a message
+        user1Send.addEventListener("click", () => {
+            const message = user1Input.value;
+            user1Messages.innerHTML += `<p>User 1: ${message}</p>`;
+            sendDataChannelMessage(message);
+            user1Input.value = "";
+        });
+
+        // User 2 sends a message
+        user2Send.addEventListener("click", () => {
+            const message = user2Input.value;
+            user2Messages.innerHTML += `<p>User 2: ${message}</p>`;
+            sendDataChannelMessage(message);
+            user2Input.value = "";
+        });
+
+        // Create a data channel for communication
+        const dataChannel = peerConnection.createDataChannel("chat");
+
+        // Handle data channel messages
+        dataChannel.onmessage = (event) => {
+            user1Messages.innerHTML += `<p>User 2: ${event.data}</p>`;
+            user2Messages.innerHTML += `<p>User 2: ${event.data}</p>`;
+        };
+
+        // Send a message over the data channel
+        function sendDataChannelMessage(message) {
+            dataChannel.send(message);
+        }
+
+        // Create an offer and set up the connection
+        async function startUser1() {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            // User 1 can now send the offer to User 2 for establishing a connection.
+        }
+
+        // Handle the offer from User 1 and create an answer
+        async function startUser2(offer) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            // User 2 can now send the answer back to User 1.
+        }
+
+        // Handle the answer from User 2
+        async function handleUser2Answer(answer) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+
+        // Depending on your application, you may need a signaling server to exchange offers and answers between users.
+
+        // Start the process for User 1
+        startUser1();
+    </script>
+</body>
+</html>
