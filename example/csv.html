@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Table Viewer</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+
+<button onclick="loadCSV()">Load CSV</button>
+<div id="tableContainer"></div>
+
+<script>
+  const csvFileLink = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT967TyqeQqn9F7Lq-4cReT9rSO8BEjb98PREoclZRhBne8_dsEOQR26T7AfQPXOlQqpdX_xEk8Tpqc/pub?gid=181218308&single=true&output=csv';
+
+  function loadCSV() {
+    const link = csvFileLink;
+
+    fetch(link)
+      .then(response => response.text())
+      .then(csv => {
+        const columnData = getColumnDataFromCSV(csv, 0); // 0 corresponds to the first column
+        const table = createTableFromColumnData(columnData);
+        document.getElementById('tableContainer').innerHTML = '';
+        document.getElementById('tableContainer').appendChild(table);
+      })
+      .catch(error => console.error('Error loading CSV:', error));
+  }
+
+  function getColumnDataFromCSV(csv, columnIndex) {
+    const lines = csv.split('\n');
+    const columnData = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const cells = lines[i].split(',');
+      if (cells.length > columnIndex) {
+        columnData.push(cells[columnIndex].trim());
+      }
+    }
+
+    return columnData;
+  }
+
+  function createTableFromColumnData(columnData) {
+    const table = document.createElement('table');
+
+    for (let i = 0; i < columnData.length; i++) {
+      const row = table.insertRow();
+      const cell = row.insertCell();
+      cell.textContent = columnData[i];
+    }
+
+    return table;
+  }
+</script>
+
+</body>
+</html>
