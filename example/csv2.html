@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Viewer</title>
+    
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+    <!-- PapaParse library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h3>CSV Viewer</h3>
+    <input type="file" id="csv-file" class="input-field">
+    <div class="row">
+        <div class="col s12">
+            <table class="striped">
+                <thead>
+                    <tr id="table-headers"></tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $('#csv-file').change(handleFile);
+    });
+
+    function handleFile(event) {
+        const file = event.target.files[0];
+
+        Papa.parse(file, {
+            header: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                displayTable(results.data);
+            }
+        });
+    }
+
+    function displayTable(data) {
+        const headers = Object.keys(data[0]);
+
+        // Display table headers
+        const headerRow = $('#table-headers');
+        headerRow.empty();
+        headers.forEach(header => {
+            headerRow.append(`<th>${header}</th>`);
+        });
+
+        // Display table data
+        const tableBody = $('#table-body');
+        tableBody.empty();
+        data.forEach(row => {
+            const rowHtml = headers.map(header => `<td>${row[header]}</td>`).join('');
+            tableBody.append(`<tr>${rowHtml}</tr>`);
+        });
+
+        // Initialize Materialize components for the table
+        M.AutoInit();
+    }
+</script>
+
+</body>
+</html>
