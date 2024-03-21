@@ -1,1 +1,1 @@
-alert("BUBA MY FET!")
+console.log("TEST")
