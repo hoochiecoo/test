@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV to HTML Table</title>
+<style>
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+</style>
+</head>
+<body>
+
+<h2>CSV to HTML Table</h2>
+<div id="table-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Function to parse CSV data and convert it to HTML table
+  function csvToHtmlTable(csvData) {
+    var rows = csvData.split('\n');
+    var tableHtml = '<table>';
+    rows.forEach(function(row, index) {
+      var columns = row.split(',');
+      if (index === 0) {
+        tableHtml += '<tr>';
+        columns.forEach(function(column) {
+          tableHtml += '<th>' + column + '</th>';
+        });
+        tableHtml += '</tr>';
+      } else {
+        tableHtml += '<tr>';
+        columns.forEach(function(column) {
+          tableHtml += '<td>' + column + '</td>';
+        });
+        tableHtml += '</tr>';
+      }
+    });
+    tableHtml += '</table>';
+    return tableHtml;
+  }
+
+  // Function to fetch CSV file and render HTML table
+  function fetchAndRenderCsv() {
+    var queryString = window.location.search;
+    var urlParams = new URLSearchParams(queryString);
+    var csvUrl = "https://docs.google.com/spreadsheets/d/e/" + urlParams.get('csv_link') + "/pub?single=true&output=csv";
+    if (csvUrl) {
+      fetch(csvUrl)
+        .then(response => response.text())
+        .then(data => {
+          var tableContainer = document.getElementById('table-container');
+          tableContainer.innerHTML = csvToHtmlTable(data);
+        })
+        .catch(error => {
+          console.error('Error fetching CSV file:', error);
+        });
+    } else {
+      console.error('CSV link not found in query parameters');
+    }
+  }
+
+  fetchAndRenderCsv();
+});
+</script>
+
+</body>
+</html>
