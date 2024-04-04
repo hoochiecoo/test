@@ -61,6 +61,7 @@ button:hover {
     }
 }
 </style>
+
 </head>
 <body>
 
@@ -135,13 +136,19 @@ function sendFormData() {
 
     fetch('https://docs.google.com/forms/u/0/d/e/1FAIpQLSfOLOGhQdDaROq-5cu49wAZ3XH16JpdFLvYmsNuKdYikuyF4w/formResponse', requestOptions)
     .then(response => {
-        if (response.ok) {
-            window.location.href = 'URL_RESULTS';
+        if (response.status === 200) {
+            alert('Form data sent successfully!');
+            // Reload the page to new view
+            window.location.reload();
         } else {
-            throw new Error('Failed to send form data');
+            alert('Failed to send form data');
         }
     })
-    .catch(error => console.error('Error sending form data:', error));
+    .catch(error => {
+    console.error('Error sending form data:', error)
+    alert('Form data sent successfully!');
+    window.location.href = 'https://hoochiecoo.github.io/test/other/to_table_by_id.html?csv_link=2PACX-1vR8lZSnbjPhmfUZfITYiT6rsiLaspoBRmlHHEyPwqKPHL0A_5BzxzP4KQb5YnKwY20C8j23d1lF1_RV';
+    });
 }
 </script>
 
