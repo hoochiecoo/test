@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form Submission</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#myForm {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+select,
+input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Additional styles for responsiveness */
+@media only screen and (max-width: 600px) {
+    #myForm {
+        width: 90%;
+    }
+}
+</style>
+</head>
+<body>
+
+<form id="myForm">
+    <label for="player1">Player 1:</label>
+    <select id="player1" name="player1"></select><br><br>
+    
+    <label for="player2">Player 2:</label>
+    <select id="player2" name="player2"></select><br><br>
+    
+    <label for="result_of_1">Result of Player 1:</label>
+    <input type="number" id="result_of_1" name="result_of_1"><br><br>
+    
+    <label for="result_of_2">Result of Player 2:</label>
+    <input type="number" id="result_of_2" name="result_of_2"><br><br>
+    
+    <button type="button" onclick="sendFormData()">Send</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSrNvtD2xTjH7ZwlvHm8o2Y5wNAo16_B05R0npcR9NWDMw3IAOOMuVtAld8_N7-XeKONob3WFtcPTt_/pub?gid=0&single=true&output=csv')
+        .then(response => response.text())
+        .then(data => {
+            // Parse CSV data
+            const rows = data.split('\n');
+            const names = [];
+            rows.forEach(row => {
+                const columns = row.split(',');
+                if (columns.length > 0) {
+                    names.push(columns[0]);
+                }
+            });
+
+            // Populate dropdowns with names
+            const player1Select = document.getElementById('player1');
+            const player2Select = document.getElementById('player2');
+            names.forEach(name => {
+                const option1 = document.createElement('option');
+                option1.text = name;
+                player1Select.add(option1);
+                
+                const option2 = document.createElement('option');
+                option2.text = name;
+                player2Select.add(option2);
+            });
+        })
+        .catch(error => console.error('Error fetching CSV:', error));
+});
+
+function sendFormData() {
+    const player1 = document.getElementById('player1').value;
+    const player2 = document.getElementById('player2').value;
+    const resultOf1 = document.getElementById('result_of_1').value;
+    const resultOf2 = document.getElementById('result_of_2').value;
+
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
+
+    const urlencoded = new URLSearchParams();
+    urlencoded.append('entry.1518456076', player1);
+    urlencoded.append('entry.531559970', player2);
+    urlencoded.append('entry.810937015', resultOf1);
+    urlencoded.append('entry.1555122603', resultOf2);
+
+    const requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: urlencoded,
+        redirect: 'follow'
+    };
+
+    fetch('https://docs.google.com/forms/u/0/d/e/1FAIpQLSfOLOGhQdDaROq-5cu49wAZ3XH16JpdFLvYmsNuKdYikuyF4w/formResponse', requestOptions)
+    .then(response => {
+        if (response.ok) {
+            window.location.href = 'URL_RESULTS';
+        } else {
+            throw new Error('Failed to send form data');
+        }
+    })
+    .catch(error => console.error('Error sending form data:', error));
+}
+</script>
+
+</body>
+</html>
