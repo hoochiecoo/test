@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form Submission</title>
+<style>
+  #formResponseIframe {
+    visibility: hidden;
+    height: 1px;
+  }
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#myForm {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+select,
+input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Additional styles for responsiveness */
+@media only screen and (max-width: 600px) {
+    #myForm {
+        width: 90%;
+    }
+}
+</style>
+</head>
+<body>
+
+<form id="myForm" target="formResponseIframe" action="https://docs.google.com/forms/u/0/d/e/1FAIpQLSfOLOGhQdDaROq-5cu49wAZ3XH16JpdFLvYmsNuKdYikuyF4w/formResponse" method="post">
+    <label for="player1">Player 1:</label>
+    <select id="player1" name="entry.1518456076"></select><br><br>
+    
+    <label for="player2">Player 2:</label>
+    <select id="player2" name="entry.531559970"></select><br><br>
+    
+    <label for="result_of_1">Result of Player 1:</label>
+    <input type="number" id="result_of_1" name="entry.810937015"><br><br>
+    
+    <label for="result_of_2">Result of Player 2:</label>
+    <input type="number" id="result_of_2" name="entry.1555122603"><br><br>
+    
+    <input type="submit" value="Send">
+</form>
+
+<iframe id="formResponseIframe" name="formResponseIframe"></iframe>
+
+<script type="text/javascript">
+   // Fetch CSV data from the provided URL and populate select fields
+   fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSrNvtD2xTjH7ZwlvHm8o2Y5wNAo16_B05R0npcR9NWDMw3IAOOMuVtAld8_N7-XeKONob3WFtcPTt_/pub?gid=0&single=true&output=csv')
+     .then(response => response.text())
+     .then(data => {
+       const lines = data.split('\n');
+       const player1Select = document.getElementById('player1');
+       const player2Select = document.getElementById('player2');
+
+       // Skip the header row (first line)
+       for (let i = 1; i < lines.length; i++) {
+         const line = lines[i];
+         if (line.trim() !== '') {
+					 const [name] = line.split(',').map(name => name.replace(/(\r\n|\n|\r)/gm, ""));
+           const option1 = document.createElement('option');
+           option1.text = name;
+           option1.value = name;
+           const option2 = document.createElement('option');
+           option2.text = name;
+           option2.value = name;
+           player1Select.add(option1);
+           player2Select.add(option2);
+         }
+       }
+     });
+
+   // set the target on the form to point to a hidden iframe
+   document.getElementById('myForm').target = 'formResponseIframe';
+   // detect when the iframe reloads
+   var iframe = document.getElementById('formResponseIframe');
+   if (iframe) {
+     iframe.onload = function () {
+       // Display message or redirect to a new page after form submission
+       alert('Form data sent successfully!');
+       window.location.href = 'https://hoochiecoo.github.io/test/other/to_table_by_id.html?csv_link=2PACX-1vR8lZSnbjPhmfUZfITYiT6rsiLaspoBRmlHHEyPwqKPHL0A_5BzxzP4KQb5YnKwY20C8j23d1lF1_RV';
+     }
+   }
+</script>
+
+</body>
+</html>
