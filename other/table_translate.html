@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word-by-Word Translator</title>
+</head>
+<body>
+<textarea id="inputText" rows="5" cols="50"></textarea><br>
+<button onclick="translateWords()">Translate</button><br>
+<table id="translationTable">
+    <thead>
+        <tr>
+            <th>Original</th>
+            <th>Translated</th>
+        </tr>
+    </thead>
+    <tbody id="translationBody">
+    </tbody>
+</table>
+
+<script>
+async function translateWords() {
+    const inputText = document.getElementById('inputText').value;
+    const words = inputText.split(' ');
+
+    const translationTableBody = document.getElementById('translationBody');
+    translationTableBody.innerHTML = ''; // Clear previous results
+
+    const apiUrl = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=';
+
+    // Process words in groups of 5
+    for (let i = 0; i < words.length; i += 5) {
+        const originalSlice = words.slice(i, i + 5);
+        const translatedSlice = await translateSlice(originalSlice);
+
+        // Create a row for each group of 5 words
+        const row = document.createElement('tr');
+
+        // Create cells for original words
+        originalSlice.forEach(word => {
+            const originalCell = document.createElement('td');
+            originalCell.textContent = word;
+            row.appendChild(originalCell);
+        });
+
+        // Append the row to the table body
+        translationTableBody.appendChild(row);
+
+        // Create a new row for translated words
+        const translatedRow = document.createElement('tr');
+
+        // Create cells for translated words
+        translatedSlice.forEach(word => {
+            const translatedCell = document.createElement('td');
+            translatedCell.textContent = word;
+            translatedRow.appendChild(translatedCell);
+        });
+
+        // Append the translated row to the table body
+        translationTableBody.appendChild(translatedRow);
+    }
+}
+
+async function translateSlice(words) {
+    const apiUrl = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=';
+    const translatedWords = [];
+
+    for (const word of words) {
+        try {
+            const response = await fetch(apiUrl + encodeURI(word));
+            const data = await response.json();
+            const translatedWord = data[0][0][0];
+            translatedWords.push(translatedWord);
+        } catch (error) {
+            console.error('Error translating word:', error);
+            translatedWords.push('Translation Error');
+        }
+    }
+
+    return translatedWords;
+}
+</script>
+</body>
+</html>
