@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word-by-Word Translator</title>
+<style>
+.translated {
+    font-size: 0.6em; /* Adjust the font size as needed */
+}
+</style>
+</head>
+<body>
+<textarea id="inputText" rows="5" cols="50"></textarea><br>
+<button onclick="translateWords()">Translate</button><br>
+<div id="translationContainer">
+</div>
+
+<script>
+async function translateWords() {
+    const inputText = document.getElementById('inputText').value;
+    const words = inputText.split(' ');
+
+    const translationContainer = document.getElementById('translationContainer');
+    translationContainer.innerHTML = ''; // Clear previous results
+
+    const apiUrl = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=';
+
+    // Process words in groups of 5
+    for (let i = 0; i < words.length; i++) {
+        const originalWord = words[i];
+        const translatedWord = await translateWord(originalWord);
+
+        // Create a div for each word and its translation
+        const row = document.createElement('div');
+
+        // Append original word to the div
+        const originalWordSpan = document.createElement('span');
+        originalWordSpan.textContent = originalWord + ' ';
+        row.appendChild(originalWordSpan);
+
+        // Append translated word to the div with a class for styling
+        const translatedWordSpan = document.createElement('span');
+        translatedWordSpan.textContent = translatedWord + ' ';
+        translatedWordSpan.classList.add('translated'); // Add a class for styling
+        row.appendChild(document.createElement('br'));
+        row.appendChild(translatedWordSpan);
+
+        // Append the div to the translation container
+        translationContainer.appendChild(row);
+
+        // Add a line break after each pair of words
+       //translationContainer.appendChild(document.createElement('br'));
+    }
+}
+
+async function translateWord(word) {
+    const apiUrl = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=';
+    try {
+        const response = await fetch(apiUrl + encodeURI(word));
+        const data = await response.json();
+        const translatedWord = data[0][0][0];
+        return translatedWord;
+    } catch (error) {
+        console.error('Error translating word:', error);
+        return 'Translation Error';
+    }
+}
+</script>
+</body>
+</html>
