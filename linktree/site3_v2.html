@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Info</title>
+<style>
+    .user-info {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .user-info img {
+        max-width: 100px;
+        max-height: 100px;
+    }
+</style>
+</head>
+<body>
+<div id="user-info"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Fetch CSV file
+    fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQd8jbo3Qad3kFFKNFsrx1Yr0pSzysn5M4-8QG_TC9stM1oaTiJQonIM4SR1krsgdYNb0YPi87uVZPQ/pub?gid=0&single=true&output=csv')
+        .then(response => response.text())
+        .then(csv => {
+            const rows = csv.trim().split('\n');
+            const data = {};
+
+            // Parse CSV data into key-value pairs
+            rows.forEach(row => {
+                const [key, value] = row.split(',');
+                data[key] = value;
+            });
+
+            // Display user info
+            const userInfoDiv = document.getElementById('user-info');
+
+            // Username
+            const usernameElement = document.createElement('p');
+            usernameElement.textContent = `Username: ${data.username}`;
+            userInfoDiv.appendChild(usernameElement);
+
+            // Name
+            const nameElement = document.createElement('p');
+            nameElement.textContent = `Name: ${data.name}`;
+            userInfoDiv.appendChild(nameElement);
+
+            // Bio
+            const bioElement = document.createElement('p');
+            bioElement.textContent = `Bio: ${data.bio}`;
+            userInfoDiv.appendChild(bioElement);
+
+            // Avatar URL
+            const avatarElement = document.createElement('img');
+            avatarElement.src = data.avatar_url;
+            avatarElement.alt = 'Avatar';
+            userInfoDiv.appendChild(avatarElement);
+
+            // Links
+            for (let i = 1; i <= 2; i++) {
+                const linkTitle = data[`link${i}_title`];
+                const linkUrl = data[`link${i}_url`];
+                const linkIconUrl = data[`link${i}_icon_url`];
+                const linkDescription = data[`link${i}_description`];
+                
+                const linkDiv = document.createElement('div');
+                linkDiv.classList.add('user-info');
+                
+                const linkTitleElement = document.createElement('p');
+                linkTitleElement.textContent = `Link ${i}: ${linkTitle}`;
+                linkDiv.appendChild(linkTitleElement);
+
+                const linkUrlElement = document.createElement('p');
+                linkUrlElement.textContent = `URL: ${linkUrl}`;
+                linkDiv.appendChild(linkUrlElement);
+
+                const linkIconElement = document.createElement('img');
+                linkIconElement.src = linkIconUrl;
+                linkIconElement.alt = `Icon ${i}`;
+                linkDiv.appendChild(linkIconElement);
+
+                const linkDescriptionElement = document.createElement('p');
+                linkDescriptionElement.textContent = `Description: ${linkDescription}`;
+                linkDiv.appendChild(linkDescriptionElement);
+
+                userInfoDiv.appendChild(linkDiv);
+            }
+
+            // Contact Info
+            const contactEmailElement = document.createElement('p');
+            contactEmailElement.textContent = `Email: ${data.contact_email}`;
+            userInfoDiv.appendChild(contactEmailElement);
+
+            const contactPhoneElement = document.createElement('p');
+            contactPhoneElement.textContent = `Phone: ${data.contact_phone}`;
+            userInfoDiv.appendChild(contactPhoneElement);
+
+            // Social Media
+            const socialTwitterElement = document.createElement('p');
+            socialTwitterElement.textContent = `Twitter: ${data.social_twitter}`;
+            userInfoDiv.appendChild(socialTwitterElement);
+
+            const socialInstagramElement = document.createElement('p');
+            socialInstagramElement.textContent = `Instagram: ${data.social_instagram}`;
+            userInfoDiv.appendChild(socialInstagramElement);
+
+            const socialFacebookElement = document.createElement('p');
+            socialFacebookElement.textContent = `Facebook: ${data.social_facebook}`;
+            userInfoDiv.appendChild(socialFacebookElement);
+        })
+        .catch(error => console.error('Error fetching CSV file:', error));
+});
+</script>
+</body>
+</html>
