@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV Reader</title>
+</head>
+<body>
+<div id="output"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Fetch CSV file
+    fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQd8jbo3Qad3kFFKNFsrx1Yr0pSzysn5M4-8QG_TC9stM1oaTiJQonIM4SR1krsgdYNb0YPi87uVZPQ/pub?gid=0&single=true&output=csv')
+        .then(response => response.text())
+        .then(csv => {
+            const rows = csv.trim().split('\n');
+            const data = {};
+
+            // Parse CSV data into key-value pairs
+            rows.forEach(row => {
+                const [key, value] = row.split(',');
+                data[key] = value;
+            });
+
+            // Display key-value pairs
+            const outputDiv = document.getElementById('output');
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    const value = data[key];
+                    const keyValueElement = document.createElement('p');
+                    keyValueElement.textContent = `${key}: ${value}`;
+                    outputDiv.appendChild(keyValueElement);
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching CSV file:', error));
+});
+</script>
+</body>
+</html>
