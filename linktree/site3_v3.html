@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Info</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .user-info {
+        border-bottom: 1px solid #ccc;
+        padding: 10px 0;
+        display: flex;
+        align-items: center;
+    }
+    .user-info img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-right: 20px;
+    }
+    .user-info p {
+        margin: 0;
+    }
+</style>
+</head>
+<body>
+<div class="container" id="user-info"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Fetch CSV file
+    fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQd8jbo3Qad3kFFKNFsrx1Yr0pSzysn5M4-8QG_TC9stM1oaTiJQonIM4SR1krsgdYNb0YPi87uVZPQ/pub?gid=0&single=true&output=csv')
+        .then(response => response.text())
+        .then(csv => {
+            const rows = csv.trim().split('\n');
+            const data = {};
+
+            // Parse CSV data into key-value pairs
+            rows.forEach(row => {
+                const [key, value] = row.split(',');
+                data[key] = value;
+            });
+
+            // Display user info
+            const userInfoDiv = document.getElementById('user-info');
+
+            // Avatar
+            const avatarDiv = document.createElement('div');
+            avatarDiv.classList.add('user-info');
+            const avatarImg = document.createElement('img');
+            avatarImg.src = data.avatar_url;
+            avatarDiv.appendChild(avatarImg);
+            userInfoDiv.appendChild(avatarDiv);
+
+            // Username
+            const usernameDiv = document.createElement('div');
+            usernameDiv.classList.add('user-info');
+            const usernameP = document.createElement('p');
+            usernameP.textContent = data.username;
+            usernameDiv.appendChild(usernameP);
+            userInfoDiv.appendChild(usernameDiv);
+
+            // Links
+            for (let i = 1; i <= 2; i++) {
+                const linkTitle = data[`link${i}_title`];
+                const linkUrl = data[`link${i}_url`];
+                
+                const linkDiv = document.createElement('div');
+                linkDiv.classList.add('user-info');
+                const linkAnchor = document.createElement('a');
+                linkAnchor.href = linkUrl;
+                linkAnchor.textContent = linkTitle;
+                linkDiv.appendChild(linkAnchor);
+                userInfoDiv.appendChild(linkDiv);
+            }
+
+            // Contact Info
+            const contactDiv = document.createElement('div');
+            contactDiv.classList.add('user-info');
+            const contactEmailP = document.createElement('p');
+            contactEmailP.textContent = data.contact_email;
+            contactDiv.appendChild(contactEmailP);
+            const contactPhoneP = document.createElement('p');
+            contactPhoneP.textContent = data.contact_phone;
+            contactDiv.appendChild(contactPhoneP);
+            userInfoDiv.appendChild(contactDiv);
+
+            // Social Media
+            const socialDiv = document.createElement('div');
+            socialDiv.classList.add('user-info');
+            const socialTwitterP = document.createElement('p');
+            socialTwitterP.textContent = `Twitter: ${data.social_twitter}`;
+            socialDiv.appendChild(socialTwitterP);
+            const socialInstagramP = document.createElement('p');
+            socialInstagramP.textContent = `Instagram: ${data.social_instagram}`;
+            socialDiv.appendChild(socialInstagramP);
+            const socialFacebookP = document.createElement('p');
+            socialFacebookP.textContent = `Facebook: ${data.social_facebook}`;
+            socialDiv.appendChild(socialFacebookP);
+            userInfoDiv.appendChild(socialDiv);
+        })
+        .catch(error => console.error('Error fetching CSV file:', error));
+});
+</script>
+</body>
+</html>
