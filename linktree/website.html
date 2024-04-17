@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linktree-like Site</title>
+  <style>
+    /* Add your CSS styles here */
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin-bottom: 20px;
+    }
+    .link {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .link img {
+      width: 30px;
+      height: 30px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Linktree-like Site</h1>
+    <div id="profile"></div>
+    <div id="links"></div>
+  </div>
+
+  <script>
+    // Function to fetch YAML file and parse it
+    async function fetchYAML(url) {
+      const response = await fetch(url);
+      const text = await response.text();
+      const data = jsyaml.load(text);
+      return data;
+    }
+
+    // Function to build user profile section
+    function buildProfile(user) {
+      const profileDiv = document.getElementById('profile');
+      profileDiv.innerHTML = `
+        <img src="${user.avatar_url}" class="avatar" alt="Avatar">
+        <h2>${user.name}</h2>
+        <p>${user.bio}</p>
+      `;
+    }
+
+    // Function to build links section
+    function buildLinks(links) {
+      const linksDiv = document.getElementById('links');
+      links.forEach(link => {
+        const linkDiv = document.createElement('div');
+        linkDiv.classList.add('link');
+        linkDiv.innerHTML = `
+          <img src="${link.icon_url}" alt="${link.title} icon">
+          <a href="${link.url}" target="_blank">${link.title}</a>
+          <p>${link.description}</p>
+        `;
+        linksDiv.appendChild(linkDiv);
+      });
+    }
+
+    // Main function to initialize the page
+    async function init() {
+      const yamlURL = 'https://raw.githubusercontent.com/hoochiecoo/test/main/linktree/info.yml';
+      const userData = await fetchYAML(yamlURL);
+      buildProfile(userData.user);
+      buildLinks(userData.user.links);
+    }
+
+    // Call the init function when the page loads
+    window.onload = init;
+  </script>
+</body>
+</html>
