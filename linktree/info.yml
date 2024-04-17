@@ -1,0 +1,16 @@
+- user:
+    username: yourusername
+    name: Your Name
+    bio: |
+      Short bio or description about you or your page.
+    avatar_url: https://example.com/avatar.jpg
+    links:
+      - title: Link 1
+        url: https://example.com/link1
+        icon_url: https://example.com/icons/link1_icon.png
+        description: Description of Link 1
+      - title: Link 2
+        url: https://example.com/link2
+        icon_url: https://example.com/icons/link2_icon.png
+        description: Description of Link 2
+      # Add more links as needed
