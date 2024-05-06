@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player Comparison</title>
+<style>
+    /* Add your CSS styles here */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+</head>
+<body>
+    <label for="player1">Player 1:</label>
+    <select id="player1">
+        <option value="">Select Player 1</option>
+    </select>
+
+    <label for="player2">Player 2:</label>
+    <select id="player2">
+        <option value="">Select Player 2</option>
+    </select>
+
+    <button onclick="comparePlayers()">Compare</button>
+
+    <div id="comparisonResult"></div>
+
+<script>
+    async function fetchCSV(url) {
+        const response = await fetch(url);
+        const data = await response.text();
+        return data;
+    }
+
+    async function comparePlayers() {
+        const csvData = await fetchCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vR37EwAUP0tDMggeU2hmpXf8k7uEYsNwWz7HWXal8nEFxAFDup4d3anaEDhEFVWHoGA9LkDswckQFvh/pub?gid=104363240&single=true&output=csv");
+        const lines = csvData.split('\n');
+        const players = [];
+        for (let i = 1; i < lines.length; i++) {
+            const data = lines[i].split(',');
+            players.push({ id: data[0], name: data[1] });
+        }
+
+        const player1Id = document.getElementById('player1').value;
+        const player2Id = document.getElementById('player2').value;
+        let player1Data, player2Data;
+
+        // Find player data
+        for (let i = 1; i < lines.length; i++) {
+            const data = lines[i].split(',');
+            if (data[0] === player1Id) {
+                player1Data = data;
+            }
+            if (data[0] === player2Id) {
+                player2Data = data;
+            }
+        }
+
+        if (player1Data && player2Data) {
+            const comparisonResult = document.getElementById('comparisonResult');
+            comparisonResult.innerHTML = `
+                <table>
+                    <tr>
+                        <th>Player 1</th>
+                        <th>Title</th>
+                        <th>Player 2</th>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[1]}</td>
+                        <td>Name</td>
+                        <td>${player2Data[1]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[2]}</td>
+                        <td>Rating</td>
+                        <td>${player2Data[2]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[3]}</td>
+                        <td>Average</td>
+                        <td>${player2Data[3]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[4]}</td>
+                        <td>Max</td>
+                        <td>${player2Data[4]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[5]}</td>
+                        <td>Median</td>
+                        <td>${player2Data[5]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[6]}</td>
+                        <td>GamesSum</td>
+                        <td>${player2Data[6]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[7]}</td>
+                        <td>GamesCount</td>
+                        <td>${player2Data[7]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[8]}</td>
+                        <td>MatchesPlayed</td>
+                        <td>${player2Data[8]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[9]}</td>
+                        <td>Hand</td>
+                        <td>${player2Data[9]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[10]}</td>
+                        <td>Style</td>
+                        <td>${player2Data[10]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[11]}</td>
+                        <td>Group</td>
+                        <td>${player2Data[11]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[12]}</td>
+                        <td>Birth Date</td>
+                        <td>${player2Data[12]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[13]}</td>
+                        <td>Team</td>
+                        <td>${player2Data[13]}</td>
+                    </tr>
+                    <tr>
+                        <td>${player1Data[14]}</td>
+                        <td>TG_ID</td>
+                        <td>${player2Data[14]}</td>
+                    </tr>
+                </table>
+            `;
+        } else {
+            alert('Please select two players to compare.');
+        }
+    }
+
+    async function populatePlayersDropdown() {
+        const csvData = await fetchCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vR37EwAUP0tDMggeU2hmpXf8k7uEYsNwWz7HWXal8nEFxAFDup4d3anaEDhEFVWHoGA9LkDswckQFvh/pub?gid=104363240&single=true&output=csv");
+        const lines = csvData.split('\n');
+        const playersDropdowns = document.querySelectorAll('select');
+        const players = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const data = lines[i].split(',');
+            players.push({ id: data[0], name: data[1] });
+        }
+
+        playersDropdowns.forEach(dropdown => {
+            players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = player.name;
+                dropdown.appendChild(option.cloneNode(true));
+            });
+        });
+    }
+
+    populatePlayersDropdown();
+</script>
+</body>
+</html>
