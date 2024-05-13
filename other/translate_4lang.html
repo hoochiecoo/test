@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Textarea Interaction</title>
+<style>
+    textarea {
+        width: 200px;
+        height: 100px;
+        margin-bottom: 10px;
+    }
+</style>
+</head>
+<body>
+
+<div>RU</div>
+<textarea id="RU_textarea" oninput="updateTextareas('RU_textarea', 'ru')"></textarea><br>
+<div>EN</div>
+<textarea id="EN_textarea" oninput="updateTextareas('EN_textarea', 'en')"></textarea><br>
+<div>SR</div>
+<textarea id="SR_textarea" oninput="updateTextareas('SR_textarea', 'sr')"></textarea><br>
+<div>HU</div>
+<textarea id="HU_textarea" oninput="updateTextareas('HU_textarea', 'hu')"></textarea>
+
+<script>
+    async function updateTextareas(id, lang) {
+        var value = document.getElementById(id).value;
+        var textareas = document.getElementsByTagName("textarea");
+        for (var i = 0; i < textareas.length; i++) {
+            if (textareas[i].id !== id) {
+                var translatedText = await translateText(value, lang, textareas[i].id.substring(0, 2).toLowerCase());
+                textareas[i].value = translatedText;
+            }
+        }
+    }
+
+    async function translateText(text, sourceLang, targetLang) {
+        var url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${text}`;
+        var response = await fetch(url);
+        var data = await response.json();
+        return data[0][0][0];
+    }
+</script>
+
+</body>
+</html>
