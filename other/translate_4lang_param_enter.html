@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Textarea Interaction</title>
+<style>
+    textarea {
+        width: 200px;
+        height: 100px;
+        margin-bottom: 10px;
+    }
+</style>
+</head>
+<body>
+
+<script>
+    // Function to parse query parameters from URL
+    function getQueryParams(url) {
+        var queryParams = {};
+        var params = url.slice(url.indexOf('?') + 1).split('&');
+        for (var i = 0; i < params.length; i++) {
+            var pair = params[i].split('=');
+            queryParams[pair[0]] = pair[1].split(',');
+        }
+        return queryParams;
+    }
+
+    // Function to dynamically create textareas based on query parameters
+    function createTextareas() {
+        var queryParams = getQueryParams(window.location.href);
+        var langs = queryParams.langs;
+
+        var body = document.getElementsByTagName("body")[0];
+
+        // Create textareas for each language
+        for (var i = 0; i < langs.length; i++) {
+            var langNamesText = langs[i];
+
+            // Create text string with name of lang
+            var langNamesNode = document.createTextNode(langNamesText);
+            body.appendChild(langNamesNode);
+            body.appendChild(document.createElement("br"));
+
+            // Create textarea
+            var textarea = document.createElement("textarea");
+            textarea.id = langs[i] + "_textarea";
+            textarea.placeholder = langs[i];
+            textarea.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    updateTextareas(this.id, this.id.substring(0, 2).toLowerCase());
+                }
+            };
+            body.appendChild(textarea);
+            body.appendChild(document.createElement("br"));
+        }
+    }
+
+    // Function to update textareas with translation
+    async function updateTextareas(id, lang) {
+        var value = document.getElementById(id).value;
+        var textareas = document.getElementsByTagName("textarea");
+        for (var i = 0; i < textareas.length; i++) {
+            if (textareas[i].id !== id) {
+                var translatedText = await translateText(value, lang, textareas[i].id.substring(0, 2).toLowerCase());
+                textareas[i].value = translatedText;
+            }
+        }
+    }
+
+    // Function to translate text
+    async function translateText(text, sourceLang, targetLang) {
+        var url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${text}`;
+        var response = await fetch(url);
+        var data = await response.json();
+        return data[0][0][0];
+    }
+
+    // Create textareas when the page loads
+    window.onload = createTextareas;
+</script>
+
+</body>
+</html>
