@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loan Calculator</title>
+</head>
+<body>
+    <h1>Loan Calculator</h1>
+    <form id="loan-form">
+        <label for="amount">Loan Amount:</label>
+        <input type="number" id="amount" name="amount" required><br><br>
+        <label for="interest">Annual Interest Rate (%):</label>
+        <input type="number" id="interest" name="interest" step="0.01" required><br><br>
+        <label for="years">Loan Term (years):</label>
+        <input type="number" id="years" name="years" required><br><br>
+        <button type="button" onclick="calculateLoan()">Calculate</button>
+    </form>
+    <h2>Results:</h2>
+    <div id="results">
+        <p>Monthly Payment: <span id="monthly-payment"></span></p>
+        <p>Total Payment: <span id="total-payment"></span></p>
+        <p>Total Interest: <span id="total-interest"></span></p>
+    </div>
+
+    <script>
+        function calculateLoan() {
+            var amount = document.getElementById('amount').value;
+            var interest = document.getElementById('interest').value;
+            var years = document.getElementById('years').value;
+
+            var principal = parseFloat(amount);
+            var calculateInterest = parseFloat(interest) / 100 / 12;
+            var calculatePayments = parseFloat(years) * 12;
+
+            var x = Math.pow(1 + calculateInterest, calculatePayments);
+            var monthly = (principal * x * calculateInterest) / (x - 1);
+
+            if (!isNaN(monthly) && (monthly != Infinity) && (monthly > 0)) {
+                document.getElementById('monthly-payment').innerText = monthly.toFixed(2);
+                document.getElementById('total-payment').innerText = (monthly * calculatePayments).toFixed(2);
+                document.getElementById('total-interest').innerText = ((monthly * calculatePayments) - principal).toFixed(2);
+            } else {
+                document.getElementById('monthly-payment').innerText = "Error";
+                document.getElementById('total-payment').innerText = "Error";
+                document.getElementById('total-interest').innerText = "Error";
+            }
+        }
+    </script>
+</body>
+</html>

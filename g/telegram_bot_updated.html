@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        #messages {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .message {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Telegram Bot</h1>
+    <p>Check the console for bot activity.</p>
+    <div id="messages"></div>
+    
+    <script>
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        const token = getQueryParam('token');
+        const chatId = getQueryParam('chat_id');
+        let lastUpdateId = 0;
+
+        if (!token || !chatId) {
+            alert('Please provide both token and chat_id in the query parameters.');
+            throw new Error('Missing token or chat_id');
+        }
+
+        async function sendMessage(text) {
+            const url = `https://api.telegram.org/bot${token}/sendMessage`;
+            try {
+                const response = await axios.post(url, {
+                    chat_id: chatId,
+                    text: text
+                });
+                console.log('Message sent:', response.data);
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        async function getUpdates() {
+            const url = `https://api.telegram.org/bot${token}/getUpdates?offset=${lastUpdateId + 1}`;
+            try {
+                const response = await axios.get(url);
+                console.log('Updates:', response.data);
+                response.data.result.forEach(update => {
+                    if (update.message && update.message.text) {
+                        sendMessage(`You said: ${update.message.text}`);
+                        addMessageToHtml(update.message.text);
+                    }
+                    lastUpdateId = update.update_id;
+                });
+            } catch (error) {
+                console.error('Error getting updates:', error);
+            }
+        }
+
+        function addMessageToHtml(text) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Send a test message
+        sendMessage('Bot started in browser!');
+
+        // Poll for updates every 5 seconds
+        setInterval(getUpdates, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Table with 20 Cells and Pair Sums</title>
+    <style>
+        table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        td {
+            width: 5%;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .pair-sum {
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        function calculateSum() {
+            let totalSum = 0;
+            for (let i = 1; i <= 20; i += 2) {
+                let input1 = document.getElementById('input' + i);
+                let input2 = document.getElementById('input' + (i + 1));
+                let value1 = parseFloat(input1.value) || 0;
+                if (value1 > 10) {
+                    value1 = 10;
+                    input1.value = 10;
+                }
+                let max2 = 10 - value1;
+                input2.max = max2;
+                let value2 = parseFloat(input2.value) || 0;
+                if (value2 > max2) {
+                    value2 = max2;
+                    input2.value = max2;
+                }
+                let pairSum = value1 + value2;
+                totalSum += pairSum;
+                document.getElementById('pairSum' + i).innerText = pairSum;
+            }
+            document.getElementById('totalSumCell').innerText = totalSum;
+        }
+    </script>
+</head>
+<body>
+    <h1>Table with 20 Cells and Pair Sums</h1>
+    <table border="1">
+<td>Cell 1</td><td>Cell 2</td><td>Cell 3</td><td>Cell 4</td><td>Cell 5</td><td>Cell 6</td><td>Cell 7</td><td>Cell 8</td><td>Cell 9</td><td>Cell 10</td><td>Cell 11</td><td>Cell 12</td><td>Cell 13</td><td>Cell 14</td><td>Cell 15</td><td>Cell 16</td><td>Cell 17</td><td>Cell 18</td><td>Cell 19</td><td>Cell 20</td>
+        </tr>
+        <tr>
+
+    <td><input type="number" id="input1" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input2" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input3" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input4" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input5" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input6" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input7" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input8" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input9" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input10" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input11" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input12" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input13" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input14" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input15" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input16" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input17" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input18" oninput="calculateSum()"></td>
+
+    <td><input type="number" id="input19" max="10" oninput="calculateSum()"></td>
+    <td><input type="number" id="input20" oninput="calculateSum()"></td>
+
+        </tr>
+        <tr>
+
+    <td colspan="2" id="pairSum1" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum3" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum5" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum7" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum9" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum11" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum13" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum15" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum17" class="pair-sum">0</td>
+
+    <td colspan="2" id="pairSum19" class="pair-sum">0</td>
+
+        </tr>
+        <tr>
+            <td colspan="20" id="totalSumCell">0</td>
+        </tr>
+    </table>
+</body>
+</html>
