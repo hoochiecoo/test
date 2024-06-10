@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Local File as Text</title>
+</head>
+<body>
+  <input type="file" id="fileInput">
+  <pre id="fileContents"></pre>
+
+  <script>
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+      var file = event.target.files[0];
+      var reader = new FileReader();
+
+      reader.onload = function(event) {
+        var contents = event.target.result;
+        document.getElementById('fileContents').textContent = contents;
+      };
+
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
