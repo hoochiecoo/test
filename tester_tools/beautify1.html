@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Beautifier</title>
+<style>
+</style>
+</head>
+<body>
+<div class="container">
+    <button onclick="beautifyJson()">Beautify</button>
+    <div class="textarea-container">
+        <h2>Input JSON:</h2>
+        <textarea id="inputJson"></textarea>
+    </div>
+    <div class="textarea-container">
+        <h2>Beautified JSON:</h2>
+        <textarea id="outputJson" readonly></textarea>
+    </div>
+</div>
+<script>
+    function beautifyJson() {
+        try {
+            var inputJson = document.getElementById('inputJson').value;
+            var parsedJson = JSON.parse(inputJson);
+            var beautifiedJson = JSON.stringify(parsedJson, null, 2);
+            document.getElementById('outputJson').value = beautifiedJson;
+        } catch (error) {
+            alert('Invalid JSON format. Please check your input.');
+        }
+    }
+</script>
+</body>
+</html>
