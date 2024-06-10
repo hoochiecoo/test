@@ -1,0 +1,41 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to File</title>
+</head>
+<body>
+    <h1>Text to File Converter</h1>
+    <textarea id="textInput" rows="10" cols="50" placeholder="Enter your text here..."></textarea>
+    <br><br>
+    <label for="fileExtension">Choose file extension:</label>
+    <select id="fileExtension">
+        <option value="txt">.txt</option>
+        <option value="html">.html</option>
+        <option value="csv">.csv</option>
+    </select>
+    <br><br>
+    <button onclick="generateDownloadLink()">Download</button>
+    <br><br>
+    <a id="downloadLink" style="display:none;">Download File</a>
+
+    <script>
+        function generateDownloadLink() {
+            const text = document.getElementById('textInput').value;
+            const extension = document.getElementById('fileExtension').value;
+            const fileName = 'download.' + extension;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const downloadLink = document.getElementById('downloadLink');
+            downloadLink.href = url;
+            downloadLink.download = fileName;
+            downloadLink.style.display = 'block';
+            downloadLink.innerText = 'Click here to download your file';
+        }
+    </script>
+</body>
+</html>
