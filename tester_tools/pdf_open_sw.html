@@ -20,9 +20,7 @@ function openFile() {
 
   reader.onload = function(event) {
     var typedarray = new Uint8Array(event.target.result);
-    pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
-      displayPdf(pdf);
-    });
+    loadPdf(typedarray);
   };
 
   reader.onerror = function(event) {
@@ -30,6 +28,16 @@ function openFile() {
   };
 
   reader.readAsArrayBuffer(file);
+}
+
+function loadPdf(typedarray) {
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+      displayPdf(pdf);
+    });
+  } else {
+    console.error("PDF.js library is not loaded!");
+  }
 }
 
 function displayPdf(pdf) {
@@ -60,7 +68,8 @@ function displayPdf(pdf) {
 </script>
 
 <!-- Load PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js" onload="openFile()"></script>
+
 <!-- Register Service Worker -->
 <script>
 if ('serviceWorker' in navigator) {
