@@ -1,5 +1,5 @@
 // Define the database name and version
-const DB_NAME = "dogStoreDB";
+const DB_NAME = "timestampDB";
 const DB_VERSION = 1;
 
 // Define the object store name
