@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tennis Judge App</title>
+<style>
+    /* Basic styling for demonstration */
+    body {
+        font-family: Arial, sans-serif;
+    }
+    input, select, button {
+        margin-bottom: 10px;
+    }
+</style>
+</head>
+<body>
+<h1>Tennis Judge App</h1>
+
+<!-- User Registration -->
+<h2>User Registration</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="email" id="email" placeholder="Email">
+<button onclick="registerUser()">Register</button>
+
+<!-- Player Registration -->
+<h2>Player Registration</h2>
+<input type="text" id="playerName" placeholder="Player Name">
+<input type="text" id="age" placeholder="Age">
+<button onclick="registerPlayer()">Register Player</button>
+
+<!-- Match Setup -->
+<h2>Match Setup</h2>
+<select id="player1">
+    <option value="Player 1">Player 1</option>
+    <option value="Player 2">Player 2</option>
+    <!-- Options populated dynamically from registered players -->
+</select>
+<select id="player2">
+    <option value="Player 1">Player 1</option>
+    <option value="Player 2">Player 2</option>
+    <!-- Options populated dynamically from registered players -->
+</select>
+<!-- Other match setup inputs -->
+<button onclick="setupMatch()">Start Match</button>
+
+<!-- Point Management -->
+<h2>Point Management</h2>
+<button onclick="updateScore('player1')">Player 1 Score</button>
+<button onclick="updateScore('player2')">Player 2 Score</button>
+<!-- Other point management inputs -->
+
+<!-- Match Progress -->
+<h2>Match Progress</h2>
+<p>Current Score: <span id="currentScore"></span></p>
+<!-- Other match progress information -->
+
+<!-- Finish Match -->
+<h2>Finish Match</h2>
+<button onclick="finishMatch()">Finish Match</button>
+
+<script>
+    // Basic JavaScript functions for demonstration
+    function registerUser() {
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value;
+        console.log("User registered:", username, email);
+    }
+
+    function registerPlayer() {
+        const playerName = document.getElementById("playerName").value;
+        const age = document.getElementById("age").value;
+        console.log("Player registered:", playerName, age);
+    }
+
+    function setupMatch() {
+        const player1 = document.getElementById("player1").value;
+        const player2 = document.getElementById("player2").value;
+        console.log("Match setup:", player1, player2);
+    }
+
+    function updateScore(player) {
+        console.log(player + " score updated");
+        // Logic to update score for the selected player
+    }
+
+    function finishMatch() {
+        console.log("Match finished");
+        // Logic to finalize match and send data to server
+    }
+</script>
+</body>
+</html>
