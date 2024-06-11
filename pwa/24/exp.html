@@ -113,105 +113,110 @@
 </head>
 
 <body>
-  <div class="container">
-    <header class="heading">
-      <h1 class="title">2048</h1>
-      <div class="scores-container">
-        <div class="score-container">0</div>
-        <div class="best-container">0</div>
-      </div>
-    </header>
-
-    <div class="above-game">
-      <p class="game-intro">Join the numbers and get to the
-        <strong>2048 tile!</strong>
-      </p>
-      <a class="restart-button">New Game</a>
-    </div>
-
-    <div class="game-container">
-      <div class="game-message">
-        <p></p>
-        <div class="lower">
-          <a class="keep-playing-button">Keep going</a>
-          <a class="retry-button">Try again</a>
-        </div>
-      </div>
-
-      <div class="grid-container">
-        <div class="grid-row">
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-        </div>
-        <div class="grid-row">
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-        </div>
-        <div class="grid-row">
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-        </div>
-        <div class="grid-row">
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-          <div class="grid-cell"></div>
-        </div>
-      </div>
-
-      <div class="tile-container">
-
-      </div>
-    </div>
-
-    <p class="game-explanation">
-      <strong class="important">How to play:</strong> Use your
-      <strong>arrow keys</strong> to move the tiles. When two tiles with the same number touch, they
-      <strong>merge into one!</strong>
-    </p>
-    <hr>
-    <p>
-      <strong class="important">Note:</strong> This site is the official version of 2048. You can play it on your phone
-      via
-      <a href="http://git.io/2048">http://git.io/2048.</a> All other apps or sites are derivatives or fakes, and should
-      be used with caution.
-    </p>
-    <hr>
-    <p>
-      Created by
-      <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli.</a> Based on
-      <a href="https://itunes.apple.com/us/app/1024!/id823499224" target="_blank">1024 by Veewo Studio</a> and
-      conceptually similar to
-      <a href="http://asherv.com/threes/" target="_blank">Threes by Asher Vollmer.</a>
-    </p>
-  </div>
-  <div class="ath-container banner-bottom-center">
-    <div class="ath-banner">
-      <div class="ath-banner-cell">
-        <img src="meta/2048-logo-48x48.png" alt="PWA" class="ath-prompt-logo">
-      </div>
-      <div class="ath-banner-title">
-        <p>Install 2048?</p>
-      </div>
-      <div class="ath-banner-cell">
-        <button class="btn btn-cancel btn-link">Not Now</button>
-      </div>
-      <div class="ath-banner-cell">
-        <button class="btn btn-install btn-success">Install</button>
-      </div>
-
-    </div>
-  </div>
-
   <script>
-    // Just a simple "Hello, world!" alert
-    alert("Hello, world!");
+    // Check if manifest query parameter is set to true
+    const urlParams = new URLSearchParams(window.location.search);
+    const manifestRequested = urlParams.get('manifest');
+    if (manifestRequested !== 'true') {
+      // If not, display the rest of the site
+      document.write(`
+        <div class="container">
+          <header class="heading">
+            <h1 class="title">2048</h1>
+            <div class="scores-container">
+              <div class="score-container">0</div>
+              <div class="best-container">0</div>
+            </div>
+          </header>
+
+          <div class="above-game">
+            <p class="game-intro">Join the numbers and get to the
+              <strong>2048 tile!</strong>
+            </p>
+            <a class="restart-button">New Game</a>
+          </div>
+
+          <div class="game-container">
+            <div class="game-message">
+              <p></p>
+              <div class="lower">
+                <a class="keep-playing-button">Keep going</a>
+                <a class="retry-button">Try again</a>
+              </div>
+            </div>
+
+            <div class="grid-container">
+              <div class="grid-row">
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+              </div>
+              <div class="grid-row">
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+              </div>
+              <div class="grid-row">
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+              </div>
+              <div class="grid-row">
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+              </div>
+            </div>
+
+            <div class="tile-container">
+
+            </div>
+          </div>
+
+          <p class="game-explanation">
+            <strong class="important">How to play:</strong> Use your
+            <strong>arrow keys</strong> to move the tiles. When two tiles with the same number touch, they
+            <strong>merge into one!</strong>
+          </p>
+          <hr>
+          <p>
+            <strong class="important">Note:</strong> This site is the official version of 2048. You can play it on your phone
+            via
+            <a href="http://git.io/2048">http://git.io/2048.</a> All other apps or sites are derivatives or fakes, and should
+            be used with caution.
+          </p>
+          <hr>
+          <p>
+            Created by
+            <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli.</a> Based on
+            <a href="https://itunes.apple.com/us/app/1024!/id823499224" target="_blank">1024 by Veewo Studio</a> and
+            conceptually similar to
+            <a href="http://asherv.com/threes/" target="_blank">Threes by Asher Vollmer.</a>
+          </p>
+        </div>
+        <div class="ath-container banner-bottom-center">
+          <div class="ath-banner">
+            <div class="ath-banner-cell">
+              <img src="meta/2048-logo-48x48.png" alt="PWA" class="ath-prompt-logo">
+            </div>
+            <div class="ath-banner-title">
+              <p>Install 2048?</p>
+            </div>
+            <div class="ath-banner-cell">
+              <button class="btn btn-cancel btn-link">Not Now</button>
+            </div>
+            <div class="ath-banner-cell">
+              <button class="btn btn-install btn-success">Install</button>
+            </div>
+
+          </div>
+        </div>
+      `);
+    }
   </script>
 
   <script>
