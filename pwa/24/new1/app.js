@@ -1,5 +1,3 @@
-// Your JavaScript code here
-//console.log('Hello, PWA!');
 // Define the database name and version
 const DB_NAME = "dogStoreDB";
 const DB_VERSION = 1;
@@ -36,8 +34,22 @@ request.onupgradeneeded = function(event) {
     }
 };
 
+// Function to add a dog to the database and update the UI
+function addDogAndRefreshUI(name, breed, age) {
+    addDog(name, breed, age, function() {
+        refreshDogList();
+    });
+}
+
+// Function to retrieve all dogs from the database and update the UI
+function getAllDogsAndRefreshUI() {
+    getAllDogs(function(dogs) {
+        updateDogListUI(dogs);
+    });
+}
+
 // Function to add a dog to the database
-function addDog(name, breed, age) {
+function addDog(name, breed, age, callback) {
     const transaction = db.transaction([STORE_NAME], "readwrite");
     const objectStore = transaction.objectStore(STORE_NAME);
     
@@ -51,6 +63,9 @@ function addDog(name, breed, age) {
     
     request.onsuccess = function(event) {
         console.log("Dog added to the database");
+        if (callback) {
+            callback();
+        }
     };
     
     request.onerror = function(event) {
@@ -59,7 +74,7 @@ function addDog(name, breed, age) {
 }
 
 // Function to retrieve all dogs from the database
-function getAllDogs() {
+function getAllDogs(callback) {
     const transaction = db.transaction([STORE_NAME], "readonly");
     const objectStore = transaction.objectStore(STORE_NAME);
     const request = objectStore.getAll();
@@ -67,7 +82,9 @@ function getAllDogs() {
     request.onsuccess = function(event) {
         const dogs = event.target.result;
         console.log("All dogs:", dogs);
-        // Here you can use the retrieved data to update your UI or perform any other actions
+        if (callback) {
+            callback(dogs);
+        }
     };
     
     request.onerror = function(event) {
@@ -75,9 +92,45 @@ function getAllDogs() {
     };
 }
 
-// Example usage:
-// Adding a dog
-addDog("Max", "Labrador", 3);
+// Function to update the UI with the list of dogs
+function updateDogListUI(dogs) {
+    const dogListContainer = document.getElementById("dog-list-container");
+    dogListContainer.innerHTML = "";
+    
+    const dogList = document.createElement("ul");
+    dogs.forEach(function(dog) {
+        const listItem = document.createElement("li");
+        listItem.textContent = `Name: ${dog.name}, Breed: ${dog.breed}, Age: ${dog.age}`;
+        dogList.appendChild(listItem);
+    });
+    dogListContainer.appendChild(dogList);
+}
 
-// Retrieving all dogs
-getAllDogs();
+// Function to create buttons and initialize the UI
+function createButtons() {
+    const addButton = document.createElement("button");
+    addButton.textContent = "Add Dog";
+    addButton.addEventListener("click", function() {
+        const name = prompt("Enter the dog's name:");
+        const breed = prompt("Enter the dog's breed:");
+        const age = parseInt(prompt("Enter the dog's age:"));
+        
+        addDogAndRefreshUI(name, breed, age);
+    });
+    
+    const refreshButton = document.createElement("button");
+    refreshButton.textContent = "Refresh Dog List";
+    refreshButton.addEventListener("click", function() {
+        getAllDogsAndRefreshUI();
+    });
+    
+    const dogListContainer = document.createElement("div");
+    dogListContainer.id = "dog-list-container";
+    
+    document.body.appendChild(addButton);
+    document.body.appendChild(refreshButton);
+    document.body.appendChild(dogListContainer);
+}
+
+// Initialize the UI
+createButtons();
