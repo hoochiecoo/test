@@ -3,5 +3,5 @@
   "short_name": "ftp",
   "theme_color": "#2196f3",
   "background_color": "#2196f3",
-  "display": "standalone"
+  "display": "fullscreen"
 }
