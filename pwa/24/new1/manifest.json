@@ -3,6 +3,6 @@
   "short_name": "ftp",
   "theme_color": "#2196f3",
   "background_color": "#2196f3",
-  "display": "standalone",
+  "display": "fullscreen",
   "start_url": "/test/pwa/24/new1/index.html"
 }
