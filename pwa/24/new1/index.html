@@ -4,24 +4,51 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#2196f3">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/test/pwa/24/new1/manifest.json">
   <title>First Test PWA</title>
-  <link rel="stylesheet" href="styles.css"> <!-- if you have a CSS file -->
+  <link rel="stylesheet" href="/test/pwa/24/new1/styles.css"> <!-- if you have a CSS file -->
 </head>
 <body>
   <h1>Welcome to First Test PWA</h1>
   <p>This is your first progressive web app.</p>
+  <button class="add-button" style="display: none;">Add to Home Screen</button>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then((registration) => {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch((error) => {
-          console.log('Service Worker registration failed:', error);
+      navigator.serviceWorker.register('/test/pwa/24/new1/service-worker.js')
+        .then(() => {
+          console.log('Service Worker Registered');
         });
     }
+
+    // Code to handle install prompt on desktop
+    let deferredPrompt;
+    const addBtn = document.querySelector('.add-button');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      deferredPrompt = e;
+      // Update UI to notify the user they can add to home screen
+      addBtn.style.display = 'block';
+
+      addBtn.addEventListener('click', () => {
+        // hide our user interface that shows our A2HS button
+        addBtn.style.display = 'none';
+        // Show the prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the A2HS prompt');
+          } else {
+            console.log('User dismissed the A2HS prompt');
+          }
+          deferredPrompt = null;
+        });
+      });
+    });
   </script>
-  <script src="app.js"></script> <!-- if you have a JS file -->
+  <script src="/test/pwa/24/new1/app.js"></script> <!-- if you have a JS file -->
 </body>
 </html>
