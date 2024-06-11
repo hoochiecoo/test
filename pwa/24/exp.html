@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <title>2048 - Progressive Web App</title>
+
+  <link href="style/bootstrap.min.css" rel="stylesheet" type="text/css">
+  <link href="style/animate.min.css" rel="stylesheet" type="text/css">
+  <link href="style/addtohomescreen.css" rel="stylesheet" type="text/css">
+
+  <link href="style/main.css" rel="stylesheet" type="text/css">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <meta name="apple-mobile-web-app-title" content="2048 PWA">
+
+  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x1096.png"
+    media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+  <!-- iPhone 5+ -->
+  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x920.png"
+    media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)">
+  <!-- iPhone, retina -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <link rel="apple-touch-icon" href="meta/2048-logo-80x80.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="meta/2048-logo-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="meta/2048-logo-180x180.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="meta/2048-logo-167x167.png">
+
+  <meta name="application-name" content="2048" />
+  <meta name="msapplication-square70x70logo" content="meta/2048-logo-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="meta/2048-logo-152x152.png" />
+  <meta name="msapplication-wide310x150logo" content="meta/2048-logo-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="meta/2048-logo-310x310.png" />
+  <meta name="msapplication-TileColor" content="#ECC400" />
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Check if manifest query parameter is set to true
+    const urlParams = new URLSearchParams(window.location.search);
+    const manifestRequested = urlParams.get('manifest');
+    if (manifestRequested === 'true') {
+      // Return manifest JSON
+      document.write(JSON.stringify({
+        "name": "2048 - Progressive Web App",
+        "short_name": "2048 PWA",
+        "description": "This is a fork of the original 2048 web application source. It is upgraded to be a progressive web application and used as a reference application in the Packt Book - Progressive Web Applications By Example",
+        "icons": [
+          {
+            "src": "meta/2048-logo-70x70.png",
+            "sizes": "70x70",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-120x120.png",
+            "sizes": "120x120",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-310x174.png",
+            "sizes": "310x174",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-310x310.png",
+            "sizes": "310x310",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-340x340.png",
+            "sizes": "340x340",
+            "type": "image/png"
+          },
+          {
+            "src": "meta/2048-logo-600x310.png",
+            "sizes": "600x310",
+            "type": "image/png"
+          }
+        ],
+        "start_url": "/?hs=2349872398472894",
+        "scope": "/",
+        "display": "fullscreen",
+        "background_color": "#fff",
+        "theme_color": "#ECC400",
+        "orientation": "portrait",
+        "lang": "en",
+        "dir": "ltr"
+      }));
+      // Terminate script execution
+      throw new Error('Manifest requested');
+    }
+  </script>
+  <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+  <div class="container">
+    <header class="heading">
+      <h1 class="title">2048</h1>
+      <div class="scores-container">
+        <div class="score-container">0</div>
+        <div class="best-container">0</div>
+      </div>
+    </header>
+
+    <div class="above-game">
+      <p class="game-intro">Join the numbers and get to the
+        <strong>2048 tile!</strong>
+      </p>
+      <a class="restart-button">New Game</a>
+    </div>
+
+    <div class="game-container">
+      <div class="game-message">
+        <p></p>
+        <div class="lower">
+          <a class="keep-playing-button">Keep going</a>
+          <a class="retry-button">Try again</a>
+        </div>
+      </div>
+
+      <div class="grid-container">
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+      </div>
+
+      <div class="tile-container">
+
+      </div>
+    </div>
+
+    <p class="game-explanation">
+      <strong class="important">How to play:</strong> Use your
+      <strong>arrow keys</strong> to move the tiles. When two tiles with the same number touch, they
+      <strong>merge into one!</strong>
+    </p>
+    <hr>
+    <p>
+      <strong class="important">Note:</strong> This site is the official version of 2048. You can play it on your phone
+      via
+      <a href="http://git.io/2048">http://git.io/2048.</a> All other apps or sites are derivatives or fakes, and should
+      be used with caution.
+    </p>
+    <hr>
+    <p>
+      Created by
+      <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli.</a> Based on
+      <a href="https://itunes.apple.com/us/app/1024!/id823499224" target="_blank">1024 by Veewo Studio</a> and
+      conceptually similar to
+      <a href="http://asherv.com/threes/" target="_blank">Threes by Asher Vollmer.</a>
+    </p>
+  </div>
+  <div class="ath-container banner-bottom-center">
+    <div class="ath-banner">
+      <div class="ath-banner-cell">
+        <img src="meta/2048-logo-48x48.png" alt="PWA" class="ath-prompt-logo">
+      </div>
+      <div class="ath-banner-title">
+        <p>Install 2048?</p>
+      </div>
+      <div class="ath-banner-cell">
+        <button class="btn btn-cancel btn-link">Not Now</button>
+      </div>
+      <div class="ath-banner-cell">
+        <button class="btn btn-install btn-success">Install</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Just a simple "Hello, world!" alert
+    alert("Hello, world!");
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+
+      navigator.serviceWorker.register("/sw.js")
+        .then(function (registration) { // Registration was successful
+
+          console.log("ServiceWorker registration successful with scope: ", registration.scope);
+
+        }).catch(function (err) { // registration failed :(
+
+          console.error("ServiceWorker registration failed: ", err);
+        });
+
+    }
+  </script>
+
+</body>
+
+</html>
