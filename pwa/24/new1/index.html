@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2196f3">
+  <link rel="manifest" href="/manifest.json">
+  <title>First Test PWA</title>
+  <link rel="stylesheet" href="styles.css"> <!-- if you have a CSS file -->
+</head>
+<body>
+  <h1>Welcome to First Test PWA</h1>
+  <p>This is your first progressive web app.</p>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then((registration) => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('Service Worker registration failed:', error);
+        });
+    }
+  </script>
+  <script src="app.js"></script> <!-- if you have a JS file -->
+</body>
+</html>
