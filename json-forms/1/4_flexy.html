@@ -12,6 +12,8 @@
 </head>
 <body>
 
+<div id="app"></div>
+
 <script type="text/javascript">
     // Function to load JSON form data using fetch
     const queryParams = new URLSearchParams(window.location.search);
@@ -25,16 +27,19 @@
                 const containerId = 'formContainer-' + Date.now();
                 const dataInputId = 'formData-' + Date.now();
 
-                // Create form container
+                // Create base app element
+                const appElement = document.getElementById('app');
+
+                // Create form container div
                 const formContainer = document.createElement('div');
                 formContainer.id = containerId;
-                document.body.appendChild(formContainer);
+                appElement.appendChild(formContainer);
 
                 // Create textarea for form data
                 const formDataTextarea = document.createElement('textarea');
                 formDataTextarea.id = dataInputId;
                 formDataTextarea.style.display = 'none';
-                document.body.appendChild(formDataTextarea);
+                appElement.appendChild(formDataTextarea);
 
                 // Create form with dynamic IDs
                 var form = reactJsonForm.createForm({
@@ -43,7 +48,7 @@
                     schema: jsonData
                 });
 
-                // Append form to container
+                // Append form to container div
                 formContainer.appendChild(form);
 
                 // Fill data input with JSON
