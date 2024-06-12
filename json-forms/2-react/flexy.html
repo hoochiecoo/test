@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World with React</title>
+    <!-- Include React library scripts -->
+    <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        // Function to parse query parameters
+        function getQueryParams() {
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            return Object.fromEntries(urlParams.entries());
+        }
+
+        // Function to dynamically load components based on query parameter 'parts'
+        function loadComponents() {
+            const queryParams = getQueryParams();
+            const parts = queryParams['parts'] ? queryParams['parts'].split(',') : [];
+
+            parts.forEach(part => {
+                const script = document.createElement('script');
+                script.src = `${part}.js`;
+                document.head.appendChild(script);
+            });
+        }
+
+        // Call loadComponents when the page loads
+        window.onload = loadComponents;
+    </script>
+</body>
+</html>
