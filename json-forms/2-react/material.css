@@ -1,0 +1,118 @@
+/* Material Design Colors */
+:root {
+  --md-primary-color: #2196F3;
+  --md-secondary-color: #FFC107;
+  --md-background-color: #FFFFFF;
+  --md-text-color: #212121;
+}
+
+/* Shadows */
+.shadow {
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Typography */
+body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+}
+
+/* Buttons */
+.btn {
+  background-color: var(--md-primary-color);
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #1976D2;
+}
+
+/* Cards */
+.card {
+  background-color: #FFFFFF;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Inputs */
+.input-field {
+  margin-bottom: 20px;
+}
+
+.input-field input[type="text"],
+.input-field input[type="email"],
+.input-field input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+}
+
+/* Checkboxes */
+.checkbox {
+  display: inline-block;
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.checkbox input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: #EEE;
+}
+
+.checkbox input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox .checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox .checkmark:after {
+  left: 9px;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid #2196F3;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Example Usage */
+.btn-primary {
+  background-color: var(--md-primary-color);
+}
+
+.btn-secondary {
+  background-color: var(--md-secondary-color);
+}
+
+.primary-text {
+  color: var(--md-primary-color);
+}
+
+.secondary-text {
+  color: var(--md-secondary-color);
+}
