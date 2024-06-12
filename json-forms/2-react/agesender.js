@@ -35,15 +35,17 @@ class AgeSender extends React.Component {
     };
 
     render() {
-        return React.createElement('form', { onSubmit: this.handleSubmit },
-            React.createElement('input', { type: 'number', placeholder: 'Age', value: this.state.age, onChange: this.handleAgeChange }),
-            React.createElement('button', { type: 'submit' }, 'Send')
+        return (
+            <form className="age-sender" onSubmit={this.handleSubmit}>
+                <input type="number" placeholder="Age" value={this.state.age} onChange={this.handleAgeChange} className="age-input" />
+                <button type="submit" className="send-button">Send</button>
+            </form>
         );
     }
 }
 
 // Render the AgeSender component into the 'core' container
 ReactDOM.render(
-    React.createElement(AgeSender),
+    <AgeSender />,
     document.getElementById('core')
 );
