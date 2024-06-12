@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page with Libraries</title>
+    <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react-modal@3.15.1/dist/react-modal.min.js"></script>
+    <!-- library -->
+    <script src="https://unpkg.com/@bhch/react-json-form@2.14.0/dist/react-json-form.js"></script>
+    <script>
+        // Load content from content.json
+        fetch('content.json')
+            .then(response => response.json())
+            .then(data => {
+                // Manipulate HTML content based on data from content.json
+                // For example, you can update the innerHTML of a specific element
+                document.getElementById('content').innerHTML = data.htmlContent;
+            });
+
+        // Load core elements from core-elements.json
+        fetch('core-elements.json')
+            .then(response => response.json())
+            .then(data => {
+                // Manipulate core elements based on data from core-elements.json
+                // For example, you can add event listeners or perform other actions
+                // with the core elements
+                // Assuming core elements are React components
+                ReactDOM.render(
+                    React.createElement(data.component, data.props),
+                    document.getElementById('core-elements')
+                );
+            });
+    </script>
+</head>
+<body>
+    <!-- Your HTML content here -->
+    <div id="content">
+        <!-- Content loaded from content.json will be placed here -->
+    </div>
+
+    <div id="core-elements">
+        <!-- Core elements loaded from core-elements.json will be rendered here -->
+    </div>
+</body>
+</html>
