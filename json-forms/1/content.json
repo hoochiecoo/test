@@ -1,0 +1,10 @@
+{
+  "type": "array",
+  "title": "Shopping list",
+  "description": "Add items to your shopping list",
+  "items": {
+    "type": "string"
+  },
+  "minItems": 1,
+  "maxItems": 5
+}
