@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "keys": {
+    "country": {
+      "type": "string",
+      "choices": [
+        "Australia",
+        "India",
+        "United Kingdom",
+        "United States"
+      ]
+    }
+  }
+}
