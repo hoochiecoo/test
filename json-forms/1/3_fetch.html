@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page with Libraries</title>
+    <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react-modal@3.15.1/dist/react-modal.min.js"></script>
+    <!-- library -->
+    <script src="https://unpkg.com/@bhch/react-json-form@2.13.4/dist/react-json-form.js"></script>
+</head>
+<body>
+<div id="formContainer">
+    <!-- The form will be displayed here -->
+</div>
+
+<textarea id="formData" style="display:none;">
+    <!-- The form data will be kept in this textarea -->
+</textarea>
+
+<script type="text/javascript">
+    // Function to load JSON form data using fetch
+    fetch('content.js')
+        .then(response => response.json())
+        .then(jsonData => {
+            var form = reactJsonForm.createForm({
+                containerId: 'formContainer',
+                dataInputId: 'formData',
+                schema: jsonData
+            });
+
+            form.render();
+        })
+        .catch(error => console.error('Error fetching JSON:', error));
+</script>
+</body>
+</html>
