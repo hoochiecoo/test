@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page with Libraries</title>
+    <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react-modal@3.15.1/dist/react-modal.min.js"></script>
+    <!-- library -->
+    <script src="https://unpkg.com/@bhch/react-json-form@2.13.4/dist/react-json-form.js"></script>
+    <script>
+        // Function to fetch data from a JSON file and manipulate HTML content
+        function fetchDataAndManipulate(url, manipulationFunction) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => manipulationFunction(data))
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Manipulate HTML content based on data from content.json
+        function manipulateContent(data) {
+            document.getElementById('content').innerHTML = data.htmlContent;
+        }
+
+        // Manipulate core elements based on data from core-elements.json
+        function manipulateCoreElements(data) {
+            ReactDOM.render(
+                React.createElement(data.component, data.props),
+                document.getElementById('core-elements')
+            );
+        }
+
+        // Fetch content.json and manipulate content
+        fetchDataAndManipulate('content.json', manipulateContent);
+
+        // Fetch core-elements.json and manipulate core elements
+        fetchDataAndManipulate('core-elements.json', manipulateCoreElements);
+    </script>
+</head>
+<body>
+    <!-- Your HTML content here -->
+    <div id="content">
+        <!-- Content loaded from content.json will be placed here -->
+    </div>
+
+    <div id="core-elements">
+        <!-- Core elements loaded from core-elements.json will be rendered here -->
+    </div>
+
+    <!-- Form container and textarea for form data -->
+    <div id="formContainer">
+        <!-- The form will be displayed here -->
+    </div>
+
+    <textarea id="formData">
+        <!-- The form data will be kept in this textarea -->
+    </textarea>
+
+    <script type="text/javascript">
+        var form = reactJsonForm.createForm({
+            containerId: 'formContainer',
+            dataInputId: 'formData',
+            schema: {
+                type: 'object',
+                keys: {
+                    name: {type: 'string'},
+                    age: {type: 'integer'},
+                }
+            }
+        });
+
+        form.render();
+    </script>
+</body>
+</html>
