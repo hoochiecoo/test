@@ -33,13 +33,27 @@
                 // Create form container div
                 const formContainer = document.createElement('div');
                 formContainer.id = containerId;
-                appElement.appendChild(formContainer);
+
+                // Append form container to app element if it's a valid DOM node
+                if (appElement instanceof Node) {
+                    appElement.appendChild(formContainer);
+                } else {
+                    console.error('Invalid app element:', appElement);
+                    return;
+                }
 
                 // Create textarea for form data
                 const formDataTextarea = document.createElement('textarea');
                 formDataTextarea.id = dataInputId;
                 formDataTextarea.style.display = 'none';
-                appElement.appendChild(formDataTextarea);
+
+                // Append textarea to app element if it's a valid DOM node
+                if (appElement instanceof Node) {
+                    appElement.appendChild(formDataTextarea);
+                } else {
+                    console.error('Invalid app element:', appElement);
+                    return;
+                }
 
                 // Create form with dynamic IDs
                 var form = reactJsonForm.createForm({
