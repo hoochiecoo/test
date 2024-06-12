@@ -13,6 +13,6 @@ function ElementCode() {
 
 // Render the Core component into the 'core' container
 ReactDOM.render(
-    React.createElement(UserName),
+    React.createElement(UserName, { name: 'JohnDoe' }), // Change 'JohnDoe' to desired username
     document.getElementById('username')
 );
