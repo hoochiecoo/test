@@ -18,10 +18,21 @@
             return Object.fromEntries(urlParams.entries());
         }
 
+        // Function to create div elements for parts
+        function createPartDivs(parts) {
+            parts.forEach(part => {
+                const div = document.createElement('div');
+                div.id = part;
+                document.getElementById('root').appendChild(div);
+            });
+        }
+
         // Function to dynamically load components based on query parameter 'parts'
         function loadComponents() {
             const queryParams = getQueryParams();
-            const parts = queryParams['parts'] ? queryParams['parts'].split(',') : [];
+            const parts = queryParams['parts'] ? queryParams['parts'].split(',') : ['core', 'content'];
+
+            createPartDivs(parts);
 
             parts.forEach(part => {
                 const script = document.createElement('script');
