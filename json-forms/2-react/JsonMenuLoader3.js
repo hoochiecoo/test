@@ -28,7 +28,7 @@ function JsonMenuLoader() {
     function renderLinks(names) {
         const links = names.map((name, index) =>
             React.createElement('div', { key: index }, 
-                React.createElement('a', { href: `${window.location.host}${window.location.pathname}?parts=${name.replace('.js', '')}`, target: '_blank' }, name)
+                React.createElement('a', { href: `https://${window.location.host}${window.location.pathname}?parts=${name.replace('.js', '')}`, target: '_blank' }, name)
             )
         );
         ReactDOM.render(React.createElement('div', null, links), document.getElementById('jsonLinks'));
