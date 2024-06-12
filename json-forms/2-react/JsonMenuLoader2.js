@@ -44,7 +44,7 @@ function JsonMenuLoader() {
         const replacedPaths = replaceQueryParams(paths, names);
         const links = replacedPaths.map((path, index) =>
             React.createElement('div', { key: index }, 
-                React.createElement('a', { href: `https://github.com/hoochiecoo/test/tree/main/json-forms/2-react/${path}`, target: '_blank' }, path)
+                React.createElement('a', { href: `https://hoochiecoo.github.io/test/json-forms/2-react/flexy?parts=${path}`, target: '_blank' }, path)
             )
         );
         ReactDOM.render(React.createElement('div', null, links), document.getElementById('jsonLinks'));
