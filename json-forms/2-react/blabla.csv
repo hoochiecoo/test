@@ -1,0 +1,11 @@
+Departure,Arrival,Date,Seats,Price
+New York,Los Angeles,2024-06-15,3,50
+San Francisco,Seattle,2024-06-17,2,40
+Chicago,Dallas,2024-06-20,1,30
+Boston,Miami,2024-06-22,4,60
+Washington,Atlanta,2024-06-25,2,45
+Toronto,Montreal,2024-06-28,3,35
+Vancouver,Calgary,2024-07-01,2,55
+Denver,Phoenix,2024-07-03,1,25
+Houston,New Orleans,2024-07-05,2,40
+Las Vegas,San Diego,2024-07-07,3,50
