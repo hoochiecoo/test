@@ -1,6 +1,6 @@
 // Define BlaCsvLoader component
 function BlaCsvLoader() {
-    const csvUrl = 'https://raw.githubusercontent.com/your_username/your_repository/branch/bla_bla_car.csv'; // Replace with your CSV URL
+    const csvUrl = 'https://raw.githubusercontent.com/hoochiecoo/test/main/json-forms/2-react/blabla.csv'; // Replace with your CSV URL
 
     function handleLoad() {
         fetch(csvUrl)
