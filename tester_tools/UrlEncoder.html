@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Area Update Sync with URL Encode/Decode</title>
+</head>
+<body>
+
+<textarea id="encoder" rows="4" cols="50"></textarea>
+<textarea id="decoder" rows="4" cols="50"></textarea>
+
+<script>
+    // Get references to the text areas
+    const encoderTextarea = document.getElementById('encoder');
+    const decoderTextarea = document.getElementById('decoder');
+
+    // Function to URL encode a string
+    function urlEncode(str) {
+        return encodeURIComponent(str);
+    }
+
+    // Function to URL decode a string
+    function urlDecode(str) {
+        return decodeURIComponent(str);
+    }
+
+    // Add event listeners to sync text areas
+    encoderTextarea.addEventListener('input', function(event) {
+        const encodedValue = urlEncode(event.target.value);
+        decoderTextarea.value = encodedValue;
+    });
+
+    decoderTextarea.addEventListener('input', function(event) {
+        const decodedValue = urlDecode(event.target.value);
+        encoderTextarea.value = decodedValue;
+    });
+</script>
+
+</body>
+</html>
