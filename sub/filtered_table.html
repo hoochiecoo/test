@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Data</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Available Rides</h1>
+    <label for="ratingFilter">Min Rating:</label>
+    <input type="number" id="ratingFilter" step="1" min="1300" max="1800" oninput="filterData()">
+    <label for="groupFilter">Group:</label>
+    <select id="groupFilter" onchange="filterData()">
+        <option value="">All</option>
+        <option value="PRO">PRO</option>
+        <option value="LIGUE">LIGUE</option>
+        <option value="NEW">NEW</option>
+    </select>
+    <label for="dayFilter">Day:</label>
+    <select id="dayFilter" onchange="filterData()">
+        <option value="">All</option>
+        <option value="Monday">Monday</option>
+        <option value="Tuesday">Tuesday</option>
+        <option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option>
+    </select>
+    <table id="rideTable">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Departure</th>
+                <th>Driver</th>
+                <th>Rating</th>
+                <th>Group</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        const rideData = [
+            { day: 'Monday', departure: '17:00', driver: 'Milan', rating: 1500, group: 'PRO' },
+            { day: 'Monday', departure: '19:30', driver: 'Damir', rating: 1450, group: 'LIGUE' },
+            { day: 'Monday', departure: '21:00', driver: 'Ana', rating: 1600, group: 'NEW' },
+            { day: 'Tuesday', departure: '16:30', driver: 'Marko', rating: 1700, group: 'PRO' },
+            { day: 'Tuesday', departure: '17:30', driver: 'Ivan', rating: 1800, group: 'PRO' },
+            { day: 'Tuesday', departure: '19:00', driver: 'Jovan', rating: 1550, group: 'PRO' },
+            { day: 'Wednesday', departure: '17:30', driver: 'Petar', rating: 1650, group: 'LIGUE' },
+            { day: 'Wednesday', departure: '20:00', driver: 'Sasa', rating: 1400, group: 'PRO' },
+            { day: 'Thursday', departure: '17:00', driver: 'Milos', rating: 1750, group: 'LIGUE' },
+            { day: 'Thursday', departure: '18:30', driver: 'Nenad', rating: 1350, group: 'PRO' },
+            { day: 'Thursday', departure: '20:00', driver: 'Dejan', rating: 1450, group: 'LIGUE' },
+            { day: 'Monday', departure: '17:00', driver: 'Nikola', rating: 1580, group: 'PRO' },
+            { day: 'Monday', departure: '19:30', driver: 'Filip', rating: 1400, group: 'LIGUE' },
+            { day: 'Monday', departure: '21:00', driver: 'Dragan', rating: 1600, group: 'NEW' },
+            { day: 'Tuesday', departure: '16:30', driver: 'Goran', rating: 1680, group: 'PRO' },
+            { day: 'Tuesday', departure: '17:30', driver: 'Zoran', rating: 1750, group: 'PRO' },
+            { day: 'Tuesday', departure: '19:00', driver: 'Bojan', rating: 1550, group: 'PRO' },
+            { day: 'Wednesday', departure: '17:30', driver: 'Aleksandar', rating: 1600, group: 'LIGUE' },
+            { day: 'Wednesday', departure: '20:00', driver: 'Mladen', rating: 1400, group: 'PRO' },
+            { day: 'Thursday', departure: '17:00', driver: 'Mihajlo', rating: 1780, group: 'LIGUE' },
+            { day: 'Thursday', departure: '18:30', driver: 'Svetlana', rating: 1350, group: 'PRO' },
+            { day: 'Thursday', departure: '20:00', driver: 'Vladimir', rating: 1450, group: 'LIGUE' },
+        ];
+
+        function populateTable(data) {
+            const tbody = document.getElementById('rideTable').querySelector('tbody');
+            tbody.innerHTML = '';
+            data.forEach(ride => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${ride.day}</td>
+                    <td>${ride.departure}</td>
+                    <td>${ride.driver}</td>
+                    <td>${ride.rating}</td>
+                    <td>${ride.group}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterData() {
+            const minRating = parseFloat(document.getElementById('ratingFilter').value) || 1300;
+            const groupFilter = document.getElementById('groupFilter').value;
+            const dayFilter = document.getElementById('dayFilter').value;
+
+            const filteredData = rideData.filter(ride => 
+                ride.rating >= minRating &&
+                (groupFilter === "" || ride.group === groupFilter) &&
+                (dayFilter === "" || ride.day === dayFilter)
+            );
+            populateTable(filteredData);
+        }
+
+        // Initialize table with all data
+        populateTable(rideData);
+    </script>
+</body>
+</html>
