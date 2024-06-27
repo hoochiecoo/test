@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Street Views</title>
+</head>
+<body>
+    <h1>Random Street Views around Vladimir and The Hague</h1>
+    <button onclick="generateStreetViews()">Get Street Views</button>
+    <div id="vladimir-street-view" style="width: 600px; height: 400px; margin-bottom: 20px;"></div>
+    <div id="thehague-street-view" style="width: 600px; height: 400px;"></div>
+
+    <script>
+        function generateStreetViews() {
+            generateStreetView('vladimir', 56.1291, 40.4077);
+            generateStreetView('thehague', 52.0705, 4.3007);
+        }
+
+        function generateStreetView(city, lat, lng) {
+            const radius = 3; // 3 km radius
+
+            function randomOffset() {
+                return (Math.random() - 0.5) * 2 * radius / 111; // 111 km per degree of latitude/longitude
+            }
+
+            function getRandomCoordinates() {
+                const randomLat = lat + randomOffset();
+                const randomLng = lng + randomOffset();
+                return { randomLat, randomLng };
+            }
+
+            function checkStreetViewAvailable({ randomLat, randomLng }) {
+                const svService = new google.maps.StreetViewService();
+                const latLng = new google.maps.LatLng(randomLat, randomLng);
+
+                svService.getPanorama({ location: latLng, radius: 50 }, (data, status) => {
+                    if (status === 'OK') {
+                        const iframeSrc = `https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcE5rY3ZoZ1hIN1Z3RFpHcTFiWmN1ejN4M3FPU3Y1eUtBU2tGNzRO!2m2!1d${randomLat}!2d${randomLng}!3f0!4f0!5f0.7820865974627469`;
+                        document.getElementById(`${city}-street-view`).innerHTML = `<iframe width="600" height="400" src="${iframeSrc}" frameborder="0" style="border:0;" allowfullscreen></iframe>`;
+                    } else {
+                        generateStreetView(city, lat, lng);
+                    }
+                });
+            }
+
+            const coordinates = getRandomCoordinates();
+            checkStreetViewAvailable(coordinates);
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+</body>
+</html>
