@@ -2,21 +2,36 @@
   <head>
     <!-- Load the Telegram Library -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Load AngularJS Library -->
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <script>
-      // Initialize the AngularJS app
-      angular.module("custom-webapp-ui", []).controller('CustomUIController', function CustomUIController($scope) {
-        // Get the logged-in user's Telegram ID
-        window.Telegram.WebApp.getLoggedInUser().then(function(user) {
-          console.log("Telegram ID:", user.id);
-        }).catch(function(error) {
-          console.error("Error getting user:", error);
-        });
-      });
+      // Simulated data for testing
+      const testData = { name: "John Doe", age: 30 };
+
+      // Simulated function to send data back to Telegram bot
+      function sendDataToBot(data) {
+        window.Telegram.WebApp.sendData(JSON.stringify(data));
+      }
+
+      // Simulated function to handle button click
+      function handleButtonClick() {
+        console.log("Button clicked!");
+        sendDataToBot(testData); // Sending test data to bot
+      }
+
+      // Simulated initialization
+      window.onload = function () {
+        // Simulated button setup
+        const mainButton = window.Telegram.WebApp.MainButton;
+        mainButton.text = "Send Data";
+        mainButton.enable();
+        mainButton.show();
+
+        // Simulated button click event
+        mainButton.onClick(handleButtonClick);
+      };
     </script>
   </head>
-  <body ng-app="custom-webapp-ui" ng-controller="CustomUIController">
-    <h1>Hello World</h1>
+  <body>
+    <h1>Telegram WebApp Test</h1>
+    <p>This is a test page to demonstrate interactions with Telegram WebApp functions.</p>
   </body>
 </html>
