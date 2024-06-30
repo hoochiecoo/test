@@ -1,63 +1,11 @@
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Load the Telegram Library -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-      // Function to parse URL query parameters
-      function getParameterByName(name, url) {
-        if (!url) url = window.location.href;
-        name = name.replace(/[\[\]]/g, "\\$&");
-        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-            results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, " "));
-      }
-
-      // Function to handle button click
-      function handleButtonClick() {
-        // Get initData from window object
-        var initData = window.Telegram.WebApp.initData;
-
-        // Parse initData to extract user information
-        var userString = getParameterByName('user', initData);
-        var userObj = JSON.parse(decodeURIComponent(userString));
-
-        // Extract user ID and name
-        var userId = userObj.id;
-        var userName = userObj.first_name + ' ' + userObj.last_name;
-
-        // Log user information
-        console.log("User ID:", userId);
-        console.log("User Name:", userName);
-
-        // Simulated data for sending to bot
-        var testData = { message: "Hello from WebApp!", userId: userId, userName: userName };
-
-        // Send data to bot
-        sendDataToBot(testData);
-      }
-
-      // Function to send data back to Telegram bot
-      function sendDataToBot(data) {
-        window.Telegram.WebApp.sendData(JSON.stringify(data));
-      }
-
-      // Simulated initialization
-      window.onload = function () {
-        // Simulated button setup
-        var mainButton = window.Telegram.WebApp.MainButton;
-        mainButton.text = "Send Message";
-        mainButton.enable();
-        mainButton.show();
-
-        // Simulated button click event
-        mainButton.onClick(handleButtonClick);
-      };
-    </script>
-  </head>
-  <body>
-    <h1>Telegram WebApp Test</h1>
-    <p>This is a test page to demonstrate interactions with Telegram WebApp functions.</p>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datawrapper Embed Example</title>
+</head>
+<body style="margin: 0; overflow: hidden;">
+  <iframe src="https://datawrapper.dwcdn.net/5vcmO/" frameborder="0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"></iframe>
+</body>
 </html>
