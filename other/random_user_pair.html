@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Pairing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        select {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        #pairTable {
+            margin-top: 20px;
+        }
+        button {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>User Pairing</h2>
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Pair with</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Users and select fields will be added dynamically here -->
+        </tbody>
+    </table>
+
+    <h3>Selected Pairs</h3>
+    <table id="pairTable">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Paired with</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Selected pairs will be added dynamically here -->
+        </tbody>
+    </table>
+
+    <button onclick="randomPairing()">Fully Random Pairs</button>
+    <button onclick="advancedRandomPairing()">Advanced Randomization</button>
+
+    <script>
+        var csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR37EwAUP0tDMggeU2hmpXf8k7uEYsNwWz7HWXal8nEFxAFDup4d3anaEDhEFVWHoGA9LkDswckQFvh/pub?gid=1683153621&single=true&output=csv';
+        var users = []; // Initialize an empty array to hold users data
+        var selectedPairs = [];
+
+        // Function to fetch CSV data and process it
+        async function fetchAndProcessCSV() {
+            try {
+                const response = await fetch(csvUrl);
+                const csvData = await response.text();
+                users = parseCSV(csvData); // Update users array with parsed data
+
+                initializeUserTable(users);
+            } catch (error) {
+                console.error('Error fetching CSV:', error);
+            }
+        }
+
+        // Function to parse CSV data and extract names
+        function parseCSV(csvData) {
+            const rows = csvData.trim().split('\n');
+            const headers = rows[0].split(',');
+
+            const nameIndex = headers.findIndex(header => header.trim().toLowerCase() === 'name');
+            if (nameIndex === -1) {
+                console.error('Column "Name" not found in CSV.');
+                return [];
+            }
+
+            const users = [];
+            for (let i = 1; i < rows.length; i++) {
+                const cols = rows[i].split(',');
+                if (cols.length > nameIndex) {
+                    const userName = cols[nameIndex].trim();
+                    if (userName) {
+                        users.push(userName);
+                    }
+                }
+            }
+
+            return users;
+        }
+
+        // Function to initialize the table of users
+        function initializeUserTable(users) {
+            var userTableBody = document.querySelector("#userTable tbody");
+            userTableBody.innerHTML = ""; // Clear any existing content
+
+            users.forEach(function(user) {
+                var tr = document.createElement("tr");
+
+                var tdUser = document.createElement("td");
+                tdUser.textContent = user;
+                tr.appendChild(tdUser);
+
+                var tdSelect = document.createElement("td");
+                var select = createPairSelect(user, users);
+                tdSelect.appendChild(select);
+                tr.appendChild(tdSelect);
+
+                userTableBody.appendChild(tr);
+            });
+        }
+
+        // Function to create pair select dropdown
+        function createPairSelect(currentUser, allUsers) {
+            var select = document.createElement("select");
+
+            var option = document.createElement("option");
+            option.text = "Select...";
+            option.value = "";
+            select.appendChild(option);
+
+            allUsers.forEach(function(user) {
+                if (user !== currentUser) {
+                    var option = document.createElement("option");
+                    option.text = user;
+                    option.value = user;
+                    select.appendChild(option);
+                }
+            });
+
+            select.addEventListener("change", function() {
+                var selectedPair = select.value;
+                if (selectedPair) {
+                    // Remove pair from original list
+                    users = users.filter(function(user) {
+                        return user !== currentUser && user !== selectedPair;
+                    });
+
+                    // Add to selected pairs
+                    selectedPairs.push({ user: currentUser, pairedWith: selectedPair });
+
+                    // Reinitialize user table and pair table
+                    initializeUserTable(users);
+                    updatePairTable();
+                }
+            });
+
+            return select;
+        }
+
+        // Function to update the pair table
+        function updatePairTable() {
+            var pairTableBody = document.querySelector("#pairTable tbody");
+            pairTableBody.innerHTML = ""; // Clear existing content
+
+            selectedPairs.forEach(function(pair) {
+                var tr = document.createElement("tr");
+
+                var tdUser = document.createElement("td");
+                tdUser.textContent = pair.user;
+                tr.appendChild(tdUser);
+
+                var tdPairedWith = document.createElement("td");
+                tdPairedWith.textContent = pair.pairedWith;
+                tr.appendChild(tdPairedWith);
+
+                pairTableBody.appendChild(tr);
+            });
+        }
+
+        // Function for fully random pairing
+        function randomPairing() {
+            var remainingUsers = [...users];
+            selectedPairs = [];
+
+            while (remainingUsers.length > 1) {
+                var index1 = Math.floor(Math.random() * remainingUsers.length);
+                var user1 = remainingUsers[index1];
+                remainingUsers.splice(index1, 1);
+
+                var index2 = Math.floor(Math.random() * remainingUsers.length);
+                var user2 = remainingUsers[index2];
+                remainingUsers.splice(index2, 1);
+
+                selectedPairs.push({ user: user1, pairedWith: user2 });
+            }
+
+            updatePairTable();
+        }
+
+        // Function for advanced randomization (pairing sequentially with next 5 users)
+        function advancedRandomPairing() {
+            var remainingUsers = [...users];
+            selectedPairs = [];
+
+            while (remainingUsers.length > 0) {
+                var user1 = remainingUsers.shift(); // Take the first user from the remaining list
+
+                // Find a pair for user1 from the next 5 users or less if fewer are remaining
+                var pairIndex = Math.min(5, remainingUsers.length);
+                var index2 = Math.floor(Math.random() * pairIndex);
+                var user2 = remainingUsers[index2];
+                remainingUsers.splice(index2, 1);
+
+                selectedPairs.push({ user: user1, pairedWith: user2 });
+            }
+
+            updatePairTable();
+        }
+
+        // Initialize the user table when the page loads
+        document.addEventListener("DOMContentLoaded", function() {
+            fetchAndProcessCSV();
+        });
+    </script>
+</body>
+</html>
