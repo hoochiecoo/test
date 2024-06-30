@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zoomed Out Iframe</title>
+    <title>Iframe with Zoom</title>
     <style>
         .iframe-container {
             position: relative;
-            width: 100%;
             overflow: hidden;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            width: 100%;
+            padding-top: 75%; /* Adjust this value to control the height of the iframe */
         }
         .iframe-container iframe {
             position: absolute;
             top: 0;
             left: 0;
-            width: 200%;
+            width: 200%; /* 200% to counter the 50% scaling */
             height: 200%;
-            transform: scale(0.35);
+            transform: scale(0.5);
             transform-origin: 0 0;
             border: none;
         }
@@ -25,7 +25,11 @@
 </head>
 <body>
     <div class="iframe-container">
-        <iframe src="https://docs.google.com/spreadsheets/d/1YV6UlcpgAIe0Dn1rjskxCL-0HMmqBgx0MRzvzWqlrZs/edit?gid=270098562" allowfullscreen></iframe>
+        <iframe 
+            src="https://docs.google.com/spreadsheets/d/1YV6UlcpgAIe0Dn1rjskxCL-0HMmqBgx0MRzvzWqlrZs/edit?gid=270098562"
+            width="1920" 
+            height="1080">
+        </iframe>
     </div>
 </body>
 </html>
