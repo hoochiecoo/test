@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
+  <style>
+   body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+header {
+  margin-bottom: 20px;
+}
+
+h1, h2 {
+  margin: 0;
+  padding: 0;
+}
+
+#messages {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  max-height: 400px;
+  text-align: left;
+}
+
+.message {
+  padding: 8px;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+  border-radius: 8px;
+  display: block;
+  clear: both;
+}
+
+.timestamp {
+      font-style: italic;
+      font-size: 0.8em; /* Smaller font size for timestamp */
+    }
+
+.my-message {
+  background-color: #DCF8C6;
+  align-self: flex-end;
+  text-align: right;
+  float: right;
+  clear: both;
+}
+
+.other-message {
+  background-color: #EAEAEA;
+  align-self: flex-start;
+  text-align: left;
+  float: left;
+  clear: both;
+}
+
+.message p {
+  margin: 5px 0;
+  font-size: 0.9em; /* Adjusted font size */
+}
+
+.message strong {
+  font-weight: bold;
+  font-size: 0.9em; /* Adjusted font size */
+}
+
+.message em {xqxq
+  font-style: italic; /* Italicized timestamp */
+  font-size: 0.8em; /* Adjusted font size */
+}
+
+.info {
+  font-style: italic;
+  font-size: 0.8em; /* Adjusted font size */
+}
+
+#form {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#input {
+  flex: 1;
+  padding: 10px;
+}
+
+#send {
+  padding: 10px;
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>This chat is only for timeslot choosing</h1>
+      <h2 id="room-name"></h2>
+      <p><a href="https://docs.google.com/spreadsheets/d/1YV6UlcpgAIe0Dn1rjskxCL-0HMmqBgx0MRzvzWqlrZs/edit?gid=815149046#gid=815149046" target="_blank">Link to slots spreadsheet</a></p>
+      <p class="info">Only the last 10 messages are stored on the server.</p>
+    </header>
+    
+    <div id="chatBox" style="display:none">
+      <ul id="messages"></ul>
+      <form id="form" action="">
+        <input id="input" autocomplete="off" /><button id="send">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+    var username;
+    var room;
+
+    function getQueryVariable(variable) {
+      const query = window.location.search.substring(1);
+      const vars = query.split('&');
+      for (let i = 0; i < vars.length; i++) {
+        const pair = vars[i].split('=');
+        if (decodeURIComponent(pair[0]) === variable) {
+          return decodeURIComponent(pair[1]);
+        }
+      }
+      return null;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      room = getQueryVariable('room');
+      username = getQueryVariable('username');
+      
+      if (room && username) {
+        document.getElementById('room-name').textContent = room;
+        socket.emit('join room', room, username);
+        document.getElementById('chatBox').style.display = 'block';
+      } else {
+        alert('Room name and username are required.');
+      }
+    });
+
+    var form = document.getElementById('form');
+    var input = document.getElementById('input');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
+
+    socket.on('init messages', function(messages) {
+      messages.forEach(function(msg) {
+        displayMessage(msg);
+      });
+    });
+
+    socket.on('chat message', function(data) {
+      displayMessage(data);
+    });
+
+    socket.on('user joined', function(msg) {
+      displayInfoMessage(msg);
+    });
+
+    socket.on('user left', function(msg) {
+      displayInfoMessage(msg);
+    });
+
+    function displayMessage(data) {
+      var messages = document.getElementById('messages');
+      var item = document.createElement('li');
+      var messageClass = (data.username === username) ? 'my-message' : 'other-message';
+      var timestamp = '<p class="timestamp">' + new Date().toLocaleTimeString() + '</p>';
+      item.innerHTML = `<div class="message ${messageClass}"><strong>${data.username}</strong><p>${data.message}</p><p>${timestamp}</p></div>`;
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function displayInfoMessage(msg) {
+      var messages = document.getElementById('messages');
+      var item = document.createElement('li');
+      item.textContent = msg;
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    }
+  </script>
+</body>
+</html>
