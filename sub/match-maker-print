@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bowling Match Results Generator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+  textarea {
+    width: 100%;
+    height: 200px;
+    margin-top: 10px;
+    font-family: monospace;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+  <h2>Bowling Match Results Generator</h2>
+
+  <div>
+    <label for="playerA">Player A:</label>
+    <input type="text" id="playerA" placeholder="Enter Player A's name">
+  </div>
+
+  <div>
+    <label for="playerB">Player B:</label>
+    <input type="text" id="playerB" placeholder="Enter Player B's name">
+  </div>
+
+  <div>
+    <h3>1st Set</h3>
+    <label for="set1game1">Game 1:</label>
+    <input type="text" id="set1game1A" placeholder="Player A score">
+    <input type="text" id="set1game1B" placeholder="Player B score">
+
+    <label for="set1game2">Game 2:</label>
+    <input type="text" id="set1game2A" placeholder="Player A score">
+    <input type="text" id="set1game2B" placeholder="Player B score">
+
+    <label for="set1rollOff">Roll-Off Game:</label>
+    <input type="text" id="set1rollOffA" placeholder="Player A score">
+    <input type="text" id="set1rollOffB" placeholder="Player B score">
+  </div>
+
+  <div>
+    <h3>2nd Set</h3>
+    <label for="set2game1">Game 1:</label>
+    <input type="text" id="set2game1A" placeholder="Player A score">
+    <input type="text" id="set2game1B" placeholder="Player B score">
+
+    <label for="set2game2">Game 2:</label>
+    <input type="text" id="set2game2A" placeholder="Player A score">
+    <input type="text" id="set2game2B" placeholder="Player B score">
+
+    <label for="set2rollOff">Roll-Off Game:</label>
+    <input type="text" id="set2rollOffA" placeholder="Player A score">
+    <input type="text" id="set2rollOffB" placeholder="Player B score">
+  </div>
+
+  <div>
+    <h3>3rd Set (Roll-Off Game)</h3>
+    <label for="set3rollOff">Game 1:</label>
+    <input type="text" id="set3rollOffA" placeholder="Player A score">
+    <input type="text" id="set3rollOffB" placeholder="Player B score">
+  </div>
+
+  <button onclick="generateResults()">Generate Results</button>
+
+  <textarea id="results" readonly placeholder="Results will appear here"></textarea>
+
+  <script>
+    function generateResults() {
+      // Get input values
+      let playerA = document.getElementById("playerA").value.trim();
+      let playerB = document.getElementById("playerB").value.trim();
+
+      let set1game1A = document.getElementById("set1game1A").value.trim();
+      let set1game1B = document.getElementById("set1game1B").value.trim();
+      let set1game2A = document.getElementById("set1game2A").value.trim();
+      let set1game2B = document.getElementById("set1game2B").value.trim();
+      let set1rollOffA = document.getElementById("set1rollOffA").value.trim();
+      let set1rollOffB = document.getElementById("set1rollOffB").value.trim();
+
+      let set2game1A = document.getElementById("set2game1A").value.trim();
+      let set2game1B = document.getElementById("set2game1B").value.trim();
+      let set2game2A = document.getElementById("set2game2A").value.trim();
+      let set2game2B = document.getElementById("set2game2B").value.trim();
+      let set2rollOffA = document.getElementById("set2rollOffA").value.trim();
+      let set2rollOffB = document.getElementById("set2rollOffB").value.trim();
+
+      let set3rollOffA = document.getElementById("set3rollOffA").value.trim();
+      let set3rollOffB = document.getElementById("set3rollOffB").value.trim();
+
+      // Generate the results text
+      let resultsText = `${playerA} - ${playerB}\n`;
+      resultsText += `1 - 2\n\n`;
+
+      resultsText += `1 SET\n`;
+      resultsText += `${set1game1A} - ${set1game1B}\n`;
+      resultsText += `${set1game2A} - ${set1game2B}\n`;
+      resultsText += `${set1rollOffA} - ${set1rollOffB}\n\n`;
+
+      resultsText += `2 SET\n`;
+      resultsText += `${set2game1A} - ${set2game1B}\n`;
+      resultsText += `${set2game2A} - ${set2game2B}\n`;
+      resultsText += `${set2rollOffA} - ${set2rollOffB}\n\n`;
+
+      resultsText += `3 SET (Roll-Off Game)\n`;
+      resultsText += `${set3rollOffA} - ${set3rollOffB}\n`;
+
+      // Display results in textarea
+      document.getElementById("results").value = resultsText;
+    }
+  </script>
+</body>
+</html>
