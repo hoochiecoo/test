@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сортировка списка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        textarea {
+            width: 300px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #priority-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Сортировка списка</h1>
+    <textarea id="input-list" placeholder="Введите список, разделенный переводами строки..."></textarea>
+    <button id="start-button">Начать</button>
+    <textarea id="output-list" readonly placeholder="Итоговый список будет здесь..."></textarea>
+    <div id="priority-buttons"></div>
+
+    <script>
+        const startButton = document.getElementById('start-button');
+        const inputList = document.getElementById('input-list');
+        const outputList = document.getElementById('output-list');
+        const priorityButtons = document.getElementById('priority-buttons');
+
+        let items = [];
+        let currentRange = [];
+        let currentRangeStartIndex = 0;
+
+        startButton.addEventListener('click', () => {
+            items = inputList.value.split('\n').filter(item => item.trim() !== '');
+            displayPriorityButtons();
+        });
+
+        function getRandomItems() {
+            const startIndex = Math.floor(Math.random() * (items.length - 3));
+            currentRangeStartIndex = startIndex;
+            currentRange = items.slice(startIndex, startIndex + 4);
+            return currentRange;
+        }
+
+        function displayPriorityButtons() {
+            priorityButtons.innerHTML = '';
+            if (items.length === 0) return;
+
+            const topItems = getRandomItems();
+
+            topItems.forEach((item, index) => {
+                const button = document.createElement('button');
+                button.textContent = item;
+                button.addEventListener('click', () => prioritizeItem(item));
+                priorityButtons.appendChild(button);
+            });
+        }
+
+        function prioritizeItem(item) {
+            const itemIndex = currentRange.indexOf(item);
+            if (itemIndex > -1) {
+                // Remove item from the current range and add it to the start
+                const [prioritizedItem] = currentRange.splice(itemIndex, 1);
+                currentRange.unshift(prioritizedItem);
+
+                // Update items array with new sorted range
+                items.splice(currentRangeStartIndex, 4, ...currentRange);
+
+                updateOutputList();
+                displayPriorityButtons();
+            }
+        }
+
+        function updateOutputList() {
+            outputList.value = items.join('\n');
+        }
+    </script>
+</body>
+</html>
