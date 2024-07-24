@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сортировка списка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        textarea {
+            width: 300px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #priority-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .group-container {
+            margin-top: 20px;
+            width: 300px;
+        }
+        .group-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        #group-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 1px solid #ccc;
+            padding: 20px;
+            z-index: 1000;
+        }
+        #group-popup input {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+        #group-popup button {
+            padding: 5px 10px;
+            margin: 5px;
+        }
+        #group-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        #group-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Сортировка списка</h1>
+    <textarea id="input-list" placeholder="Введите список, разделенный переводами строки..."></textarea>
+    <button id="start-button">Начать</button>
+    <div id="priority-buttons"></div>
+    <div id="output-container"></div>
+
+    <div id="group-popup">
+        <h3>Выберите группу или создайте новую</h3>
+        <input type="text" id="new-group-name" placeholder="Имя новой группы">
+        <div id="group-buttons"></div>
+        <button id="confirm-new-group-button">Создать новую группу</button>
+    </div>
+    <div id="group-overlay"></div>
+
+    <script>
+        let items = [];
+        let groupedItems = {};
+        let selectedItem = '';
+
+        function handleAction(event) {
+            const target = event.target;
+
+            if (target.id === 'start-button') {
+                handleStartButtonClick();
+            } else if (target.matches('#priority-buttons button')) {
+                handleItemButtonClick(target);
+            } else if (target.id === 'confirm-new-group-button') {
+                handleConfirmNewGroupButtonClick();
+            } else if (target.matches('#group-buttons button')) {
+                handleExistingGroupButtonClick(target);
+            }
+        }
+
+        function handleStartButtonClick() {
+            items = document.getElementById('input-list').value.split('\n').filter(item => item.trim() !== '');
+            displayItemButtons();
+        }
+
+        function displayItemButtons() {
+            const priorityButtons = document.getElementById('priority-buttons');
+            priorityButtons.innerHTML = '';
+
+            items.forEach(item => {
+                const button = document.createElement('button');
+                button.textContent = item;
+                priorityButtons.appendChild(button);
+            });
+        }
+
+        function handleItemButtonClick(button) {
+            selectedItem = button.textContent;
+            displayGroupPopup();
+        }
+
+        function displayGroupPopup() {
+            const groupButtons = document.getElementById('group-buttons');
+            groupButtons.innerHTML = '';
+
+            for (const group in groupedItems) {
+                const groupButton = document.createElement('button');
+                groupButton.textContent = group;
+                groupButton.dataset.group = group;
+                groupButtons.appendChild(groupButton);
+            }
+
+            document.getElementById('group-popup').style.display = 'block';
+            document.getElementById('group-overlay').style.display = 'block';
+        }
+
+        function handleConfirmNewGroupButtonClick() {
+            const newGroupName = document.getElementById('new-group-name').value.trim();
+
+            if (newGroupName) {
+                if (!groupedItems[newGroupName]) {
+                    groupedItems[newGroupName] = [];
+                    createGroupTextarea(newGroupName);
+                }
+                groupedItems[newGroupName].push(selectedItem);
+
+                items = items.filter(i => i !== selectedItem);
+                updateGroupTextarea(newGroupName);
+                displayItemButtons();
+                hideGroupPopup();
+            }
+        }
+
+        function handleExistingGroupButtonClick(button) {
+            const group = button.dataset.group;
+            groupedItems[group].push(selectedItem);
+
+            items = items.filter(i => i !== selectedItem);
+            updateGroupTextarea(group);
+            displayItemButtons();
+            hideGroupPopup();
+        }
+
+        function createGroupTextarea(group) {
+            const outputContainer = document.getElementById('output-container');
+
+            const groupContainer = document.createElement('div');
+            groupContainer.classList.add('group-container');
+
+            const groupHeader = document.createElement('div');
+            groupHeader.classList.add('group-header');
+            groupHeader.textContent = `Группа ${group}:`;
+
+            const groupTextarea = document.createElement('textarea');
+            groupTextarea.id = `group-${group}`;
+            groupTextarea.readOnly = true;
+
+            groupContainer.appendChild(groupHeader);
+            groupContainer.appendChild(groupTextarea);
+            outputContainer.appendChild(groupContainer);
+        }
+
+        function updateGroupTextarea(group) {
+            const groupTextarea = document.getElementById(`group-${group}`);
+            groupTextarea.value = groupedItems[group].join('\n');
+        }
+
+        function hideGroupPopup() {
+            document.getElementById('group-popup').style.display = 'none';
+            document.getElementById('group-overlay').style.display = 'none';
+            document.getElementById('new-group-name').value = '';
+        }
+
+        document.addEventListener('click', handleAction);
+    </script>
+</body>
+</html>
