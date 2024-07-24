@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сортировка списка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        textarea {
+            width: 300px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #priority-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Сортировка списка</h1>
+    <div id="input-container"></div>
+    <div id="output-container"></div>
+    <div id="priority-buttons"></div>
+
+    <script>
+        class ListSorter {
+            constructor() {
+                this.initialize();
+            }
+
+            initialize() {
+                this.createElements();
+                this.attachEventListeners();
+            }
+
+            createElements() {
+                this.inputList = this.createElement('textarea', { id: 'input-list', placeholder: 'Введите список, разделенный переводами строки...' });
+                this.startButton = this.createElement('button', { id: 'start-button', textContent: 'Начать' });
+                this.outputList = this.createElement('textarea', { id: 'output-list', readonly: true, placeholder: 'Итоговый список будет здесь...' });
+                this.priorityButtons = this.createElement('div', { id: 'priority-buttons' });
+
+                document.getElementById('input-container').appendChild(this.inputList);
+                document.getElementById('input-container').appendChild(this.startButton);
+                document.getElementById('output-container').appendChild(this.outputList);
+                document.getElementById('priority-buttons').appendChild(this.priorityButtons);
+            }
+
+            createElement(tag, attributes) {
+                const element = document.createElement(tag);
+                for (let key in attributes) {
+                    if (key === 'textContent') {
+                        element.textContent = attributes[key];
+                    } else {
+                        element.setAttribute(key, attributes[key]);
+                    }
+                }
+                return element;
+            }
+
+            attachEventListeners() {
+                this.startButton.addEventListener('click', () => this.startSorting());
+            }
+
+            startSorting() {
+                this.items = this.inputList.value.split('\n').filter(item => item.trim() !== '');
+                this.displayPriorityButtons();
+            }
+
+            getRandomItems() {
+                const startIndex = Math.floor(Math.random() * (this.items.length - 3));
+                this.currentRangeStartIndex = startIndex;
+                this.currentRange = this.items.slice(startIndex, startIndex + 4);
+                return this.currentRange;
+            }
+
+            displayPriorityButtons() {
+                this.priorityButtons.innerHTML = '';
+                if (this.items.length === 0) return;
+
+                const topItems = this.getRandomItems();
+
+                topItems.forEach(item => {
+                    const button = this.createElement('button', { textContent: item });
+                    button.addEventListener('click', () => this.prioritizeItem(item));
+                    this.priorityButtons.appendChild(button);
+                });
+            }
+
+            prioritizeItem(item) {
+                const itemIndex = this.currentRange.indexOf(item);
+                if (itemIndex > -1) {
+                    const [prioritizedItem] = this.currentRange.splice(itemIndex, 1);
+                    this.currentRange.unshift(prioritizedItem);
+
+                    this.items.splice(this.currentRangeStartIndex, 4, ...this.currentRange);
+
+                    this.updateOutputList();
+                    this.displayPriorityButtons();
+                }
+            }
+
+            updateOutputList() {
+                this.outputList.value = this.items.join('\n');
+            }
+        }
+
+        new ListSorter();
+    </script>
+</body>
+</html>
