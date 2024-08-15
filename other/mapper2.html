@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Options on Map</title>
+    <style>
+        #map {
+            height: 80vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            z-index: 1;
+        }
+        #controls, #table-container {
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+            cursor: pointer;
+        }
+        .route-button {
+            margin-right: 10px;
+        }
+        a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Route Options on Map</h1>
+    <div id="map"></div>
+    <div id="info">Estimated Time: </div>
+    <div id="controls">
+        <label for="url-input">Google Maps URL:</label>
+        <input type="text" id="url-input" placeholder="Paste Google Maps URL here">
+        <button onclick="processURL()">Generate Routes</button>
+    </div>
+    <div id="table-container">
+        <table id="time-table">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Route</th>
+                    <th onclick="sortTable(1)">Estimated Time</th>
+                    <th>Google Maps Link</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div id="route-buttons"></div>
+    </div>
+
+    <script>
+        let map;
+        let directionsService;
+        let directionsRenderer;
+        const center = { lat: 55.7558, lng: 37.6176 }; // Default center (Moscow)
+        const earthRadius = 6371; // Earth's radius in kilometers
+
+        let points = [];
+        let markers = [];
+        let routes = [];
+
+        function calculateOffset(lat, lng, distance) {
+            const latRad = lat * Math.PI / 180;
+            const lonRad = lng * Math.PI / 180;
+            const dLat = distance / earthRadius;
+            const dLon = distance / (earthRadius * Math.cos(latRad));
+            const newLat = latRad + dLat;
+            const newLon = lonRad + dLon;
+
+            return {
+                lat: newLat * 180 / Math.PI,
+                lng: newLon * 180 / Math.PI
+            };
+        }
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 12,
+                center: center
+            });
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+        }
+
+        function updatePoints() {
+            points = markers.map(marker => marker.getPosition().toJSON());
+        }
+
+        function generateRoutes() {
+            routes = [];
+            const numPoints = points.length;
+
+            function permute(array, start = 0) {
+                if (start === array.length - 1) {
+                    routes.push(array.slice());
+                } else {
+                    for (let i = start; i < array.length; i++) {
+                        [array[start], array[i]] = [array[i], array[start]];
+                        permute(array, start + 1);
+                        [array[start], array[i]] = [array[i], array[start]];
+                    }
+                }
+            }
+
+            permute(points);
+
+            routes.forEach((route, index) => {
+                const waypoints = route.slice(1, -1).map(point => ({
+                    location: point,
+                    stopover: true
+                }));
+
+                const request = {
+                    origin: route[0],
+                    destination: route[route.length - 1],
+                    waypoints: waypoints,
+                    optimizeWaypoints: false,
+                    travelMode: 'DRIVING'
+                };
+
+                directionsService.route(request, (result, status) => {
+                    if (status === 'OK') {
+                        const duration = result.routes[0].legs.reduce((total, leg) => total + leg.duration.value, 0) / 60;
+                        const durationText = (duration / 60).toFixed(2) + ' hours';
+
+                        // Generate Google Maps link
+                        const waypointsString = route.slice(1, -1).map(point => `${point.lat},${point.lng}`).join('/');
+                        const link = `https://www.google.com/maps/dir/${route[0].lat},${route[0].lng}/${route.slice(1, -1).map(point => `${point.lat},${point.lng}`).join('/')}/${route[route.length - 1].lat},${route[route.length - 1].lng}/@${center.lat},${center.lng},14z/data=!4m2!4m1!3e0?hl=en&entry=ttu`;
+
+                        document.getElementById(`route${index + 1}-time`).innerText = durationText;
+                        document.getElementById(`route${index + 1}-link`).href = link;
+                    } else {
+                        console.error('Directions request failed due to ' + status);
+                    }
+                });
+            });
+        }
+
+        function setRoute(option) {
+            const route = routes[option - 1];
+            const waypoints = route.slice(1, -1).map(point => ({
+                location: point,
+                stopover: true
+            }));
+
+            const request = {
+                origin: route[0],
+                destination: route[route.length - 1],
+                waypoints: waypoints,
+                optimizeWaypoints: false,
+                travelMode: 'DRIVING'
+            };
+
+            directionsService.route(request, (result, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                    const duration = result.routes[0].legs.reduce((total, leg) => total + leg.duration.value, 0) / 60;
+                    const durationText = (duration / 60).toFixed(2) + ' hours';
+                    document.getElementById('info').innerText = 'Estimated Time: ' + durationText;
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                }
+            });
+        }
+
+        function generateControls(numPoints) {
+            const buttonsDiv = document.getElementById('route-buttons');
+            buttonsDiv.innerHTML = '';
+            const numRoutes = factorial(numPoints);
+            for (let i = 0; i < numRoutes; i++) {
+                const button = document.createElement('button');
+                button.className = 'route-button';
+                button.innerText = `Route ${i + 1}`;
+                button.onclick = () => setRoute(i + 1);
+                buttonsDiv.appendChild(button);
+            }
+        }
+
+        function generateTable(numPoints) {
+            const tableBody = document.getElementById('time-table').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+            const numRoutes = factorial(numPoints);
+            for (let i = 0; i < numRoutes; i++) {
+                const row = tableBody.insertRow();
+                const routeCell = row.insertCell(0);
+                const timeCell = row.insertCell(1);
+                const linkCell = row.insertCell(2);
+                
+                routeCell.innerText = `Route ${i + 1}`;
+                timeCell.id = `route${i + 1}-time`;
+                timeCell.innerText = 'Calculating...';
+                
+                const link = document.createElement('a');
+                link.id = `route${i + 1}-link`;
+                link.innerText = 'View on Google Maps';
+                link.href = '#';
+                link.target = '_blank';
+                linkCell.appendChild(link);
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('time-table');
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const isNumeric = columnIndex === 1;
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.cells[columnIndex].innerText;
+                const cellB = rowB.cells[columnIndex].innerText;
+
+                if (isNumeric) {
+                    return parseFloat(cellA) - parseFloat(cellB);
+                } else {
+                    return cellA.localeCompare(cellB);
+                }
+            });
+
+            const tbody = table.querySelector('tbody');
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function factorial(n) {
+            return n <= 1 ? 1 : n * factorial(n - 1);
+        }
+
+function processURL() {
+    const url = document.getElementById('url-input').value;
+
+    // Trim the URL to ignore everything after '@'
+    const trimmedUrl = url.split('@')[0];
+
+    // Regex to match all latitude, longitude pairs in the URL before the '@' symbol
+    const regex = /(\d+\.\d+),(\d+\.\d+)/g;
+    let match;
+    points = [];
+
+    // Extract all coordinate pairs from the trimmed URL
+    while ((match = regex.exec(trimmedUrl)) !== null) {
+        const lat = parseFloat(match[1]);
+        const lng = parseFloat(match[2]);
+        points.push({ lat, lng });
+    }
+
+    if (points.length < 2) {
+        alert('URL must contain at least 2 points.');
+        return;
+    }
+
+    // Clear existing markers from the map
+    if (map) {
+        markers.forEach(marker => marker.setMap(null));
+    }
+
+    // Add new markers to the map based on parsed points
+    markers = points.map((point, index) => {
+        const marker = new google.maps.Marker({
+            position: point,
+            map: map,
+            title: `Point ${index + 1}`,
+            draggable: true
+        });
+
+        marker.addListener('dragend', () => {
+            updatePoints();
+            generateRoutes();
+        });
+
+        return marker;
+    });
+
+    // Generate controls, table, and routes based on the parsed points
+    generateTable(points.length);
+    generateRoutes();
+}
+
+function generateTable(numPoints) {
+    const tableBody = document.getElementById('time-table').getElementsByTagName('tbody')[0];
+    tableBody.innerHTML = ''; // Clear existing table rows
+
+    const numRoutes = factorial(numPoints - 1);
+    for (let i = 0; i < numRoutes; i++) {
+        const row = tableBody.insertRow();
+        const routeCell = row.insertCell(0);
+        const timeCell = row.insertCell(1);
+        const linkCell = row.insertCell(2);
+        
+        const routeLink = document.createElement('a');
+        routeLink.href = '#';
+        routeLink.innerText = `Route ${i + 1}`;
+        routeLink.onclick = () => {
+            setRoute(i + 1); // Display the selected route on the map
+        };
+
+        routeCell.appendChild(routeLink);
+        timeCell.id = `route${i + 1}-time`;
+        timeCell.innerText = 'Calculating...';
+
+        const link = document.createElement('a');
+        link.id = `route${i + 1}-link`;
+        link.innerText = 'View on Google Maps';
+        link.href = '#'; // Placeholder link
+        link.target = '_blank';
+        linkCell.appendChild(link);
+    }
+}
+
+function generateRoutes() {
+    routes = [];
+    const numPoints = points.length;
+
+    function permute(array, start = 0) {
+        if (start === array.length - 1) {
+            routes.push(array.slice());
+        } else {
+            for (let i = start; i < array.length; i++) {
+                [array[start], array[i]] = [array[i], array[start]]; // Swap
+                permute(array, start + 1);
+                [array[start], array[i]] = [array[i], array[start]]; // Swap back
+            }
+        }
+    }
+
+    permute(points.slice(1)); // Exclude the center point from permutations
+
+    routes.forEach((route, index) => {
+        const waypoints = route.slice(1, -1).map(point => ({
+            location: point,
+            stopover: true
+        }));
+
+        const request = {
+            origin: route[0],
+            destination: route[route.length - 1],
+            waypoints: waypoints,
+            optimizeWaypoints: false,
+            travelMode: 'DRIVING'
+        };
+
+        directionsService.route(request, (result, status) => {
+            if (status === 'OK') {
+                const duration = result.routes[0].legs.reduce((total, leg) => total + leg.duration.value, 0) / 60;
+                const durationText = (duration / 60).toFixed(2) + ' hours';
+
+                // Update the time in the table
+                document.getElementById(`route${index + 1}-time`).innerText = durationText;
+
+                // Generate Google Maps link
+                const link = `https://www.google.com/maps/dir/${route.map(point => `${point.lat},${point.lng}`).join('/')}/@${route[0].lat},${route[0].lng},14z/data=!4m2!4m1!3e0?hl=en&entry=ttu`;
+                document.getElementById(`route${index + 1}-link`).href = link;
+            } else {
+                console.error('Directions request failed due to ' + status);
+            }
+        });
+    });
+
+    // Sort the table after all routes are calculated
+    setTimeout(sortTableByTime, 500);
+}
+
+function setRoute(option) {
+    const route = routes[option - 1];
+
+    const waypoints = route.slice(1, -1).map(point => ({
+        location: point,
+        stopover: true
+    }));
+
+    const request = {
+        origin: route[0],
+        destination: route[route.length - 1],
+        waypoints: waypoints,
+        optimizeWaypoints: false,
+        travelMode: 'DRIVING'
+    };
+
+    directionsService.route(request, (result, status) => {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(result);
+
+            const duration = result.routes[0].legs.reduce((total, leg) => total + leg.duration.value, 0) / 60;
+            const durationText = (duration / 60).toFixed(2) + ' hours';
+
+            document.getElementById('info').innerText = 'Estimated Time: ' + durationText;
+        } else {
+            console.error('Directions request failed due to ' + status);
+        }
+    });
+}
+
+window.onload = initMap;
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
+</body>
+</html>
