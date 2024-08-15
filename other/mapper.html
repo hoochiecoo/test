@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Options on Map</title>
+    <style>
+        #map {
+            height: 80vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            z-index: 1;
+        }
+        #controls {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            z-index: 1;
+        }
+        #table-container {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            z-index: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Route Options on Map</h1>
+    <div id="info">Estimated Time: </div>
+    <div id="controls">
+        <button onclick="setRoute(1)">Route 1 - 2 - 3</button>
+        <button onclick="setRoute(2)">Route 1 - 3 - 2</button>
+        <button onclick="setRoute(3)">Route 2 - 1 - 3</button>
+        <button onclick="setRoute(4)">Route 2 - 3 - 1</button>
+        <button onclick="setRoute(5)">Route 3 - 1 - 2</button>
+        <button onclick="setRoute(6)">Route 3 - 2 - 1</button>
+    </div>
+    <div id="map"></div>
+    <div id="table-container">
+        <table id="time-table">
+            <thead>
+                <tr>
+                    <th>Route</th>
+                    <th>Estimated Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1 - 2 - 3</td><td id="route1-time">Calculating...</td></tr>
+                <tr><td>1 - 3 - 2</td><td id="route2-time">Calculating...</td></tr>
+                <tr><td>2 - 1 - 3</td><td id="route3-time">Calculating...</td></tr>
+                <tr><td>2 - 3 - 1</td><td id="route4-time">Calculating...</td></tr>
+                <tr><td>3 - 1 - 2</td><td id="route5-time">Calculating...</td></tr>
+                <tr><td>3 - 2 - 1</td><td id="route6-time">Calculating...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let map;
+        let directionsService;
+        let directionsRenderer;
+
+        const center = { lat: 55.7558, lng: 37.6176 }; // Default center (Moscow), replace as needed
+        const radius = 10; // Radius in kilometers
+        const earthRadius = 6371; // Earth's radius in kilometers
+
+        let points = [];
+        let markers = [];
+
+        function calculateOffset(lat, lng, distance) {
+            const latRad = lat * Math.PI / 180;
+            const lonRad = lng * Math.PI / 180;
+
+            const dLat = distance / earthRadius;
+            const dLon = distance / (earthRadius * Math.cos(latRad));
+
+            const newLat = latRad + dLat;
+            const newLon = lonRad + dLon;
+
+            return {
+                lat: newLat * 180 / Math.PI,
+                lng: newLon * 180 / Math.PI
+            };
+        }
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 12,
+                center: center
+            });
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+
+            points.push(center);
+
+            const firstPoint = calculateOffset(center.lat, center.lng, radius);
+            points.push(firstPoint);
+
+            const secondPoint = calculateOffset(firstPoint.lat, firstPoint.lng, radius);
+            points.push(secondPoint);
+
+            markers = points.map((point, index) => {
+                const marker = new google.maps.Marker({
+                    position: point,
+                    map: map,
+                    title: `Point ${index + 1}`,
+                    draggable: true
+                });
+
+                marker.addListener('dragend', () => {
+                    updatePoints();
+                    updateRoutes(); // Update routes when marker is dragged
+                });
+
+                return marker;
+            });
+
+            updateRoutes(); // Update routes on initialization
+        }
+
+        function updatePoints() {
+            points = markers.map(marker => marker.getPosition().toJSON());
+        }
+
+        function updateRoutes() {
+            const routes = [
+                { origin: points[0], destination: points[2], waypoints: [{ location: points[1], stopover: true }] }, // 1 - 2 - 3
+                { origin: points[0], destination: points[2], waypoints: [{ location: points[2], stopover: true }] }, // 1 - 3 - 2
+                { origin: points[1], destination: points[2], waypoints: [{ location: points[0], stopover: true }] }, // 2 - 1 - 3
+                { origin: points[1], destination: points[0], waypoints: [{ location: points[2], stopover: true }] }, // 2 - 3 - 1
+                { origin: points[2], destination: points[0], waypoints: [{ location: points[1], stopover: true }] }, // 3 - 1 - 2
+                { origin: points[2], destination: points[1], waypoints: [{ location: points[0], stopover: true }] }  // 3 - 2 - 1
+            ];
+
+            routes.forEach((route, index) => {
+                const request = {
+                    origin: route.origin,
+                    destination: route.destination,
+                    waypoints: route.waypoints,
+                    optimizeWaypoints: false,
+                    travelMode: 'DRIVING'
+                };
+
+                directionsService.route(request, (result, status) => {
+                    if (status === 'OK') {
+                        const duration = result.routes[0].legs.reduce((total, leg) => total + leg.duration.value, 0) / 60;
+                        const durationText = (duration / 60).toFixed(2) + ' hours';
+
+                        document.getElementById(`route${index + 1}-time`).innerText = durationText;
+                    } else {
+                        console.error('Directions request failed due to ' + status);
+                    }
+                });
+            });
+        }
+
+        function setRoute(option) {
+            const routes = [
+                { origin: points[0], destination: points[2], waypoints: [{ location: points[1], stopover: true }] }, // 1 - 2 - 3
+                { origin: points[0], destination: points[2], waypoints: [{ location: points[2], stopover: true }] }, // 1 - 3 - 2
+                { origin: points[1], destination: points[2], waypoints: [{ location: points[0], stopover: true }] }, // 2 - 1 - 3
+                { origin: points[1], destination: points[0], waypoints: [{ location: points[2], stopover: true }] }, // 2 - 3 - 1
+                { origin: points[2], destination: points[0], waypoints: [{ location: points[1], stopover: true }] }, // 3 - 1 - 2
+                { origin: points[2], destination: points[1], waypoints: [{ location: points[0], stopover: true }] }  // 3 - 2 - 1
+            ];
+
+            const route = routes[option - 1];
+
+            const request = {
+                origin: route.origin,
+                destination: route.destination,
+                waypoints: route.waypoints,
+                optimizeWaypoints: false,
+                travelMode: 'DRIVING'
+            };
+
+            directionsService.route(request, (result, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+
+                    const duration = result.routes[0].legs.reduce((total, leg) => total + leg.duration.value, 0) / 60;
+                    const durationText = (duration / 60).toFixed(2) + ' hours';
+
+                    document.getElementById('info').innerText = 'Estimated Time: ' + durationText;
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                }
+            });
+        }
+
+        window.onload = initMap;
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
+</body>
+</html>
