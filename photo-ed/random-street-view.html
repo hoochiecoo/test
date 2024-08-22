@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Street Views</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .street-view-container {
+            width: 50%;
+            height: 400px;
+            display: inline-block;
+        }
+        .street-view-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        .view-container {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <h1>Random Street Views around Two Locations</h1>
+    <div class="controls">
+        <label for="location1">Location 1 (lat, lng):</label>
+        <input type="text" id="location1" value="43.41428784122141, -5.788192315082296">
+        <br>
+        <label for="location2">Location 2 (lat, lng):</label>
+        <input type="text" id="location2" value="53.31991628924145, 50.30685656036254">
+        <br>
+        <label for="radius">Radius (km):</label>
+        <input type="text" id="radius" value="1">
+        <br>
+        <button onclick="generateStreetViews()">Get Street Views</button>
+    </div>
+    <div class="view-container">
+        <div id="location1-street-view" class="street-view-container"></div>
+        <div id="location2-street-view" class="street-view-container"></div>
+    </div>
+
+    <script>
+        function generateStreetViews() {
+            const location1Str = document.getElementById('location1').value;
+            const location2Str = document.getElementById('location2').value;
+            const radius = parseFloat(document.getElementById('radius').value) || 1;
+
+            // Update URL with current input values
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('lat1', parseCoordinates(location1Str)[0]);
+            newUrl.searchParams.set('lng1', parseCoordinates(location1Str)[1]);
+            newUrl.searchParams.set('lat2', parseCoordinates(location2Str)[0]);
+            newUrl.searchParams.set('lng2', parseCoordinates(location2Str)[1]);
+            newUrl.searchParams.set('radius', radius);
+
+            // Redirect to the updated URL
+            window.history.pushState({}, '', newUrl);
+
+            try {
+                const [lat1, lng1] = parseCoordinates(location1Str);
+                const [lat2, lng2] = parseCoordinates(location2Str);
+
+                generateStreetView('location1', lat1, lng1, radius);
+                generateStreetView('location2', lat2, lng2, radius);
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function parseCoordinates(coordStr) {
+            const coords = coordStr.split(',').map(coord => parseFloat(coord.trim()));
+            if (coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
+                throw new Error('Invalid coordinates. Please enter valid latitude and longitude.');
+            }
+            return coords;
+        }
+
+        function generateStreetView(city, lat, lng, radius) {
+            function randomOffset() {
+                return (Math.random() - 0.5) * 2 * radius / 111; // 111 km per degree of latitude/longitude
+            }
+
+            function getRandomCoordinates() {
+                const randomLat = lat + randomOffset();
+                const randomLng = lng + randomOffset();
+                return { randomLat, randomLng };
+            }
+
+            function checkStreetViewAvailable({ randomLat, randomLng }) {
+                const svService = new google.maps.StreetViewService();
+                const latLng = new google.maps.LatLng(randomLat, randomLng);
+
+                svService.getPanorama({ location: latLng, radius: 50 }, (data, status) => {
+                    if (status === 'OK') {
+                        const iframeSrc = `https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcE5rY3ZoZ1hIN1Z3RFpHcTFiWmN1ejN4M3FPU3Y1eUtBU2tGNzRO!2m2!1d${randomLat}!2d${randomLng}!3f0!4f0!5f0.7820865974627469`;
+                        document.getElementById(`${city}-street-view`).innerHTML = `<iframe src="${iframeSrc}" allowfullscreen></iframe>`;
+                    } else {
+                        generateStreetView(city, lat, lng, radius);
+                    }
+                });
+            }
+
+            const coordinates = getRandomCoordinates();
+            checkStreetViewAvailable(coordinates);
+        }
+
+        // On page load, retrieve parameters from URL and populate fields
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const lat1 = params.get('lat1');
+            const lng1 = params.get('lng1');
+            const lat2 = params.get('lat2');
+            const lng2 = params.get('lng2');
+            const radius = params.get('radius');
+
+            if (lat1 && lng1) document.getElementById('location1').value = `${lat1}, ${lng1}`;
+            if (lat2 && lng2) document.getElementById('location2').value = `${lat2}, ${lng2}`;
+            if (radius) document.getElementById('radius').value = radius;
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+</body>
+</html>
