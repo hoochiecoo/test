@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рынок Продуктов Суботицы</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #007BFF;
+            font-size: 1.8em;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .description {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin: 0 auto 20px;
+            max-width: 600px;
+        }
+        .description h2 {
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        .feature {
+            margin-bottom: 10px;
+        }
+        #uploadForm {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #uploadForm input[type="file"] {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        #uploadForm button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #uploadForm button:hover {
+            background-color: #0056b3;
+        }
+        #photoFeed {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+        .photo {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        .photo img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Добро пожаловать на Рынок Продуктов Суботицы!</h1>
+    <div class="description">
+        <h2>Обзор приложения:</h2>
+        <div class="feature">📸 Опубликуйте фотографии вашего прилавка всего за несколько секунд и привлеките больше клиентов.</div>
+        <div class="feature">⏰ Публиковать фотографии можно раз в час.</div>
+        <div class="feature">👨‍💼 Наш администратор следит за качеством: только хорошие фотографии попадут на сайт.</div>
+        <div class="feature">💰 На ваших продуктах должны быть указаны цены.</div>
+        <div class="feature">📍 Местоположение рынка: ул. Примерная, 123, Город, Страна (46.08979045045075, 19.646471153391175).</div>
+    </div>
+
+    <form id="uploadForm">
+        <input type="file" id="photoInput" accept="image/*" capture="environment">
+        <button type="button" onclick="checkLocationAndUpload()">Загрузить</button>
+    </form>
+
+    <button id="saveLocationBtn" onclick="saveUserLocation()">Сохранить мое местоположение</button>
+
+    <div id="photoFeed"></div>
+
+    <script>
+        const MAX_FILE_SIZE = 100 * 1024; // 100 KB
+        const MAX_DIMENSION = 2000; // Максимальная сторона изображения в пикселях
+        const MARKET_LOCATION = { lat: 46.08979045045075, lng: 19.646471153391175 }; // Координаты рынка
+
+        function resizeImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_DIMENSION) {
+                            height = Math.round((height * MAX_DIMENSION) / width);
+                            width = MAX_DIMENSION;
+                        }
+                    } else {
+                        if (height > MAX_DIMENSION) {
+                            width = Math.round((width * MAX_DIMENSION) / height);
+                            height = MAX_DIMENSION;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(function (blob) {
+                        callback(blob);
+                    }, 'image/jpeg', 0.75);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function compressImage(file, callback) {
+            resizeImage(file, function (resizedBlob) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = new Image();
+                    img.onload = function () {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        let width = img.width;
+                        let height = img.height;
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        let quality = 0.8;
+                        function compress() {
+                            canvas.toBlob(function (blob) {
+                                if (blob.size <= MAX_FILE_SIZE || quality <= 0.7) {
+                                    callback(blob);
+                                } else {
+                                    quality -= 0.05;
+                                    compress();
+                                }
+                            }, 'image/jpeg', quality);
+                        }
+
+                        compress();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(resizedBlob);
+            });
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371; // Радиус Земли в километрах
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLng = (lng2 - lng1) * (Math.PI / 180);
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+                Math.sin(dLng / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // Расстояние в километрах
+            return distance;
+        }
+
+        function checkLocationAndUpload() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const distance = calculateDistance(userLat, userLng, MARKET_LOCATION.lat, MARKET_LOCATION.lng);
+
+                    if (distance > 1) {
+                        alert('Вы находитесь слишком далеко от рынка (более 1 км). Загрузка фотографий запрещена.');
+                        return;
+                    }
+
+                    uploadPhoto();
+                }, function () {
+                    alert('Не удалось определить ваше местоположение.');
+                });
+            } else {
+                alert('Ваш браузер не поддерживает геолокацию.');
+            }
+        }
+
+        function saveUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    localStorage.setItem('userLocation', JSON.stringify({ lat: userLat, lng: userLng }));
+                    alert('Ваше местоположение сохранено.');
+                }, function () {
+                    alert('Не удалось определить ваше местоположение.');
+                });
+            } else {
+                alert('Ваш браузер не поддерживает геолокацию.');
+            }
+        }
+
+        function uploadPhoto() {
+            const input = document.getElementById('photoInput');
+            const file = input.files[0];
+
+            if (!file) {
+                alert('Пожалуйста, выберите фотографию для загрузки.');
+                return;
+            }
+
+            compressImage(file, function (compressedBlob) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const photoData = event.target.result;
+                    const photos = JSON.parse(localStorage.getItem('photos')) || [];
+                    photos.push(photoData);
+                    localStorage.setItem('photos', JSON.stringify(photos));
+                    location.reload(); // Refresh the page to show new photos
+                };
+                reader.readAsDataURL(compressedBlob);
+            });
+        }
+
+        function displayPhotos() {
+            const photoFeed = document.getElementById('photoFeed');
+            photoFeed.innerHTML = '';
+
+            const photos = JSON.parse(localStorage.getItem('photos')) || [];
+            photos.forEach(photoData => {
+                const div = document.createElement('div');
+                div.classList.add('photo');
+                div.innerHTML = `<img src="${photoData}" alt="Фото">`;
+                photoFeed.appendChild(div);
+            });
+        }
+
+        // Display photos on page load
+        displayPhotos();
+    </script>
+</body>
+</html>
