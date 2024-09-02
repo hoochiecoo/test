@@ -55,7 +55,7 @@
     </div>
     <script>
         async function checkGifts() {
-            const phone = document.getElementById('phone').value;
+            const phone = document.getElementById('phone').value.trim();
             if (!phone) {
                 document.getElementById('result').innerText = 'Пожалуйста, введите номер телефона.';
                 return;
@@ -66,11 +66,15 @@
                 const csv = await response.text();
                 const lines = csv.trim().split('\n');
                 const headers = lines.shift().split(',');
+
+                // Проверяем, что заголовки правильно определены
+                console.log('Headers:', headers);
+
                 const phoneIndex = headers.indexOf('phone');
                 const giftIndex = headers.indexOf('gift');
                 
                 if (phoneIndex === -1 || giftIndex === -1) {
-                    document.getElementById('result').innerText = 'Ошибка в формате данных.';
+                    document.getElementById('result').innerText = 'Ошибка в формате данных: Не найдены необходимые столбцы.';
                     return;
                 }
 
@@ -78,6 +82,9 @@
                     const [timestamp, gift, phoneNumber] = line.split(',');
                     return { gift: gift.trim(), phone: phoneNumber.trim() };
                 });
+
+                // Проверяем, что данные правильно извлечены
+                console.log('Gifts:', gifts);
                 
                 const userGift = gifts.find(item => item.phone === phone);
                 
@@ -88,6 +95,7 @@
                 }
             } catch (error) {
                 document.getElementById('result').innerText = 'Ошибка загрузки данных.';
+                console.error('Error:', error);
             }
         }
     </script>
