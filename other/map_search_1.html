@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Fullscreen Leaflet Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #search-panel {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        #search-input {
+            width: 200px;
+            padding: 5px;
+        }
+        #suggestions {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            width: 220px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        #suggestions div {
+            padding: 5px;
+            cursor: pointer;
+        }
+        #suggestions div:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div id="search-panel">
+        <input type="text" id="search-input" placeholder="Search location..." oninput="showSuggestions()">
+        <button onclick="searchLocation()">Search</button>
+    </div>
+    <div id="suggestions"></div>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map', {
+            center: [51.505, -0.09], // Default coordinates
+            zoom: 13,
+        });
+
+        // Add the OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add fullscreen control
+        L.control.fullscreen().addTo(map);
+
+        // Handling resizing on mobile for fullscreen effect
+        document.addEventListener('click', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            }
+        });
+
+        // Search location function
+        function searchLocation() {
+            var location = document.getElementById('search-input').value;
+            if (location) {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            var lat = data[0].lat;
+                            var lon = data[0].lon;
+                            map.setView([lat, lon], 13);
+                        } else {
+                            alert('Location not found.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error searching location:', err);
+                    });
+            }
+        }
+
+        // Show suggestions function
+        function showSuggestions() {
+            var query = document.getElementById('search-input').value;
+            var suggestionsDiv = document.getElementById('suggestions');
+
+            if (query.length > 3) {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        suggestionsDiv.innerHTML = '';
+                        if (data && data.length > 0) {
+                            data.forEach(item => {
+                                var suggestion = document.createElement('div');
+                                suggestion.textContent = item.display_name;
+                                suggestion.onclick = function() {
+                                    document.getElementById('search-input').value = item.display_name;
+                                    suggestionsDiv.innerHTML = '';
+                                    map.setView([item.lat, item.lon], 13);
+                                };
+                                suggestionsDiv.appendChild(suggestion);
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error fetching suggestions:', err);
+                    });
+            } else {
+                suggestionsDiv.innerHTML = '';
+            }
+        }
+    </script>
+</body>
+</html>
