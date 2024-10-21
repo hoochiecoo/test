@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Теннисный матч</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #log {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        .point {
+            margin: 5px 0;
+        }
+        .score {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Теннисный матч</h1>
+    <button id="startButton">Начать матч</button>
+    <div id="log"></div>
+
+    <script>
+        // Начальная структура матча
+        let match = {
+            id: "match_001",
+            date: "2024-10-21",
+            location: "Стадион №1",
+            players: [
+                { id: "player_001", name: "Игрок 1", rank: 5, setsWon: 0, gamesWon: 0, pointsWon: 0 },
+                { id: "player_002", name: "Игрок 2", rank: 3, setsWon: 0, gamesWon: 0, pointsWon: 0 }
+            ],
+            currentSet: {
+                setNumber: 1,
+                games: [{ gameNumber: 1, score: { player1: "0", player2: "0" }, status: "in_progress" }],
+                status: "in_progress"
+            },
+            matchStatus: "in_progress",
+            winner: null
+        };
+
+        let intervalId;
+
+        document.getElementById("startButton").onclick = function() {
+            this.disabled = true; // Отключаем кнопку во время матча
+            intervalId = setInterval(simulatePoint, 200); // Начинаем симуляцию
+            updateLog("Матч начался!");
+        };
+
+        function simulatePoint() {
+            const randomPlayer = Math.random() < 0.5 ? 0 : 1; // Случайный выбор игрока
+            const currentGame = match.currentSet.games[match.currentSet.games.length - 1]; // Получаем текущий гейм
+            let score = currentGame.score;
+
+            // Обновление счета
+            if (randomPlayer === 0) {
+                score.player1 = updateScore(score.player1);
+                match.players[0].pointsWon += 1;
+                updateLog(`${match.players[0].name} выиграл очко!`);
+            } else {
+                score.player2 = updateScore(score.player2);
+                match.players[1].pointsWon += 1;
+                updateLog(`${match.players[1].name} выиграл очко!`);
+            }
+
+            // Проверка на выигрыш гейма
+            if (checkGameWin(score.player1, score.player2)) {
+                if (score.player1 === "game") {
+                    match.players[0].gamesWon += 1;
+                    updateLog(`${match.players[0].name} выиграл гейм!`);
+                } else {
+                    match.players[1].gamesWon += 1;
+                    updateLog(`${match.players[1].name} выиграл гейм!`);
+                }
+                currentGame.status = "completed";
+                currentGame.score = { player1: "0", player2: "0" }; // Сброс счета
+                currentGame.gameNumber += 1; // Переход к следующему гейму
+                match.currentSet.games.push({
+                    gameNumber: currentGame.gameNumber,
+                    score: { player1: "0", player2: "0" },
+                    status: "in_progress"
+                });
+            }
+
+            // Проверка на завершение матча (например, если игрок выиграл 6 геймов)
+            if (match.players[0].gamesWon === 6 || match.players[1].gamesWon === 6) {
+                clearInterval(intervalId);
+                match.matchStatus = "completed";
+                match.winner = match.players[0].gamesWon === 6 ? match.players[0].name : match.players[1].name;
+                updateLog(`Матч завершен! Победитель: ${match.winner}`);
+            }
+
+            // Обновление текущего счета
+            updateScoreDisplay();
+        }
+
+        function updateScore(currentScore) {
+            const scores = ["0", "15", "30", "40", "game"];
+            let index = scores.indexOf(currentScore);
+            if (index < 3) {
+                return scores[index + 1]; // Переход на следующий счет
+            }
+            return "game"; // Если уже 40, возвращаем "game"
+        }
+
+        function checkGameWin(player1Score, player2Score) {
+            return player1Score === "game" || player2Score === "game";
+        }
+
+        function updateLog(message) {
+            const logDiv = document.getElementById("log");
+            const newPoint = document.createElement("div");
+            newPoint.className = "point";
+            newPoint.textContent = message;
+            logDiv.appendChild(newPoint);
+            logDiv.scrollTop = logDiv.scrollHeight; // Прокрутка вниз
+        }
+
+        function updateScoreDisplay() {
+            const logDiv = document.getElementById("log");
+            const currentGame = match.currentSet.games[match.currentSet.games.length - 1];
+            const scoreDisplay = document.createElement("div");
+            scoreDisplay.className = "score";
+            scoreDisplay.textContent = `Текущий счет в гейме: ${currentGame.score.player1} - ${currentGame.score.player2} | Геймы: ${match.players[0].gamesWon} - ${match.players[1].gamesWon} | Сет: ${match.currentSet.setNumber}`;
+            logDiv.appendChild(scoreDisplay);
+            logDiv.scrollTop = logDiv.scrollHeight; // Прокрутка вниз
+        }
+    </script>
+</body>
+</html>
