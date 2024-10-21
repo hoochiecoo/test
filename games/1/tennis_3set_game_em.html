@@ -53,7 +53,7 @@
 
         document.getElementById("startButton").onclick = function() {
             this.disabled = true; // Отключаем кнопку во время матча
-            intervalId = setInterval(simulatePoint, 2000); // Начинаем симуляцию
+            intervalId = setInterval(simulatePoint, 200); // Начинаем симуляцию
             updateLog("Матч начался!");
         };
 
@@ -122,7 +122,7 @@
                     status: "in_progress"
                 });
                 updateLog(`Начинаем новый сет ${match.currentSet.setNumber}.`);
-                intervalId = setInterval(simulatePoint, 2000); // Возобновляем симуляцию
+                intervalId = setInterval(simulatePoint, 200); // Возобновляем симуляцию
             }
 
             // Обновление текущего счета
