@@ -53,12 +53,14 @@
 
         document.getElementById("startButton").onclick = function() {
             this.disabled = true; // Отключаем кнопку во время матча
-            intervalId = setInterval(simulatePoint, 200); // Начинаем симуляцию
+            intervalId = setInterval(simulatePoint, 2000); // Начинаем симуляцию
             updateLog("Матч начался!");
         };
 
         function simulatePoint() {
-            const randomPlayer = Math.random() < 0.5 ? 0 : 1; // Случайный выбор игрока
+            const randomValue = Math.random(); // Случайное значение от 0 до 1
+            const randomPlayer = randomValue < 0.3 ? 0 : (randomValue < 0.7 ? 1 : 0); // Гибкий выбор игрока
+
             const currentGame = match.currentSet.games[match.currentSet.games.length - 1]; // Получаем текущий гейм
             let score = currentGame.score;
 
@@ -110,7 +112,6 @@
                     match.matchStatus = "completed";
                     match.winner = winner.name;
                     updateLog(`Матч завершен! Победитель: ${match.winner}`);
-                    clearInterval(intervalId);
                     return; // Завершаем симуляцию
                 }
 
@@ -121,7 +122,7 @@
                     status: "in_progress"
                 });
                 updateLog(`Начинаем новый сет ${match.currentSet.setNumber}.`);
-                intervalId = setInterval(simulatePoint, 200); // Возобновляем симуляцию
+                intervalId = setInterval(simulatePoint, 2000); // Возобновляем симуляцию
             }
 
             // Обновление текущего счета
