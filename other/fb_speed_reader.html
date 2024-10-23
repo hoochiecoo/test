@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FB2 Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #container {
+            max-width: 500px;
+            width: 100%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #output {
+            max-height: 600px;
+            overflow: hidden;
+        }
+        .page {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+        }
+        /* Popup styles */
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+        #popupWord {
+            font-size: 24px;
+            text-align: center;
+        }
+        #popupControls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>FB2 Reader</h1>
+        <input type="file" id="fileInput" accept=".fb2" />
+        <div id="output"></div>
+        <div id="controls">
+            <button id="prevPage">Previous</button>
+            <button id="nextPage">Next</button>
+            <button id="openPopup">Show Word by Word</button>
+        </div>
+    </div>
+
+    <!-- Popup Elements -->
+    <div id="overlay"></div>
+    <div id="popup">
+        <div id="popupWord">Word</div>
+        <div id="popupControls">
+            <button id="prevWord">Previous Word</button>
+            <button id="nextWord">Next Word</button>
+            <button id="closePopup">Close</button>
+        </div>
+        <div id="wordCountControls">
+            <label>Words per View: </label>
+            <button id="oneWord">1</button>
+            <button id="twoWords">2</button>
+            <button id="threeWords">3</button>
+            <button id="fourWords">4</button>
+        </div>
+        <div>
+            <label for="autoRunSpeed">Auto-Run Speed (ms): </label>
+            <input type="number" id="autoRunSpeed" value="1000" min="100" step="100">
+            <button id="autoRun">Auto-Run</button>
+            <button id="stopAutoRun">Stop</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let totalPages = 0;
+        let wordsOnCurrentPage = [];
+        let currentWordIndex = 0;
+        let wordsPerView = 1;
+        let autoRunInterval;
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.fb2')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const parser = new DOMParser();
+                    const fb2Document = parser.parseFromString(e.target.result, 'text/xml');
+                    const body = fb2Document.getElementsByTagName('body')[0];
+                    const text = extractText(body);
+                    paginateText(text);
+                };
+                reader.readAsText(file);
+            } else {
+                alert('Please upload a valid FB2 file.');
+            }
+        });
+
+        function extractText(node) {
+            let textContent = '';
+            node.childNodes.forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    textContent += child.textContent;
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    textContent += extractText(child) + '<br>';
+                }
+            });
+            return textContent;
+        }
+
+        function paginateText(text) {
+            const output = document.getElementById('output');
+            output.innerHTML = '';
+            const words = text.split(' ');
+            let pageContent = '';
+            let pageCounter = 1;
+            words.forEach((word, index) => {
+                pageContent += word + ' ';
+                if (index % 300 === 0 && index !== 0) {  // Roughly 300 words per page
+                    const page = document.createElement('div');
+                    page.classList.add('page');
+                    if (pageCounter === 1) page.classList.add('active');
+                    page.innerHTML = pageContent;
+                    output.appendChild(page);
+                    pageContent = '';
+                    pageCounter++;
+                }
+            });
+            if (pageContent) {
+                const page = document.createElement('div');
+                page.classList.add('page');
+                if (pageCounter === 1) page.classList.add('active');
+                page.innerHTML = pageContent;
+                output.appendChild(page);
+            }
+            totalPages = pageCounter;
+        }
+
+        document.getElementById('nextPage').addEventListener('click', function() {
+            changePage(1);
+        });
+
+        document.getElementById('prevPage').addEventListener('click', function() {
+            changePage(-1);
+        });
+
+        function changePage(direction) {
+            const pages = document.querySelectorAll('.page');
+            if (currentPage + direction >= 0 && currentPage + direction < totalPages) {
+                pages[currentPage].classList.remove('active');
+                currentPage += direction;
+                pages[currentPage].classList.add('active');
+            }
+        }
+
+        // Word by word popup functionality
+        document.getElementById('openPopup').addEventListener('click', function() {
+            const activePage = document.querySelector('.page.active');
+            wordsOnCurrentPage = activePage.innerText.split(' ');
+            currentWordIndex = 0;
+            updatePopupWord();
+            document.getElementById('popup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        });
+
+        document.getElementById('closePopup').addEventListener('click', function() {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+            clearInterval(autoRunInterval);  // Stop auto-run if active
+        });
+
+        document.getElementById('nextWord').addEventListener('click', function() {
+            if (currentWordIndex + wordsPerView < wordsOnCurrentPage.length) {
+                currentWordIndex += wordsPerView;
+                updatePopupWord();
+            }
+        });
+
+        document.getElementById('prevWord').addEventListener('click', function() {
+            if (currentWordIndex - wordsPerView >= 0) {
+                currentWordIndex -= wordsPerView;
+                updatePopupWord();
+            }
+        });
+
+        // Words per view buttons
+        document.getElementById('oneWord').addEventListener('click', function() {
+            wordsPerView = 1;
+            updatePopupWord();
+        });
+
+        document.getElementById('twoWords').addEventListener('click', function() {
+            wordsPerView = 2;
+            updatePopupWord();
+        });
+
+        document.getElementById('threeWords').addEventListener('click', function() {
+            wordsPerView = 3;
+            updatePopupWord();
+        });
+
+        document.getElementById('fourWords').addEventListener('click', function() {
+            wordsPerView = 4;
+            updatePopupWord();
+        });
+
+        function updatePopupWord() {
+            const wordsToShow = wordsOnCurrentPage.slice(currentWordIndex, currentWordIndex + wordsPerView).join(' ');
+            document.getElementById('popupWord').innerText = wordsToShow;
+        }
+
+        // Auto-Run functionality
+        document.getElementById('autoRun').addEventListener('click', function() {
+            const speed = parseInt(document.getElementById('autoRunSpeed').value) || 1000;
+            autoRunInterval = setInterval(function() {
+                if (currentWordIndex + wordsPerView < wordsOnCurrentPage.length) {
+                    currentWordIndex += wordsPerView;
+                    updatePopupWord();
+                } else {
+                    clearInterval(autoRunInterval);  // Stop auto-run when no more words are left
+                }
+            }, speed);  // Change words at user-defined interval
+        });
+
+        document.getElementById('stopAutoRun').addEventListener('click', function() {
+            clearInterval(autoRunInterval);  // Stop auto-run
+        });
+    </script>
+</body>
+</html>
