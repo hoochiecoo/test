@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запись видео</title>
+</head>
+<body>
+    <h1>Запись видео с камеры</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="startRecord">Начать запись</button>
+    <button id="stopRecord" disabled>Остановить запись</button>
+    <h2>Записанное видео</h2>
+    <video id="recordedVideo" width="640" height="480" controls></video>
+
+    <script>
+        let mediaRecorder;
+        const video = document.getElementById('video');
+        const recordedVideo = document.getElementById('recordedVideo');
+        const startRecord = document.getElementById('startRecord');
+        const stopRecord = document.getElementById('stopRecord');
+        const recordedChunks = [];
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    recordedVideo.src = url;
+                    recordedVideo.load();
+                };
+            })
+            .catch(error => {
+                console.error('Ошибка доступа к камере:', error);
+            });
+
+        startRecord.addEventListener('click', () => {
+            mediaRecorder.start();
+            startRecord.disabled = true;
+            stopRecord.disabled = false;
+        });
+
+        stopRecord.addEventListener('click', () => {
+            mediaRecorder.stop();
+            startRecord.disabled = false;
+            stopRecord.disabled = true;
+        });
+    </script>
+</body>
+</html>
+
