@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bowling Ball Speed Calculator</title>
+    <style>
+        body, html {
+            margin: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #282c34; /* Dark gray background */
+            color: #f0f0f0; /* Light text */
+            text-align: center; /* Centered text */
+            position: relative;
+        }
+        button {
+            width: 200px; /* Button width */
+            height: 200px; /* Button height */
+            border-radius: 50%; /* Round button */
+            font-size: 2rem;
+            color: #f0f0f0; /* Light text */
+            background-color: #61dafb; /* Light blue button background */
+            border: none; /* Remove border */
+            cursor: pointer;
+            outline: none; /* Remove outline on focus */
+            transition: background-color 0.3s; /* Smooth transition */
+        }
+        button:hover {
+            background-color: #21a1f1; /* Darker blue on hover */
+        }
+        #popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9); /* Light background for popup */
+            border-radius: 10px;
+            padding: 20px;
+            display: none; /* Hidden by default */
+            z-index: 10;
+            color: #333; /* Dark text for better readability */
+        }
+    </style>
+    <script>
+        let startTime;
+        let isRunning = false;
+
+        function toggleTimer(button) {
+            if (!isRunning) {
+                startTime = Date.now(); // Record start time
+                button.innerText = "0.00 seconds"; // Initialize button text
+                isRunning = true;
+                updateTime(button); // Start updating time
+            } else {
+                const endTime = Date.now(); // Record end time
+                const timeTaken = (endTime - startTime) / 1000; // Difference in seconds
+                const distance = 18.288; // Distance to the pins in meters
+                const speedKmh = (distance / timeTaken) * 3.6; // Speed in kilometers per hour
+
+                button.innerText = `Speed: ${speedKmh.toFixed(2)} km/h`; // Update button text
+                isRunning = false; // Reset state
+                clearInterval(window.updateInterval); // Stop updating time
+            }
+        }
+
+        function updateTime(button) {
+            window.updateInterval = setInterval(() => {
+                if (isRunning) {
+                    const currentTime = (Date.now() - startTime) / 1000;
+                    button.innerText = `${currentTime.toFixed(2)} seconds`; // Update button text
+                }
+            }, 100); // Update every hundredth of a second
+        }
+
+        function showPopup() {
+            document.getElementById('popup').style.display = 'block'; // Show popup
+        }
+
+        function hidePopup() {
+            document.getElementById('popup').style.display = 'none'; // Hide popup
+        }
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('popup')) {
+                hidePopup(); // Close popup on click
+            } else {
+                hidePopup(); // Close popup on click outside
+            }
+        };
+
+        // Show the popup when the page loads
+        window.onload = showPopup;
+    </script>
+</head>
+<body>
+    <div id="popup">
+        <h1>Bowling Ball Speed Calculator</h1>
+        <p>Press the button once to start the timer.</p>
+        <p>Press the button again to see the speed.</p>
+    </div>
+    <button onclick="toggleTimer(this)">Start/Stop Timer</button>
+</body>
+</html>
+
