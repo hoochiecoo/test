@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bowling Scores Table with Chart</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Basic reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Center everything in the body */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            text-align: center;
+            padding: 20px;
+            flex-direction: column;
+        }
+
+        /* Container to wrap content and ensure centering */
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* Style for the dropdown */
+        label {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+
+        table th, table td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        /* Chart Canvas */
+        canvas {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+
+        /* Make sure chart is responsive */
+        @media (max-width: 768px) {
+            table th, table td {
+                font-size: 14px;
+            }
+
+            label, select {
+                font-size: 16px;
+            }
+
+            canvas {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bowling Scores Table with Chart</h1>
+        
+        <!-- Filter dropdown for Player 1 -->
+        <label for="playerFilter">Filter by Player 1: </label>
+        <select id="playerFilter">
+            <option value="All">All</option>
+        </select>
+        
+        <!-- Table to display filtered data -->
+        <table id="dataTable" border="1">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Player 1</th>
+                    <th>Score 1</th>
+                    <th>Score 2</th>
+                    <th>Score 3</th>
+                    <th>Score 4</th>
+                    <th>Score 5</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <!-- Canvas for Chart -->
+        <canvas id="scoreChart" width="400" height="200"></canvas>
+    </div>
+
+    <script>
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/13iFmvOJnvGZrqDP927Y4MVZFdrqv-n_E4ITDT0c_g2s/pub?gid=1230234506&single=true&output=csv';
+        let allData = [];  // Store all data globally for filtering
+        let scoreChart;    // Chart instance
+
+        // Function to load data into the table
+        function loadTableData(data) {
+            const tbody = document.querySelector("#dataTable tbody");
+            tbody.innerHTML = '';  // Clear existing rows
+
+            data.forEach(row => {
+                const resultsArray = row.Results1 ? row.Results1.trim().split(/\s+/) : ["", "", "", "", ""];
+                
+                // Ensure resultsArray has exactly 5 items
+                while (resultsArray.length < 5) {
+                    resultsArray.push("");
+                }
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.Date}</td>
+                    <td>${row.Player1}</td>
+                    <td>${resultsArray[0]}</td>
+                    <td>${resultsArray[1]}</td>
+                    <td>${resultsArray[2]}</td>
+                    <td>${resultsArray[3]}</td>
+                    <td>${resultsArray[4]}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Function to populate Player 1 filter dropdown
+        function populatePlayerFilter(players) {
+            const playerFilter = document.getElementById("playerFilter");
+            players.forEach(player => {
+                const option = document.createElement("option");
+                option.value = player;
+                option.textContent = player;
+                playerFilter.appendChild(option);
+            });
+        }
+
+        // Function to gather all scores for a player and display the chart
+        function updateChartForPlayer(playerData) {
+            const scores = [];
+
+            playerData.forEach(row => {
+                const resultsArray = row.Results1 ? row.Results1.trim().split(/\s+/).map(Number) : [];
+                scores.push(...resultsArray); // Flatten scores for the chart
+            });
+
+            // If a chart already exists, destroy it before creating a new one
+            if (scoreChart) {
+                scoreChart.destroy();
+            }
+
+            const ctx = document.getElementById("scoreChart").getContext("2d");
+            scoreChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: scores.map((_, index) => `Game ${index + 1}`),
+                    datasets: [{
+                        label: 'Scores',
+                        data: scores,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 1,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'Game Number' } },
+                        y: { title: { display: true, text: 'Score' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Event listener for filter change
+        document.getElementById("playerFilter").addEventListener("change", function() {
+            const selectedPlayer = this.value;
+            const filteredData = selectedPlayer === "All"
+                ? allData
+                : allData.filter(row => row.Player1 === selectedPlayer);
+
+            loadTableData(filteredData);
+
+            if (selectedPlayer !== "All") {
+                updateChartForPlayer(filteredData);
+            } else if (scoreChart) {
+                scoreChart.destroy();  // Clear chart when "All" is selected
+            }
+        });
+
+        // Fetch and parse the CSV data
+        fetch(csvUrl)
+            .then(response => response.text())
+            .then(csvData => {
+                Papa.parse(csvData, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        allData = results.data;
+                        
+                        // Get unique players for the filter dropdown
+                        const uniquePlayers = [...new Set(allData.map(row => row.Player1))];
+                        populatePlayerFilter(uniquePlayers);
+
+                        // Load initial table data
+                        loadTableData(allData);
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading CSV:', error));
+    </script>
+</body>
+</html>
+
