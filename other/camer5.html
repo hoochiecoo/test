@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertical Video Stopwatch with Video Capture</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            width: 400px;
+            height: 600px;
+        }
+        video {
+            transform: rotate(90deg); /* Rotate video to make it vertical */
+            width: 400px;
+            height: 600px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .button-group {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <canvas id="canvas" width="400" height="600"></canvas>
+        <video id="video" autoplay></video>
+        <div class="button-group">
+            <button id="startBtn">Start Stopwatch</button>
+            <button id="saveBtn">Save as Video</button>
+            <button id="speedBtn">Measure Speed</button>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const speedBtn = document.getElementById('speedBtn');
+
+        let startTime, elapsedTime = 0, interval;
+        let isRunning = false;
+        let speedStartTime = null, speedEndTime = null;
+        const distanceInMeters = 18.29; // Length of a bowling lane in meters
+        let speedKph = null; // Variable to store the calculated speed
+
+        const videoStream = canvas.captureStream(30); // Capture the canvas as a stream
+        const mediaRecorder = new MediaRecorder(videoStream);
+        let recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+            recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stopwatch_video.webm';
+            a.click();
+        };
+
+        async function startCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: { exact: "environment" } }
+            });
+            video.srcObject = stream;
+        }
+
+        function startStopwatch() {
+            if (isRunning) return;
+            isRunning = true;
+            startTime = Date.now() - elapsedTime;
+            interval = setInterval(updateStopwatch, 100);
+            mediaRecorder.start();
+        }
+
+        function stopStopwatch() {
+            isRunning = false;
+            clearInterval(interval);
+            mediaRecorder.stop();
+        }
+
+        function updateStopwatch() {
+            elapsedTime = Date.now() - startTime;
+            const seconds = Math.floor(elapsedTime / 1000);
+            const milliseconds = elapsedTime % 1000;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'red';
+            ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50);
+
+            // If speed is available, display it on the canvas
+            if (speedKph !== null) {
+                ctx.fillStyle = 'blue';
+                ctx.fillText(`Speed: ${speedKph.toFixed(2)} kph`, 100, 100);
+            }
+        }
+
+        function measureSpeed() {
+            if (!speedStartTime) {
+                // Start measuring
+                speedStartTime = Date.now();
+                speedBtn.textContent = 'Stop Measuring';
+            } else {
+                // Stop measuring and calculate speed
+                speedEndTime = Date.now();
+                const timeTaken = (speedEndTime - speedStartTime) / 1000; // time in seconds
+                speedKph = (distanceInMeters / timeTaken) * 3.6; // Speed in km/h
+
+                // Reset for next measurement
+                speedStartTime = null;
+                speedEndTime = null;
+                speedBtn.textContent = 'Measure Speed';
+            }
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (isRunning) {
+                stopStopwatch();
+                startBtn.textContent = 'Start Stopwatch';
+            } else {
+                startStopwatch();
+                startBtn.textContent = 'Stop Stopwatch';
+            }
+        });
+
+        saveBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                mediaRecorder.stop();
+            }
+        });
+
+        speedBtn.addEventListener('click', measureSpeed);
+
+        startCamera();
+    </script>
+</body>
+</html>
