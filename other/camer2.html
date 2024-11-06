@@ -4,14 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Запись видео</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #video {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .controls {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-top: -80px;
+            gap: 10px;
+            z-index: 10;
+        }
+        .control-button {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease;
+        }
+        .control-button:active {
+            background-color: rgba(200, 200, 200, 0.8);
+        }
+        #recordedVideo {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 640px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Запись видео с камеры</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <button id="startRecord">Начать запись</button>
-    <button id="stopRecord" disabled>Остановить запись</button>
+    <video id="video" autoplay></video>
+    <div class="controls">
+        <button id="startRecord" class="control-button">▶️</button>
+        <button id="stopRecord" class="control-button" disabled>⏹️</button>
+    </div>
     <h2>Записанное видео</h2>
-    <video id="recordedVideo" width="640" height="480" controls></video>
+    <video id="recordedVideo" controls></video>
 
     <script>
         let mediaRecorder;
@@ -44,6 +91,7 @@
             });
 
         startRecord.addEventListener('click', () => {
+            recordedChunks.length = 0; // очистка перед новой записью
             mediaRecorder.start();
             startRecord.disabled = true;
             stopRecord.disabled = false;
@@ -57,4 +105,3 @@
     </script>
 </body>
 </html>
-
