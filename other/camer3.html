@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vertical Video Stopwatch with Video Capture</title>
+    <title>Bowling Ball Speed Measurement</title>
     <style>
         canvas {
             border: 1px solid black;
@@ -18,18 +18,20 @@
 <body>
     <canvas id="canvas" width="600" height="400"></canvas>
     <video id="video" width="400" height="600" autoplay></video>
-    <button id="startBtn">Start Stopwatch</button>
-    <button id="saveBtn">Save as Video</button>
+    <button id="startBtn">Start Measuring</button>
+    <button id="stopBtn">Stop Measuring</button>
+    <p id="speedOutput"></p>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
-        const saveBtn = document.getElementById('saveBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const speedOutput = document.getElementById('speedOutput');
 
-        let startTime, elapsedTime = 0, interval;
-        let isRunning = false;
+        let startTime, endTime, ballSpeed;
+        let isMeasuring = false;
 
         const videoStream = canvas.captureStream(30); // Capture the canvas as a stream
         const mediaRecorder = new MediaRecorder(videoStream);
@@ -44,59 +46,42 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'stopwatch_video.webm';
+            a.download = 'bowling_speed_video.webm';
             a.click();
         };
 
         async function startCamera() {
-            // Get user media and select the back camera
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: { exact: "environment" } } // Try to access the back camera
             });
             video.srcObject = stream;
         }
 
-        function startStopwatch() {
-            if (isRunning) return;
-            isRunning = true;
-            startTime = Date.now() - elapsedTime;
-            interval = setInterval(updateStopwatch, 100);
+        function startMeasuring() {
+            if (isMeasuring) return;
+            isMeasuring = true;
+            startTime = Date.now();
             mediaRecorder.start();
         }
 
-        function stopStopwatch() {
-            isRunning = false;
-            clearInterval(interval);
+        function stopMeasuring() {
+            if (!isMeasuring) return;
+            isMeasuring = false;
+            endTime = Date.now();
             mediaRecorder.stop();
+            calculateSpeed();
         }
 
-        function updateStopwatch() {
-            elapsedTime = Date.now() - startTime;
-            const seconds = Math.floor(elapsedTime / 1000);
-            const milliseconds = elapsedTime % 1000;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
-            ctx.font = '30px Arial';
-            ctx.fillStyle = 'red'; // Set text color to red
-            ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50); // Display time above video
+        function calculateSpeed() {
+            const elapsedTime = (endTime - startTime) / 1000; // Time in seconds
+            const distance = 20.3; // Distance from release to pin in meters (approximated)
+            ballSpeed = distance / elapsedTime; // Speed = Distance / Time
+            const speedInKph = ballSpeed * 3.6; // Convert from m/s to km/h
+            speedOutput.textContent = `Speed: ${speedInKph.toFixed(2)} km/h`;
         }
 
-        startBtn.addEventListener('click', () => {
-            if (isRunning) {
-                stopStopwatch();
-                startBtn.textContent = 'Start Stopwatch';
-            } else {
-                startStopwatch();
-                startBtn.textContent = 'Stop Stopwatch';
-            }
-        });
-
-        saveBtn.addEventListener('click', () => {
-            if (!isRunning) {
-                mediaRecorder.stop();
-            }
-        });
+        startBtn.addEventListener('click', startMeasuring);
+        stopBtn.addEventListener('click', stopMeasuring);
 
         startCamera();
     </script>
