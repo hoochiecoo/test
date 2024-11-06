@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vertical Video Stopwatch with Bowling Speed Measurement</title>
+    <title>Vertical Video Stopwatch with Video Capture</title>
     <style>
         canvas {
             border: 1px solid black;
@@ -20,9 +20,6 @@
     <canvas id="canvas" width="600" height="400"></canvas>
     <button id="startBtn">Start Stopwatch</button>
     <button id="saveBtn">Save as Video</button>
-    <button id="startSpeedBtn">Start Measuring Speed</button>
-    <button id="stopSpeedBtn">Stop Measuring Speed</button>
-    <div id="speedDisplay"></div>
 
     <script>
         const video = document.getElementById('video');
@@ -30,14 +27,9 @@
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
         const saveBtn = document.getElementById('saveBtn');
-        const startSpeedBtn = document.getElementById('startSpeedBtn');
-        const stopSpeedBtn = document.getElementById('stopSpeedBtn');
 
         let startTime, elapsedTime = 0, interval;
         let isRunning = false;
-        let speedStartTime = null;
-        let speedEndTime = null;
-        let isSpeedMeasuring = false;
 
         const videoStream = canvas.captureStream(30); // Capture the canvas as a stream
         const mediaRecorder = new MediaRecorder(videoStream);
@@ -57,9 +49,7 @@
         };
 
         async function startCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: true // Use the default camera (no specific preference)
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
             video.srcObject = stream;
         }
 
@@ -87,34 +77,6 @@
             ctx.font = '30px Arial';
             ctx.fillStyle = 'red'; // Set text color to red
             ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50); // Display time above video
-            if (!isSpeedMeasuring) {
-                ctx.fillText(`Ball Speed: Not Measured`, 100, 100); // Display speed message if not measuring
-            }
-        }
-
-        function startSpeedMeasurement() {
-            if (isSpeedMeasuring) return;
-            isSpeedMeasuring = true;
-            speedStartTime = Date.now();
-            updateStopwatch();
-        }
-
-        function stopSpeedMeasurement() {
-            if (!isSpeedMeasuring) return;
-            isSpeedMeasuring = false;
-            speedEndTime = Date.now();
-            const timeDiff = (speedEndTime - speedStartTime) / 1000; // Time in seconds
-            const distance = 15; // Distance from the bowler to the pin in meters (standard bowling lane length)
-
-            // Calculate speed in meters per second and convert to kilometers per hour
-            const speedMps = distance / timeDiff; // Speed in meters per second
-            const speedKph = speedMps * 3.6; // Convert to kilometers per hour
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing again
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
-            ctx.font = '30px Arial';
-            ctx.fillStyle = 'red'; // Set text color to red
-            ctx.fillText(`Time: ${(elapsedTime / 1000).toFixed(2)}s`, 100, 50); // Display time
-            ctx.fillText(`Ball Speed: ${speedKph.toFixed(2)} km/h`, 100, 100); // Display speed
         }
 
         startBtn.addEventListener('click', () => {
@@ -132,9 +94,6 @@
                 mediaRecorder.stop();
             }
         });
-
-        startSpeedBtn.addEventListener('click', startSpeedMeasurement);
-        stopSpeedBtn.addEventListener('click', stopSpeedMeasurement);
 
         startCamera();
     </script>
