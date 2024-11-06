@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Запись видео и измерение скорости</title>
+    <title>Запись видео с текстом</title>
     <style>
         body {
             display: flex;
@@ -20,15 +20,21 @@
             height: auto;
             border-radius: 8px;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-            position: relative;
+            position: absolute;
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
         .controls {
             position: relative;
             display: flex;
             justify-content: center;
-            margin-top: -80px;
+            margin-top: 20px;
             gap: 10px;
-            z-index: 10;
+            z-index: 2;
         }
         .control-button {
             background-color: rgba(255, 255, 255, 0.8);
@@ -45,11 +51,6 @@
         .control-button:active {
             background-color: rgba(200, 200, 200, 0.8);
         }
-        #recordedVideo {
-            margin-top: 20px;
-            width: 100%;
-            max-width: 640px;
-        }
         #speedDisplay {
             position: absolute;
             top: 10px;
@@ -58,7 +59,7 @@
             font-size: 24px;
             font-weight: bold;
             color: #ff0000;
-            z-index: 5;
+            z-index: 3;
             background-color: rgba(0, 0, 0, 0.5);
             padding: 5px 10px;
             border-radius: 10px;
@@ -67,6 +68,7 @@
 </head>
 <body>
     <video id="video" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
     <div class="controls">
         <button id="startRecord" class="control-button">▶️</button>
         <button id="stopRecord" class="control-button" disabled>⏹️</button>
@@ -79,6 +81,8 @@
     <script>
         let mediaRecorder;
         const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
         const recordedVideo = document.getElementById('recordedVideo');
         const startRecord = document.getElementById('startRecord');
         const stopRecord = document.getElementById('stopRecord');
@@ -109,9 +113,6 @@
                     const url = URL.createObjectURL(blob);
                     recordedVideo.src = url;
                     recordedVideo.load();
-                    // Заменяем видео с камеры на записанное
-                    video.srcObject.getTracks().forEach(track => track.stop()); // Останавливаем камеру
-                    video.src = url; // Вставляем записанное видео
                 };
             })
             .catch(error => {
@@ -146,6 +147,24 @@
                 isMeasuring = false;
             }
         });
+
+        // Функция для рисования видео и текста на canvas
+        function draw() {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // рисуем видео на canvas
+
+            // Если нужно, рисуем текст поверх видео
+            if (isMeasuring) {
+                ctx.font = '24px Arial';
+                ctx.fillStyle = '#ff0000';
+                ctx.fillText("Измерение скорости...", canvas.width / 2 - 100, 50);
+            }
+
+            // Перерисовываем canvas каждую секунду
+            requestAnimationFrame(draw);
+        }
+
+        // Начинаем рисование
+        draw();
     </script>
 </body>
 </html>
