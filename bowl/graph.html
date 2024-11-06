@@ -172,8 +172,20 @@
                         ? this.allData
                         : this.allData.filter(row => row.Player1 === selectedPlayer);
 
-                    this.loadTableData(filteredData);
-                    this.updateChartForPlayer(filteredData);
+                    // Sort the filtered data by date (oldest first)
+                    const sortedData = this.sortDataByDate(filteredData);
+
+                    this.loadTableData(sortedData);
+                    this.updateChartForPlayer(sortedData);
+                });
+            }
+
+            // Sort data by date (oldest first)
+            sortDataByDate(data) {
+                return data.sort((a, b) => {
+                    const dateA = new Date(a.Date);
+                    const dateB = new Date(b.Date);
+                    return dateA - dateB; // Sort in ascending order (oldest first)
                 });
             }
 
@@ -207,7 +219,8 @@
             updateChartForPlayer(playerData) {
                 const scores = [];
 
-                playerData.forEach(row => {
+                // Flatten data and reverse to start from the most recent game
+                playerData.reverse().forEach(row => {
                     const resultsArray = row.Results1 ? row.Results1.trim().split(/\s+/).map(Number) : [];
                     scores.push(...resultsArray);  // Flatten scores for the chart
                 });
