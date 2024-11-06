@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vertical Video Stopwatch with Speed Measurement</title>
+    <title>Vertical Video Stopwatch with Video Capture</title>
     <style>
         canvas {
             border: 1px solid black;
@@ -18,19 +18,22 @@
 <body>
     <canvas id="canvas" width="600" height="400"></canvas>
     <video id="video" width="400" height="600" autoplay></video>
-    <button id="startSpeedBtn">Start Speed Measurement</button>
+    <button id="startBtn">Start Stopwatch</button>
     <button id="saveBtn">Save as Video</button>
+    <button id="speedBtn">Measure Speed</button>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const startSpeedBtn = document.getElementById('startSpeedBtn');
+        const startBtn = document.getElementById('startBtn');
         const saveBtn = document.getElementById('saveBtn');
+        const speedBtn = document.getElementById('speedBtn');
 
         let startTime, elapsedTime = 0, interval;
-        let isMeasuring = false;
-        const trackLength = 18.3; // Track length in meters (example for a bowling lane)
+        let isRunning = false;
+        let speedStartTime = null, speedEndTime = null;
+        const distanceInMeters = 18.29; // Length of a bowling lane in meters
 
         const videoStream = canvas.captureStream(30); // Capture the canvas as a stream
         const mediaRecorder = new MediaRecorder(videoStream);
@@ -56,39 +59,74 @@
             video.srcObject = stream;
         }
 
-        function startSpeedMeasurement() {
-            if (isMeasuring) return;
-            isMeasuring = true;
-            startTime = Date.now();
+        function startStopwatch() {
+            if (isRunning) return;
+            isRunning = true;
+            startTime = Date.now() - elapsedTime;
+            interval = setInterval(updateStopwatch, 100);
+            mediaRecorder.start();
         }
 
-        function stopSpeedMeasurement() {
-            if (!isMeasuring) return;
-            elapsedTime = (Date.now() - startTime) / 1000; // Time in seconds
-            const speed = (trackLength / elapsedTime) * 3.6; // Calculate speed in km/h
+        function stopStopwatch() {
+            isRunning = false;
+            clearInterval(interval);
+            mediaRecorder.stop();
+        }
+
+        function updateStopwatch() {
+            elapsedTime = Date.now() - startTime;
+            const seconds = Math.floor(elapsedTime / 1000);
+            const milliseconds = elapsedTime % 1000;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
             ctx.font = '30px Arial';
             ctx.fillStyle = 'red';
-            ctx.fillText(`Speed: ${speed.toFixed(2)} km/h`, 100, 50); // Display speed
-            isMeasuring = false;
+            ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50);
         }
 
-        startSpeedBtn.addEventListener('click', () => {
-            if (isMeasuring) {
-                stopSpeedMeasurement();
-                startSpeedBtn.textContent = 'Start Speed Measurement';
+        function measureSpeed() {
+            if (!speedStartTime) {
+                // Start measuring
+                speedStartTime = Date.now();
+                speedBtn.textContent = 'Stop Measuring';
             } else {
-                startSpeedMeasurement();
-                startSpeedBtn.textContent = 'Stop Speed Measurement';
+                // Stop measuring and calculate speed
+                speedEndTime = Date.now();
+                const timeTaken = (speedEndTime - speedStartTime) / 1000; // time in seconds
+                const speedKph = (distanceInMeters / timeTaken) * 3.6; // Speed in km/h
+
+                // Display the calculated speed
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                ctx.font = '30px Arial';
+                ctx.fillStyle = 'blue';
+                ctx.fillText(`Speed: ${speedKph.toFixed(2)} kph`, 100, 100);
+
+                // Reset for next measurement
+                speedStartTime = null;
+                speedEndTime = null;
+                speedBtn.textContent = 'Measure Speed';
+            }
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (isRunning) {
+                stopStopwatch();
+                startBtn.textContent = 'Start Stopwatch';
+            } else {
+                startStopwatch();
+                startBtn.textContent = 'Stop Stopwatch';
             }
         });
 
         saveBtn.addEventListener('click', () => {
-            if (!isMeasuring) {
+            if (!isRunning) {
                 mediaRecorder.stop();
             }
         });
+
+        speedBtn.addEventListener('click', measureSpeed);
 
         startCamera();
     </script>
