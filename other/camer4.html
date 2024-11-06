@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertical Video Stopwatch with Speed Measurement</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+        video {
+            transform: rotate(90deg); /* Rotate video to make it vertical */
+            width: 400px;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="600" height="400"></canvas>
+    <video id="video" width="400" height="600" autoplay></video>
+    <button id="startSpeedBtn">Start Speed Measurement</button>
+    <button id="saveBtn">Save as Video</button>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startSpeedBtn = document.getElementById('startSpeedBtn');
+        const saveBtn = document.getElementById('saveBtn');
+
+        let startTime, elapsedTime = 0, interval;
+        let isMeasuring = false;
+        const trackLength = 18.3; // Track length in meters (example for a bowling lane)
+
+        const videoStream = canvas.captureStream(30); // Capture the canvas as a stream
+        const mediaRecorder = new MediaRecorder(videoStream);
+        let recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+            recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stopwatch_video.webm';
+            a.click();
+        };
+
+        async function startCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: { exact: "environment" } }
+            });
+            video.srcObject = stream;
+        }
+
+        function startSpeedMeasurement() {
+            if (isMeasuring) return;
+            isMeasuring = true;
+            startTime = Date.now();
+        }
+
+        function stopSpeedMeasurement() {
+            if (!isMeasuring) return;
+            elapsedTime = (Date.now() - startTime) / 1000; // Time in seconds
+            const speed = (trackLength / elapsedTime) * 3.6; // Calculate speed in km/h
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'red';
+            ctx.fillText(`Speed: ${speed.toFixed(2)} km/h`, 100, 50); // Display speed
+            isMeasuring = false;
+        }
+
+        startSpeedBtn.addEventListener('click', () => {
+            if (isMeasuring) {
+                stopSpeedMeasurement();
+                startSpeedBtn.textContent = 'Start Speed Measurement';
+            } else {
+                startSpeedMeasurement();
+                startSpeedBtn.textContent = 'Stop Speed Measurement';
+            }
+        });
+
+        saveBtn.addEventListener('click', () => {
+            if (!isMeasuring) {
+                mediaRecorder.stop();
+            }
+        });
+
+        startCamera();
+    </script>
+</body>
+</html>
