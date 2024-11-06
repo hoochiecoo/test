@@ -49,7 +49,10 @@
         };
 
         async function startCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            // Get user media and select the back camera
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: { exact: "environment" } } // Try to access the back camera
+            });
             video.srcObject = stream;
         }
 
