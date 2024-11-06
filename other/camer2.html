@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Запись видео</title>
+    <title>Запись видео и измерение скорости</title>
     <style>
         body {
             display: flex;
@@ -49,6 +49,11 @@
             width: 100%;
             max-width: 640px;
         }
+        #speedDisplay {
+            font-size: 24px;
+            margin-top: 20px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -56,9 +61,11 @@
     <div class="controls">
         <button id="startRecord" class="control-button">▶️</button>
         <button id="stopRecord" class="control-button" disabled>⏹️</button>
+        <button id="speedButton" class="control-button">⏱️</button>
     </div>
     <h2>Записанное видео</h2>
     <video id="recordedVideo" controls></video>
+    <div id="speedDisplay"></div>
 
     <script>
         let mediaRecorder;
@@ -66,8 +73,17 @@
         const recordedVideo = document.getElementById('recordedVideo');
         const startRecord = document.getElementById('startRecord');
         const stopRecord = document.getElementById('stopRecord');
+        const speedButton = document.getElementById('speedButton');
+        const speedDisplay = document.getElementById('speedDisplay');
         const recordedChunks = [];
 
+        let isMeasuring = false;
+        let startTime, endTime;
+
+        // Константа: расстояние до кеглей (в метрах)
+        const DISTANCE_TO_PINS = 18.3;
+
+        // Получение доступа к камере
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
@@ -90,6 +106,7 @@
                 console.error('Ошибка доступа к камере:', error);
             });
 
+        // Запуск и остановка записи видео
         startRecord.addEventListener('click', () => {
             recordedChunks.length = 0; // очистка перед новой записью
             mediaRecorder.start();
@@ -101,6 +118,21 @@
             mediaRecorder.stop();
             startRecord.disabled = false;
             stopRecord.disabled = true;
+        });
+
+        // Измерение времени для вычисления скорости шара
+        speedButton.addEventListener('click', () => {
+            if (!isMeasuring) {
+                startTime = performance.now();
+                speedDisplay.textContent = "Измерение началось...";
+                isMeasuring = true;
+            } else {
+                endTime = performance.now();
+                const timeElapsed = (endTime - startTime) / 1000; // время в секундах
+                const speed = (DISTANCE_TO_PINS / timeElapsed) * 3.6; // перевод в км/ч
+                speedDisplay.textContent = `Скорость шара: ${speed.toFixed(2)} км/ч`;
+                isMeasuring = false;
+            }
         });
     </script>
 </body>
