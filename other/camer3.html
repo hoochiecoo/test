@@ -58,7 +58,7 @@
 
         async function startCamera() {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { exact: "environment" } } // Try to access the back camera
+                video: true // Use the default camera (no specific preference)
             });
             video.srcObject = stream;
         }
