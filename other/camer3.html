@@ -32,7 +32,6 @@
         const saveBtn = document.getElementById('saveBtn');
         const startSpeedBtn = document.getElementById('startSpeedBtn');
         const stopSpeedBtn = document.getElementById('stopSpeedBtn');
-        const speedDisplay = document.getElementById('speedDisplay');
 
         let startTime, elapsedTime = 0, interval;
         let isRunning = false;
@@ -88,13 +87,16 @@
             ctx.font = '30px Arial';
             ctx.fillStyle = 'red'; // Set text color to red
             ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50); // Display time above video
+            if (!isSpeedMeasuring) {
+                ctx.fillText(`Ball Speed: Not Measured`, 100, 100); // Display speed message if not measuring
+            }
         }
 
         function startSpeedMeasurement() {
             if (isSpeedMeasuring) return;
             isSpeedMeasuring = true;
             speedStartTime = Date.now();
-            speedDisplay.textContent = "Measuring Speed...";
+            updateStopwatch();
         }
 
         function stopSpeedMeasurement() {
@@ -107,7 +109,12 @@
             // Calculate speed in meters per second and convert to kilometers per hour
             const speedMps = distance / timeDiff; // Speed in meters per second
             const speedKph = speedMps * 3.6; // Convert to kilometers per hour
-            speedDisplay.textContent = `Ball Speed: ${speedKph.toFixed(2)} km/h`;
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing again
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'red'; // Set text color to red
+            ctx.fillText(`Time: ${(elapsedTime / 1000).toFixed(2)}s`, 100, 50); // Display time
+            ctx.fillText(`Ball Speed: ${speedKph.toFixed(2)} km/h`, 100, 100); // Display speed
         }
 
         startBtn.addEventListener('click', () => {
