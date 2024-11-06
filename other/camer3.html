@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Секундомер и запись</title>
+</head>
+<body>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <button id="startBtn">Старт</button>
+    <button id="stopBtn" disabled>Стоп</button>
+    <video id="video" controls></video>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const startBtn = document.getElementById("startBtn");
+        const stopBtn = document.getElementById("stopBtn");
+        const videoElement = document.getElementById("video");
+
+        let timer = 0;
+        let recording = false;
+        let mediaRecorder;
+        let chunks = [];
+        let stream;
+        let startTime;
+
+        function drawTimer() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "black";
+            ctx.font = "30px Arial";
+            ctx.fillText(`Секунды: ${Math.floor(timer)}`, 10, 50);
+        }
+
+        function record() {
+            if (!stream) {
+                stream = canvas.captureStream(30); // 30 FPS
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (e) => {
+                    chunks.push(e.data);
+                };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: "video/webm" });
+                    const videoUrl = URL.createObjectURL(blob);
+                    videoElement.src = videoUrl;
+                };
+            }
+            mediaRecorder.start();
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            stream.getTracks().forEach(track => track.stop());
+        }
+
+        startBtn.addEventListener("click", () => {
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            recording = true;
+            startTime = Date.now();
+            drawTimer();
+            record();
+
+            function updateTimer() {
+                if (recording) {
+                    timer = (Date.now() - startTime) / 1000;
+                    drawTimer();
+                    requestAnimationFrame(updateTimer);
+                }
+            }
+
+            updateTimer();
+        });
+
+        stopBtn.addEventListener("click", () => {
+            stopRecording();
+            stopBtn.disabled = true;
+            startBtn.disabled = false;
+            recording = false;
+        });
+    </script>
+</body>
+</html>
