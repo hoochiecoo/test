@@ -8,14 +8,21 @@
         canvas {
             border: 1px solid black;
         }
+        video {
+            transform: rotate(90deg); /* Rotate video to make it vertical */
+            width: 400px;
+            height: 600px;
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas" width="600" height="400"></canvas>
+    <video id="video" width="400" height="600" autoplay></video>
     <button id="startBtn">Start Stopwatch</button>
     <button id="saveBtn">Save as Video</button>
 
     <script>
+        const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
@@ -42,21 +49,11 @@
         };
 
         async function startCamera() {
+            // Get user media and select the back camera
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: { exact: "environment" } } // Try to access the back camera
             });
-            const videoElement = document.createElement('video');
-            videoElement.srcObject = stream;
-            videoElement.play();
-            videoElement.onplaying = () => {
-                function updateCanvas() {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
-                    updateStopwatch();
-                    requestAnimationFrame(updateCanvas);
-                }
-                updateCanvas();
-            };
+            video.srcObject = stream;
         }
 
         function startStopwatch() {
@@ -78,6 +75,8 @@
             const seconds = Math.floor(elapsedTime / 1000);
             const milliseconds = elapsedTime % 1000;
 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
             ctx.font = '30px Arial';
             ctx.fillStyle = 'red'; // Set text color to red
             ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50); // Display time above video
