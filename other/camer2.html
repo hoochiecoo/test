@@ -109,6 +109,9 @@
                     const url = URL.createObjectURL(blob);
                     recordedVideo.src = url;
                     recordedVideo.load();
+                    // Заменяем видео с камеры на записанное
+                    video.srcObject.getTracks().forEach(track => track.stop()); // Останавливаем камеру
+                    video.src = url; // Вставляем записанное видео
                 };
             })
             .catch(error => {
@@ -146,4 +149,3 @@
     </script>
 </body>
 </html>
-
