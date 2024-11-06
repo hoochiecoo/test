@@ -52,6 +52,7 @@
             border-collapse: collapse;
             margin-top: 20px;
             border: 1px solid #ddd;
+            display: none; /* Initially hidden */
         }
 
         table th, table td {
@@ -117,122 +118,136 @@
     </div>
 
     <script>
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/13iFmvOJnvGZrqDP927Y4MVZFdrqv-n_E4ITDT0c_g2s/pub?gid=1230234506&single=true&output=csv';
-        let allData = [];  // Store all data globally for filtering
-        let scoreChart;    // Chart instance
-
-        // Function to load data into the table
-        function loadTableData(data) {
-            const tbody = document.querySelector("#dataTable tbody");
-            tbody.innerHTML = '';  // Clear existing rows
-
-            data.forEach(row => {
-                const resultsArray = row.Results1 ? row.Results1.trim().split(/\s+/) : ["", "", "", "", ""];
-                
-                // Ensure resultsArray has exactly 5 items
-                while (resultsArray.length < 5) {
-                    resultsArray.push("");
-                }
-
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${row.Date}</td>
-                    <td>${row.Player1}</td>
-                    <td>${resultsArray[0]}</td>
-                    <td>${resultsArray[1]}</td>
-                    <td>${resultsArray[2]}</td>
-                    <td>${resultsArray[3]}</td>
-                    <td>${resultsArray[4]}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Function to populate Player 1 filter dropdown
-        function populatePlayerFilter(players) {
-            const playerFilter = document.getElementById("playerFilter");
-            players.forEach(player => {
-                const option = document.createElement("option");
-                option.value = player;
-                option.textContent = player;
-                playerFilter.appendChild(option);
-            });
-        }
-
-        // Function to gather all scores for a player and display the chart
-        function updateChartForPlayer(playerData) {
-            const scores = [];
-
-            playerData.forEach(row => {
-                const resultsArray = row.Results1 ? row.Results1.trim().split(/\s+/).map(Number) : [];
-                scores.push(...resultsArray); // Flatten scores for the chart
-            });
-
-            // If a chart already exists, destroy it before creating a new one
-            if (scoreChart) {
-                scoreChart.destroy();
+        class BowlingScores {
+            constructor(csvUrl, tableId, playerFilterId, chartId) {
+                this.csvUrl = csvUrl;
+                this.table = document.getElementById(tableId);
+                this.playerFilter = document.getElementById(playerFilterId);
+                this.chartCanvas = document.getElementById(chartId);
+                this.allData = [];
+                this.scoreChart = null;
+                this.init();
             }
 
-            const ctx = document.getElementById("scoreChart").getContext("2d");
-            scoreChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: scores.map((_, index) => `Game ${index + 1}`),
-                    datasets: [{
-                        label: 'Scores',
-                        data: scores,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderWidth: 1,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: { title: { display: true, text: 'Game Number' } },
-                        y: { title: { display: true, text: 'Score' }, beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        // Event listener for filter change
-        document.getElementById("playerFilter").addEventListener("change", function() {
-            const selectedPlayer = this.value;
-            const filteredData = selectedPlayer === "All"
-                ? allData
-                : allData.filter(row => row.Player1 === selectedPlayer);
-
-            loadTableData(filteredData);
-
-            if (selectedPlayer !== "All") {
-                updateChartForPlayer(filteredData);
-            } else if (scoreChart) {
-                scoreChart.destroy();  // Clear chart when "All" is selected
+            async init() {
+                await this.fetchData();
+                this.populatePlayerFilter();
+                this.setupEventListeners();
             }
-        });
 
-        // Fetch and parse the CSV data
-        fetch(csvUrl)
-            .then(response => response.text())
-            .then(csvData => {
-                Papa.parse(csvData, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        allData = results.data;
-                        
-                        // Get unique players for the filter dropdown
-                        const uniquePlayers = [...new Set(allData.map(row => row.Player1))];
-                        populatePlayerFilter(uniquePlayers);
+            // Fetch and parse the CSV data
+            async fetchData() {
+                try {
+                    const response = await fetch(this.csvUrl);
+                    const csvData = await response.text();
+                    Papa.parse(csvData, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: (results) => {
+                            this.allData = results.data;
+                            this.populatePlayerFilter(); // Populate player options after data is loaded
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error loading CSV:', error);
+                }
+            }
 
-                        // Load initial table data
-                        loadTableData(allData);
+            // Populate the player filter dropdown
+            populatePlayerFilter() {
+                const uniquePlayers = [...new Set(this.allData.map(row => row.Player1))];
+                uniquePlayers.forEach(player => {
+                    const option = document.createElement("option");
+                    option.value = player;
+                    option.textContent = player;
+                    this.playerFilter.appendChild(option);
+                });
+            }
+
+            // Setup event listeners for filtering
+            setupEventListeners() {
+                this.playerFilter.addEventListener("change", (event) => {
+                    const selectedPlayer = event.target.value;
+                    const filteredData = selectedPlayer === "All"
+                        ? this.allData
+                        : this.allData.filter(row => row.Player1 === selectedPlayer);
+
+                    this.loadTableData(filteredData);
+                    this.updateChartForPlayer(filteredData);
+                });
+            }
+
+            // Load the table data
+            loadTableData(data) {
+                const tbody = this.table.querySelector('tbody');
+                tbody.innerHTML = '';  // Clear existing rows
+
+                data.forEach(row => {
+                    const resultsArray = row.Results1 ? row.Results1.trim().split(/\s+/) : ["", "", "", "", ""];
+                    while (resultsArray.length < 5) resultsArray.push("");  // Ensure results have 5 items
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${row.Date}</td>
+                        <td>${row.Player1}</td>
+                        <td>${resultsArray[0]}</td>
+                        <td>${resultsArray[1]}</td>
+                        <td>${resultsArray[2]}</td>
+                        <td>${resultsArray[3]}</td>
+                        <td>${resultsArray[4]}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Show the table once data is loaded and filtered
+                this.table.style.display = 'table';  
+            }
+
+            // Update the chart for the selected player
+            updateChartForPlayer(playerData) {
+                const scores = [];
+
+                playerData.forEach(row => {
+                    const resultsArray = row.Results1 ? row.Results1.trim().split(/\s+/).map(Number) : [];
+                    scores.push(...resultsArray);  // Flatten scores for the chart
+                });
+
+                // If a chart already exists, destroy it before creating a new one
+                if (this.scoreChart) {
+                    this.scoreChart.destroy();
+                }
+
+                const ctx = this.chartCanvas.getContext("2d");
+                this.scoreChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: scores.map((_, index) => `Game ${index + 1}`),
+                        datasets: [{
+                            label: 'Scores',
+                            data: scores,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 1,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { title: { display: true, text: 'Game Number' } },
+                            y: { title: { display: true, text: 'Score' }, beginAtZero: true }
+                        }
                     }
                 });
-            })
-            .catch(error => console.error('Error loading CSV:', error));
+            }
+        }
+
+        // Initialize the BowlingScores class with the necessary parameters
+        const bowlingScores = new BowlingScores(
+            'https://docs.google.com/spreadsheets/d/13iFmvOJnvGZrqDP927Y4MVZFdrqv-n_E4ITDT0c_g2s/pub?gid=1230234506&single=true&output=csv',
+            'dataTable',
+            'playerFilter',
+            'scoreChart'
+        );
     </script>
 </body>
 </html>
-
