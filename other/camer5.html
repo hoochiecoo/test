@@ -5,27 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vertical Video Stopwatch with Video Capture</title>
     <style>
+        .container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 400px;
+            height: 600px;
+            margin: auto;
+        }
         canvas {
             border: 1px solid black;
             width: 400px;
             height: 600px;
         }
         video {
-            transform: rotate(90deg); /* Rotate video to make it vertical */
-            width: 400px;
-            height: 600px;
-            display: none; /* Hide video element since we're displaying it on canvas */
+            display: none; /* Hide the video element if only the canvas is needed */
+        }
+        .button-group {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        .button-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas" width="400" height="600"></canvas>
-    <video id="video" autoplay></video>
+    <div class="container">
+        <canvas id="canvas" width="400" height="600"></canvas>
+        <div class="button-group">
+            <button id="startBtn">Start Stopwatch</button>
+            <button id="saveBtn">Save as Video</button>
+            <button id="speedBtn">Measure Speed</button>
+        </div>
+    </div>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const speedBtn = document.getElementById('speedBtn');
 
         let startTime, elapsedTime = 0, interval;
         let isRunning = false;
@@ -78,37 +108,22 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
-            ctx.font = '20px Arial';
+            ctx.font = '30px Arial';
             ctx.fillStyle = 'red';
-            ctx.fillText(`Time: ${seconds}.${milliseconds}`, 20, 50);
+            ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50);
 
             // If speed is available, display it on the canvas
             if (speedKph !== null) {
                 ctx.fillStyle = 'blue';
-                ctx.fillText(`Speed: ${speedKph.toFixed(2)} kph`, 20, 90);
+                ctx.fillText(`Speed: ${speedKph.toFixed(2)} kph`, 100, 100);
             }
-
-            // Draw buttons on the canvas
-            drawButtons();
-        }
-
-        function drawButtons() {
-            ctx.fillStyle = '#333';
-            ctx.fillRect(20, 500, 100, 40); // Start/Stop button
-            ctx.fillRect(150, 500, 100, 40); // Save button
-            ctx.fillRect(280, 500, 100, 40); // Measure Speed button
-
-            ctx.fillStyle = '#fff';
-            ctx.font = '16px Arial';
-            ctx.fillText(isRunning ? 'Stop' : 'Start', 40, 525);
-            ctx.fillText('Save', 180, 525);
-            ctx.fillText('Measure Speed', 290, 525);
         }
 
         function measureSpeed() {
             if (!speedStartTime) {
                 // Start measuring
                 speedStartTime = Date.now();
+                speedBtn.textContent = 'Stop Measuring';
             } else {
                 // Stop measuring and calculate speed
                 speedEndTime = Date.now();
@@ -118,35 +133,27 @@
                 // Reset for next measurement
                 speedStartTime = null;
                 speedEndTime = null;
+                speedBtn.textContent = 'Measure Speed';
             }
         }
 
-        canvas.addEventListener('click', (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-
-            // Check if Start/Stop button was clicked
-            if (x > 20 && x < 120 && y > 500 && y < 540) {
-                if (isRunning) {
-                    stopStopwatch();
-                } else {
-                    startStopwatch();
-                }
-            }
-
-            // Check if Save button was clicked
-            if (x > 150 && x < 250 && y > 500 && y < 540) {
-                if (!isRunning) {
-                    mediaRecorder.stop();
-                }
-            }
-
-            // Check if Measure Speed button was clicked
-            if (x > 280 && x < 380 && y > 500 && y < 540) {
-                measureSpeed();
+        startBtn.addEventListener('click', () => {
+            if (isRunning) {
+                stopStopwatch();
+                startBtn.textContent = 'Start Stopwatch';
+            } else {
+                startStopwatch();
+                startBtn.textContent = 'Stop Stopwatch';
             }
         });
+
+        saveBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                mediaRecorder.stop();
+            }
+        });
+
+        speedBtn.addEventListener('click', measureSpeed);
 
         startCamera();
     </script>
