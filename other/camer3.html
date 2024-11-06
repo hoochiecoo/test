@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canvas Stopwatch with Video Capture</title>
+    <title>Vertical Video Stopwatch with Video Capture</title>
     <style>
         canvas {
             border: 1px solid black;
         }
+        video {
+            transform: rotate(90deg); /* Rotate video to make it vertical */
+            width: 400px;
+            height: 600px;
+        }
     </style>
 </head>
 <body>
-    <video id="video" width="400" height="200" autoplay></video>
-    <canvas id="canvas" width="400" height="200"></canvas>
+    <canvas id="canvas" width="600" height="400"></canvas>
+    <video id="video" width="400" height="600" autoplay></video>
     <button id="startBtn">Start Stopwatch</button>
     <button id="saveBtn">Save as Video</button>
 
@@ -44,7 +49,10 @@
         };
 
         async function startCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            // Get user media and select the back camera
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: { exact: "environment" } } // Try to access the back camera
+            });
             video.srcObject = stream;
         }
 
