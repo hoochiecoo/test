@@ -79,7 +79,7 @@
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame on canvas
             ctx.font = '30px Arial';
             ctx.fillStyle = 'red'; // Set text color to red
-            ctx.fillText(Time: ${seconds}.${milliseconds}, 100, 50); // Display time above video
+            ctx.fillText(`Time: ${seconds}.${milliseconds}`, 100, 50); // Display time above video
         }
 
         startBtn.addEventListener('click', () => {
