@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bowling Scores Table with Chart</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Basic reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Global Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100vh;
+            background-color: #121212; /* Dark mode background */
+            color: #e0e0e0; /* Light text color */
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 2.5em;
+        }
+
+        /* Material Design Card */
+        .container {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* Filter Block */
+        .filter-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 18px;
+            margin-right: 10px;
+            color: #bdbdbd;
+        }
+
+        select {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #424242;
+            color: #e0e0e0;
+            border: 1px solid #616161;
+            border-radius: 4px;
+        }
+
+        /* Table Block */
+        .table-block {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            display: none;
+            border: 1px solid #616161;
+            border-radius: 8px;
+            background-color: #212121;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #388E3C;
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        table td {
+            color: #e0e0e0;
+            border-bottom: 1px solid #616161;
+        }
+
+        /* Chart Block */
+        .chart-block {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #1e1e1e;
+            color: #bdbdbd;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        /* Material Design Style Button */
+        .material-button {
+            background-color: #6200ea;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .material-button:hover {
+            background-color: #3700b3;
+        }
+
+        /* Make sure chart is responsive */
+        @media (max-width: 768px) {
+            table th, table td {
+                font-size: 14px;
+            }
+
+            label, select {
+                font-size: 16px;
+            }
+
+            canvas {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bowling Scores Table with Chart</h1>
+    </header>
+
+    <div class="container">
+        <!-- Filter Block -->
+        <div class="filter-block">
+            <label for="playerFilter">Filter by Player: </label>
+            <select id="playerFilter">
+                <option value="All">All</option>
+            </select>
+        </div>
+
+        <!-- Chart Block -->
+        <div class="chart-block">
+            <canvas id="scoreChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Table Block -->
+        <div class="table-block">
+            <table id="dataTable" border="1">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Player Name</th>
+                        <th>Results</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Material Design Button -->
+        <button class="material-button" onclick="reloadPage()">Reload Data</button>
+    </div>
+
+    <footer>
+        <p>© 2024 Bowling Scores Dashboard</p>
+    </footer>
+
+    <script>
+        class BowlingScores {
+            constructor(csvUrl, tableId, playerFilterId, chartId) {
+                this.csvUrl = csvUrl;
+                this.table = document.getElementById(tableId);
+                this.playerFilter = document.getElementById(playerFilterId);
+                this.chartCanvas = document.getElementById(chartId);
+                this.allData = [];
+                this.scoreChart = null;
+                this.init();
+            }
+
+            async init() {
+                await this.fetchData();
+                this.populatePlayerFilter();
+                this.setupEventListeners();
+            }
+
+            // Fetch and parse the CSV data
+            async fetchData() {
+                try {
+                    const response = await fetch(this.csvUrl);
+                    const csvData = await response.text();
+                    Papa.parse(csvData, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: (results) => {
+                            this.allData = results.data;
+                            this.populatePlayerFilter(); // Populate player options after data is loaded
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error loading CSV:', error);
+                }
+            }
+
+            // Populate the player filter dropdown
+            populatePlayerFilter() {
+                const uniquePlayers = [...new Set(this.allData.map(row => row.PlayerName))];
+                uniquePlayers.forEach(player => {
+                    const option = document.createElement("option");
+                    option.value = player;
+                    option.textContent = player;
+                    this.playerFilter.appendChild(option);
+                });
+            }
+
+            // Setup event listeners for filtering
+            setupEventListeners() {
+                this.playerFilter.addEventListener("change", (event) => {
+                    const selectedPlayer = event.target.value;
+                    const filteredData = selectedPlayer === "All"
+                        ? this.allData
+                        : this.allData.filter(row => row.PlayerName === selectedPlayer);
+
+                    // Sort the filtered data by date (oldest first)
+                    const sortedData = this.sortDataByDate(filteredData);
+
+                    this.loadTableData(sortedData);
+                    this.updateChartForPlayer(sortedData);
+                });
+            }
+
+            // Sort data by date (oldest first)
+            sortDataByDate(data) {
+                return data.sort((a, b) => {
+                    const dateA = new Date(a.Date);
+                    const dateB = new Date(b.Date);
+                    return dateA - dateB; // Sort in ascending order (oldest first)
+                });
+            }
+
+            // Load the table data
+            loadTableData(data) {
+                const tbody = this.table.querySelector('tbody');
+                tbody.innerHTML = '';  // Clear existing rows
+
+                data.forEach(row => {
+                    const resultsArray = row.Results ? row.Results.trim().split(/\s+/) : [];
+                    while (resultsArray.length < 5) resultsArray.push("");  // Ensure results have 5 items
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${row.Date}</td>
+                        <td>${row.PlayerName}</td>
+                        <td>${resultsArray.join(", ")}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Show the table once data is loaded and filtered
+                this.table.style.display = 'table';  
+            }
+
+            // Update the chart for the selected player
+            updateChartForPlayer(playerData) {
+                const scores = [];
+
+                // Flatten data and reverse to start from the most recent game
+                playerData.reverse().forEach(row => {
+                    const resultsArray = row.Results ? row.Results.trim().split(/\s+/).map(Number) : [];
+                    scores.push(...resultsArray);  // Flatten scores for the chart
+                });
+
+                // If a chart already exists, destroy it before creating a new one
+                if (this.scoreChart) {
+                    this.scoreChart.destroy();
+                }
+
+                const ctx = this.chartCanvas.getContext("2d");
+                this.scoreChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: scores.map((_, index) => `Game ${index + 1}`),
+                        datasets: [{
+                            label: 'Scores',
+                            data: scores,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 1,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { title: { display: true, text: 'Game Number' } },
+                            y: { title: { display: true, text: 'Score' }, beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize the BowlingScores class with the necessary parameters
+        const bowlingScores = new BowlingScores(
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ097fHhFOH3v_RYrE-IRuD2GWy-ZoI7dgv38IG-tmUzBZJIlxVl6bljhcHm_3tyrdIk7_clVL6WnkB/pub?gid=1956659355&single=true&output=csv',
+            'dataTable',
+            'playerFilter',
+            'scoreChart'
+        );
+
+        function reloadPage() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
+
