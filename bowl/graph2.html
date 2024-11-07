@@ -42,16 +42,10 @@
 
         /* Material Design Card */
         .container {
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            width: 100%;
-            max-width: 900px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            height: 100%;
         }
 
         /* Filter Block */
@@ -78,14 +72,34 @@
             border-radius: 4px;
         }
 
+        /* Chart Block */
+        .chart-block {
+            flex: 1;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        canvas {
+            width: 50% !important;
+            height: auto;
+        }
+
         /* Table Block */
         .table-block {
-            width: 100%;
+            flex: 1;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
         }
 
         table {
             width: 100%;
+            max-width: 600px;
             border-collapse: collapse;
             display: none;
             border: 1px solid #616161;
@@ -108,17 +122,6 @@
         table td {
             color: #e0e0e0;
             border-bottom: 1px solid #616161;
-        }
-
-        /* Chart Block */
-        .chart-block {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        canvas {
-            max-width: 100%;
-            height: auto;
         }
 
         /* Footer */
@@ -354,4 +357,3 @@
     </script>
 </body>
 </html>
-
