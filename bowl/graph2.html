@@ -329,7 +329,11 @@
                     options: {
                         scales: {
                             x: { title: { display: true, text: 'Game Number' } },
-                            y: { title: { display: true, text: 'Score' }, beginAtZero: true }
+                            y: {
+                                title: { display: true, text: 'Score' },
+                                beginAtZero: true,
+                                max: 300 // Set max score limit to 300
+                            }
                         }
                     }
                 });
