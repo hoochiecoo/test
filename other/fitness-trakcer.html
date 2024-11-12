@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Emulator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      font-size: 18px;
+      color: #999;
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .header-icons span {
+      font-size: 18px;
+    }
+
+    .market-title {
+      font-size: 24px;
+      margin: 20px 0;
+      color: #fff;
+      text-align: center;
+    }
+
+    .nav-tabs {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      background-color: #333;
+      padding: 10px 15px;
+      border-radius: 5px;
+      text-align: center;
+      font-size: 16px;
+      color: #ddd;
+      flex: 1;
+      margin: 5px;
+      cursor: pointer;
+      max-width: 120px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .tab.active {
+      background-color: #4a4a4a;
+      color: #fff;
+    }
+
+    .info-boxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* Контейнер для двух столбцов */
+    .info-box-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .info-box {
+      flex: 1 1 calc(50% - 10px); /* Два столбца с отступами */
+      padding: 15px;
+      background-color: #2b2b2b;
+      border-radius: 8px;
+      color: #ddd;
+    }
+
+    .info-box .percentage {
+      font-size: 22px;
+      color: #00b16a;
+    }
+
+    .ad-banner {
+      background-color: #45322e;
+      padding: 15px;
+      border-radius: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .bond-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .bond-item {
+      background-color: #2b2b2b;
+      padding: 15px;
+      border-radius: 8px;
+      color: #ddd;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .bond-item .title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .bond-item .details {
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      background-color: #333;
+      justify-content: space-around;
+      padding: 10px 0;
+      box-sizing: border-box;
+    }
+
+    .bottom-nav div {
+      color: #ddd;
+      font-size: 14px;
+      text-align: center;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .bottom-nav div.active {
+      color: #00b16a;
+    }
+
+    /* Media Query for screens less than 300px */
+    @media (max-width: 300px) {
+      .info-box {
+        flex: 1 1 100%; /* Для экранов меньше 300px элементы будут занимать весь ряд (один столбец) */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script>
+    const App = () => {
+      return React.createElement(
+        "div", 
+        { className: "container" },
+
+        // Header
+        React.createElement(
+          "div", 
+          { className: "header" },
+          React.createElement("span", null, "13:01"),
+          React.createElement(
+            "div", 
+            { className: "header-icons" },
+            React.createElement("span", null, "🌐"),
+            React.createElement("span", null, "🔍"),
+            React.createElement("span", null, "⭐")
+          )
+        ),
+
+        // Market Title
+        React.createElement("div", { className: "market-title" }, "Рынок"),
+
+        // Navigation Tabs
+        React.createElement(
+          "div", 
+          { className: "nav-tabs" },
+          React.createElement("div", { className: "tab active" }, "Избранное"),
+          React.createElement("div", { className: "tab" }, "Акции"),
+          React.createElement("div", { className: "tab" }, "Облигации"),
+          React.createElement("div", { className: "tab" }, "Фонды")
+        ),
+
+        // Info Boxes (два столбца)
+        React.createElement(
+          "div", 
+          { className: "info-box-container" },
+          React.createElement(
+            "div", 
+            { className: "info-box" },
+            React.createElement("div", null, "Сегодня, 12 ноября"),
+            React.createElement("div", null, "Боковой тренд"),
+            React.createElement("div", null, "Незначительное колебание рынка")
+          ),
+          React.createElement(
+            "div", 
+            { className: "info-box" },
+            React.createElement("div", { className: "percentage" }, "56%"),
+            React.createElement("div", null, "Тенденция к покупке")
+          )
+        ),
+
+        // Ad Banner
+        React.createElement(
+          "div", 
+          { className: "ad-banner" },
+          React.createElement("span", null, "📈"),
+          React.createElement(
+            "div", 
+            null,
+            React.createElement("div", null, "Инвестиции в IPO"),
+            React.createElement("div", null, 'Новый фонд акций от УК "Первая"')
+          )
+        ),
+
+        // Bond List
+        React.createElement(
+          "div", 
+          { className: "bond-list" },
+          React.createElement(
+            "div", 
+            { className: "bond-item" },
+            React.createElement("div", { className: "title" }, "Кокс 001P-01"),
+            React.createElement(
+              "div", 
+              { className: "details" },
+              "28,71% • 3 года (оферта 2 года)"
+            )
+          ),
+          React.createElement(
+            "div", 
+            { className: "bond-item" },
+            React.createElement("div", { className: "title" }, "ГТЛК 002P-02"),
+            React.createElement("div", { className: "details" }, "25,58 - 28,50%")
+          )
+        ),
+
+        // Bottom Navigation
+        React.createElement(
+          "div", 
+          { className: "bottom-nav" },
+          React.createElement("div", null, "Портфель"),
+          React.createElement("div", { className: "active" }, "Рынок"),
+          React.createElement("div", null, "Новости"),
+          React.createElement("div", null, "Помощь"),
+          React.createElement("div", null, "Профиль")
+        )
+      );
+    };
+
+    ReactDOM.render(
+      React.createElement(App),
+      document.getElementById('root')
+    );
+  </script>
+</body>
+</html>
