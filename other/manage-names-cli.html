@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Управление Данными</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input[type="text"] {
+      width: 300px;
+      padding: 8px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+    }
+    .output {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    .suggestions {
+      margin-top: 10px;
+      font-size: 16px;
+      color: grey;
+    }
+    .name-suggestion {
+      color: blue;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Управление Данными</h1>
+  <p>Введите команду в строку управления:</p>
+
+  <input type="text" id="input-command" placeholder="Введите команду" onkeydown="handleKeyDown(event)" oninput="updateSuggestions()">
+
+  <div class="output" id="output"></div>
+  <div class="suggestions" id="suggestions"></div>
+
+  <script>
+    let names = ['Анатолий', 'Иван', 'Мария']; // Пример данных
+
+    function handleKeyDown(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault(); // Отменяем стандартное действие для Enter
+        processCommand();
+      }
+    }
+
+    function processCommand() {
+      const input = document.getElementById('input-command').value;
+      const output = document.getElementById('output');
+      const suggestions = document.getElementById('suggestions');
+
+      if (input.startsWith('add ')) {
+        const nameToAdd = input.slice(4).trim();
+        if (nameToAdd) {
+          names.push(nameToAdd);
+          output.innerHTML = `Добавлено: ${nameToAdd}`;
+        } else {
+          output.innerHTML = 'Пожалуйста, укажите имя для добавления.';
+        }
+      } else if (input.startsWith('remove ')) {
+        const nameToRemove = input.slice(7).trim();
+        if (nameToRemove && names.includes(nameToRemove)) {
+          names = names.filter(name => name !== nameToRemove);
+          output.innerHTML = `Удалено: ${nameToRemove}`;
+        } else {
+          output.innerHTML = 'Имя не найдено для удаления.';
+        }
+      } else if (input === 'list') {
+        output.innerHTML = `Список имен: ${names.join(', ')}`;
+      } else {
+        output.innerHTML = '';
+        suggestions.innerHTML = `Подсказки: 
+          <ul>
+            <li>add [имя] — добавить имя</li>
+            <li>remove [имя] — удалить имя</li>
+            <li>list — показать все имена</li>
+          </ul>`;
+      }
+    }
+
+    function updateSuggestions() {
+      const input = document.getElementById('input-command').value;
+      const suggestions = document.getElementById('suggestions');
+      const command = input.split(' ')[0];
+      const query = input.slice(command.length).trim().toLowerCase();
+
+      if (command === 'remove' || command === 'add') {
+        const filteredNames = names.filter(name => name.toLowerCase().startsWith(query));
+        if (filteredNames.length > 0) {
+          suggestions.innerHTML = `Подсказки: 
+            <ul>
+              ${filteredNames.map(name => `<li class="name-suggestion" onclick="insertName('${name}')">${name}</li>`).join('')}
+            </ul>`;
+        } else {
+          suggestions.innerHTML = 'Нет совпадений для этого имени.';
+        }
+      } else {
+        suggestions.innerHTML = '';
+      }
+    }
+
+    function insertName(name) {
+      const inputField = document.getElementById('input-command');
+      const currentValue = inputField.value;
+      inputField.value = currentValue + ' ' + name; // Вставка имени в конец строки
+      updateSuggestions(); // Обновить подсказки после вставки
+    }
+  </script>
+
+</body>
+</html>
+
