@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Честная цена</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .price-display {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333333;
+            background-color: #fff9d6;
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            text-align: right;
+            cursor: pointer;
+        }
+        .numeric-keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .numeric-keyboard button {
+            font-size: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #ffd700;
+            border: none;
+            cursor: pointer;
+        }
+        .numeric-keyboard button:hover {
+            background-color: #ffcc00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Честная цена</div>
+        <div id="price-per-kg" class="price-display">0 din</div>
+        <div class="form-group">
+            <label for="package-price">Введите цену за упаковку</label><br>
+            <input type="text" id="package-price" placeholder="din" readonly onclick="switchActiveField('price')">
+        </div>
+        <div class="form-group">
+            <label for="package-weight">Введите вес в граммах</label><br>
+            <input type="text" id="package-weight" placeholder="г." readonly onclick="switchActiveField('weight')">
+        </div>
+
+        <!-- Numeric Keyboard -->
+        <div class="numeric-keyboard">
+            <button onclick="addDigit('price')">1</button>
+            <button onclick="addDigit('price')">2</button>
+            <button onclick="addDigit('price')">3</button>
+            <button onclick="addDigit('price')">4</button>
+            <button onclick="addDigit('price')">5</button>
+            <button onclick="addDigit('price')">6</button>
+            <button onclick="addDigit('price')">7</button>
+            <button onclick="addDigit('price')">8</button>
+            <button onclick="addDigit('price')">9</button>
+            <button onclick="clearInput()">C</button>
+            <button onclick="addDigit('price')">0</button>
+            <button onclick="calculatePrice()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        let activeField = 'price';  // Default active field is price
+
+        // Function to switch active field
+        function switchActiveField(field) {
+            activeField = field;
+        }
+
+        // Function to add digits to the active input field
+        function addDigit() {
+            const inputField = document.getElementById('package-' + activeField);
+            inputField.value += event.target.textContent;
+            calculatePrice(); // Automatically calculate after input
+        }
+
+        // Function to clear the input field
+        function clearInput() {
+            const inputField = document.getElementById('package-' + activeField);
+            inputField.value = '';
+            calculatePrice(); // Recalculate after clearing
+        }
+
+        // Function to calculate the price per kilogram
+        function calculatePrice() {
+            const price = parseFloat(document.getElementById("package-price").value);
+            const weight = parseFloat(document.getElementById("package-weight").value);
+
+            if (isNaN(price) || isNaN(weight) || weight <= 0) {
+                document.getElementById("price-per-kg").textContent = "0 din"; // Default value
+                return;
+            }
+
+            const pricePerKg = Math.floor((price / weight) * 1000); // Round down to remove decimals
+            document.getElementById("price-per-kg").textContent = pricePerKg + " din";
+        }
+    </script>
+</body>
+</html>
