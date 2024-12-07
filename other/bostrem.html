@@ -16,18 +16,19 @@
             document.getElementById('number').textContent = count;
 
             // Fetch CSV data with no cache
-            fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRipV0Yce0uR5iaoXszuXchHhkcbxTjFI9mcQQBWsQVn4X1PJyWerpTMB9c11O6EV2-ni0szyr27YWa/pub?gid=1369138481&single=true&output=csv', {
-                cache: 'no-store'
-            })
-            .then(response => response.text())
-            .then(data => {
-                const firstCell = data.split('\n')[0].split(',')[0]; // Get the first cell of the first row
-                document.getElementById('csvData').textContent = firstCell;
-            })
-            .catch(error => console.error('Error fetching CSV:', error));
+fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRipV0Yce0uR5iaoXszuXchHhkcbxTjFI9mcQQBWsQVn4X1PJyWerpTMB9c11O6EV2-ni0szyr27YWa/pub?gid=1369138481&single=true&output=csv', {
+    cache: 'no-store'
+})
+.then(response => response.text())
+.then(data => {
+    const firstCell = data.split('\n')[0].split(',')[0]; // Get the first cell of the first row
+    document.getElementById('csvData').textContent = firstCell;
+})
+.catch(error => console.error('Error fetching CSV:', error));
+
         }
 
-        setInterval(incrementNumber, 3000);
+        setInterval(incrementNumber, 5000);
     </script>
 </body>
 </html>
