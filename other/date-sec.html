@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Current Date and Time</title>
+    <title>Incrementing Number</title>
 </head>
 <body>
-    <div id="datetime"></div>
+    <div id="number">0</div>
     <script>
-        function updateDateTime() {
-            const now = new Date();
-            document.getElementById('datetime').textContent = now.toLocaleString();
+        let count = 0;
+        function incrementNumber() {
+            count++;
+            document.getElementById('number').textContent = count;
         }
 
-        setInterval(updateDateTime, 1000);
-        updateDateTime();  // Initial call to display immediately
+        setInterval(incrementNumber, 3000);
     </script>
 </body>
 </html>
