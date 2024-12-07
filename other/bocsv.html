@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data</title>
+</head>
+<body>
+    <pre id="csvData"></pre>
+    <script>
+        fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRipV0Yce0uR5iaoXszuXchHhkcbxTjFI9mcQQBWsQVn4X1PJyWerpTMB9c11O6EV2-ni0szyr27YWa/pub?gid=1369138481&single=true&output=csv')
+            .then(response => response.text())
+            .then(data => {
+                const firstLine = data.split('\n')[0];
+                document.getElementById('csvData').textContent = firstLine;
+            })
+            .catch(error => console.error('Error fetching CSV:', error));
+    </script>
+</body>
+</html>
