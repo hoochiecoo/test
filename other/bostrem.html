@@ -3,26 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Data</title>
+    <title>Incrementing Number with CSV Data</title>
 </head>
 <body>
-    <pre id="csvData"></pre>
+    <div id="number">0</div>
+    <div id="csvData"></div>
     <script>
-        function fetchCSV() {
-            fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRipV0Yce0uR5iaoXszuXchHhkcbxTjFI9mcQQBWsQVn4X1PJyWerpTMB9c11O6EV2-ni0szyr27YWa/pub?gid=1369138481&single=true&output=csv')
-                .then(response => response.text())
-                .then(data => {
-                    const firstLine = data.split('\n')[0];
-                    document.getElementById('csvData').textContent = firstLine;
-                })
-                .catch(error => console.error('Error fetching CSV:', error));
+        let count = 0;
+
+        function incrementNumber() {
+            count++;
+            document.getElementById('number').textContent = count;
+
+            // Fetch CSV data with no cache
+            fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRipV0Yce0uR5iaoXszuXchHhkcbxTjFI9mcQQBWsQVn4X1PJyWerpTMB9c11O6EV2-ni0szyr27YWa/pub?gid=1369138481&single=true&output=csv', {
+                cache: 'no-store'
+            })
+            .then(response => response.text())
+            .then(data => {
+                const firstCell = data.split('\n')[0].split(',')[0]; // Get the first cell of the first row
+                document.getElementById('csvData').textContent = firstCell;
+            })
+            .catch(error => console.error('Error fetching CSV:', error));
         }
 
-        // Fetch CSV data initially
-        fetchCSV();
-
-        // Fetch CSV data every 30 seconds
-        setInterval(fetchCSV, 30000);
+        setInterval(incrementNumber, 3000);
     </script>
 </body>
 </html>
