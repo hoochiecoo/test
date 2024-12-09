@@ -17,18 +17,33 @@
             align-items: center;
         }
         #content {
+            position: relative;
             width: 100%;
             white-space: pre-wrap;
             word-wrap: break-word;
             text-align: left;
-            background-color: rgba(135, 206, 235, 0.5); /* голубой полупрозрачный фон */
             padding: 20px;
-            box-sizing: border-box; /* Чтобы padding не выходил за пределы элемента */
+            box-sizing: border-box;
+        }
+        #shadow {
+            position: absolute;
+            top: 0;
+            left: 1px;
+            color: black;
+        }
+        #text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <h1 id="content"></h1>
+    <div id="content">
+        <div id="shadow"></div>
+        <div id="text"></div>
+    </div>
 
     <script>
         async function loadText() {
@@ -36,7 +51,8 @@
                 const response = await fetch("https://bowlmates.club/IT/read-text");
                 const data = await response.json();
                 const formattedText = data.text.replace(/\n/g, '<br>');
-                document.getElementById('content').innerHTML = formattedText;
+                document.getElementById('shadow').innerHTML = formattedText;
+                document.getElementById('text').innerHTML = formattedText;
             } catch (error) {
                 console.error("Error loading text:", error);
             }
@@ -47,3 +63,4 @@
     </script>
 </body>
 </html>
+
