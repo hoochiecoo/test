@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Graph with CSV Data and Chart Type Switch</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .chart-container {
+            max-width: 800px;
+            margin: 20px auto;
+            position: relative;
+        }
+        .save-button {
+            margin-top: 10px;
+        }
+        #input-container {
+            margin: 20px;
+        }
+        select {
+            padding: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dynamic Graph with CSV Data and Chart Type Switch</h1>
+
+    <!-- Dropdown to select chart type -->
+    <div id="input-container">
+        <select id="chartTypeSelect" onchange="updateGraphsFromSelection()">
+            <option value="line">Line Chart</option>
+            <option value="bar">Bar Chart</option>
+            <option value="radar">Radar Chart</option>
+            <option value="pie">Pie Chart</option>
+        </select>
+    </div>
+
+    <!-- Container to hold charts -->
+    <div id="chartsContainer"></div>
+
+    <script>
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ097fHhFOH3v_RYrE-IRuD2GWy-ZoI7dgv38IG-tmUzBZJIlxVl6bljhcHm_3tyrdIk7_clVL6WnkB/pub?gid=1166794223&single=true&output=csv';
+
+        let names = [];
+        let allGames = {};
+
+        function fetchData() {
+            fetch(csvUrl)
+                .then(response => response.text())
+                .then(csvText => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            parseCsvData(results.data);
+                        }
+                    });
+                });
+        }
+
+        function parseCsvData(data) {
+            data.forEach(row => {
+                const name = row['Name'].trim();
+                const games = row['AllGames'].trim().split(' ').map(Number);
+
+                if (name && games.length > 0) {
+                    names.push(name);
+                    allGames[name] = games;
+                }
+            });
+
+            if (names.length > 0) {
+                updateGraphsFromSelection();
+            }
+        }
+
+        function initChart(data, chartType, containerId, playerName) {
+            const ctx = document.getElementById(containerId).getContext('2d');
+            const yMin = Math.min(...data) - 10;
+            const yMax = Math.max(...data) + 10;
+
+            return new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: data.map((_, index) => index + 1),
+                    datasets: [{
+                        label: 'Games',
+                        data: data,
+                        borderColor: '#f70057',
+                        backgroundColor: chartType === 'bar' ? 'rgba(247, 0, 87, 0.2)' : 'rgba(247, 0, 87, 0.2)',
+                        borderWidth: 1,
+                        fill: chartType !== 'pie',
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Game Index'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Score'
+                            },
+                            beginAtZero: false,
+                            min: yMin,
+                            max: yMax,
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGraphsFromSelection() {
+            const chartType = document.getElementById('chartTypeSelect').value;
+            const chartsContainer = document.getElementById('chartsContainer');
+            chartsContainer.innerHTML = '';
+
+            names.forEach((name) => {
+                const gameData = allGames[name];
+                const chartDiv = document.createElement('div');
+                chartDiv.className = 'chart-container';
+                chartDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <canvas id="chart-${name}" width="400" height="200"></canvas>
+                    <button class="save-button" onclick="saveSingleChart('${name}')">Save ${name}'s Chart</button>
+                `;
+                chartsContainer.appendChild(chartDiv);
+                initChart(gameData, chartType, `chart-${name}`, name);
+            });
+        }
+
+        function saveSingleChart(name) {
+            const canvas = document.getElementById(`chart-${name}`);
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `${name}-chart.png`;
+            link.click();
+        }
+
+        window.onload = function() {
+            fetchData();
+        }
+    </script>
+
+</body>
+</html>
+
