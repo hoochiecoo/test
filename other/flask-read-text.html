@@ -17,15 +17,15 @@
             border-collapse: collapse;
         }
         td {
-            border: 1px solid black;
             position: relative;
         }
-        .bottom-text {
+        #content {
             position: absolute;
             bottom: 0;
             left: 0;
-            right: 0;
-            text-align: center;
+            text-align: left;
+            width: 100%;
+            font-family: monospace;
         }
     </style>
 </head>
@@ -33,10 +33,25 @@
     <table>
         <tr>
             <td>
-                <div class="bottom-text">текстa fknwef jkwaef kwae fwej </div>
+                <div id="content"></div>
             </td>
-            <td></td>
         </tr>
     </table>
+
+    <script>
+        async function loadText() {
+            try {
+                const response = await fetch("https://bowlmates.club/IT/read-text");
+                const data = await response.json();
+                const formattedText = data.text.replace(/\n/g, '<br>');
+                document.getElementById('content').innerHTML = formattedText;
+            } catch (error) {
+                console.error("Error loading text:", error);
+            }
+        }
+
+        setInterval(loadText, 5000);
+        window.onload = loadText;
+    </script>
 </body>
 </html>
