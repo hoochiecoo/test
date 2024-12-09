@@ -3,64 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Text Loader</title>
     <style>
-        body {
-            font-family: "Courier New", monospace;
+        body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
             display: flex;
-            justify-content: center;
-            align-items: center;
         }
-        #content {
-            position: relative;
+        table {
             width: 100%;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            text-align: left;
-            padding: 20px;
-            box-sizing: border-box;
+            height: 100%;
+            border-collapse: collapse;
         }
-        #shadow {
-            position: absolute;
-            top: 0;
-            left: 1px;
-            color: black;
+        td {
+            border: 1px solid black;
+            position: relative;
         }
-        #text {
+        .bottom-text {
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
-            color: white;
+            right: 0;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div id="content">
-        <div id="shadow"></div>
-        <div id="text"></div>
-    </div>
-
-    <script>
-        async function loadText() {
-            try {
-                const response = await fetch("https://bowlmates.club/IT/read-text");
-                const data = await response.json();
-                const formattedText = data.text.replace(/\n/g, '<br>');
-                document.getElementById('shadow').innerHTML = formattedText;
-                document.getElementById('text').innerHTML = formattedText;
-            } catch (error) {
-                console.error("Error loading text:", error);
-            }
-        }
-
-        setInterval(loadText, 5000);
-        window.onload = loadText;
-    </script>
+    <table>
+        <tr>
+            <td>
+                <div class="bottom-text">текстa fknwef jkwaef kwae fwej </div>
+            </td>
+            <td></td>
+        </tr>
+    </table>
 </body>
 </html>
-
