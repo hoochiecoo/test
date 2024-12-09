@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table with Column Position</title>
+    <style>
+        table, th, td {border: 1px solid black; border-collapse: collapse; padding: 5px;}
+        th {text-align: center;}
+        td {text-align: right;}
+        button {margin-top: 10px;}
+        #output {margin-top: 20px;}
+        .player-name {color: blue; cursor: pointer;}
+        
+        /* Style for the modal (popup) */
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        #popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        #close-popup {
+            cursor: pointer;
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Table with Position Data</h2>
+    <button onclick="showTable()">Show Next Table</button>
+    <div id="tableContainer"></div>
+
+    <!-- Modal for displaying player positions -->
+    <div id="popup-overlay"></div>
+    <div id="popup">
+        <pre id="output"></pre>
+        <span id="close-popup">Close</span>
+    </div>
+
+    <script>
+        const csvData = `
+Name,RATING,MAX,AVG,MEDIAN,GamesCount,MatchesPlayed,Wins,Loses,WinsRF,LosesRF
+Miloš Bulatović,1594,173,143,145,23,7,6,1,3,2
+Atila Rafai,1573,176,139,133,18,6,5,1,0,1
+Kucora Roland,1565,174,138,141,18,6,5,1,4,1
+Milos Ivanisevic,1520,146,116,117,6,3,2,1,0,0
+Artem Potapenko,1520,169,108,94,13,3,2,1,1,1
+Marin Vojnić,1518,169,138,145,6,3,2,1,0,0
+Darko Antunović,1516,140,115,117,6,3,2,1,0,1
+Filip Budanović,1513,146,101,101,23,7,4,3,3,0
+Sótányi Bálint,1503,150,114,114,11,4,2,2,0,1
+Marko Nešković,1501,143,105,107,14,4,2,2,0,1
+Aleksander Nefedov,1501,154,133,132,8,2,1,1,1,0
+Margarita Hvaluk,1499,115,105,112,4,2,1,1,0,0
+Stefan Stanic,1488,184,119,115,22,7,3,4,2,3
+Anatoly Apanyakin,1485,152,118,120,19,7,3,4,1,1
+Aleksey Golubev,1479,81,75,77,4,1,0,1,1,1
+Srdjan Dobrijevic,1470,166,124,122,19,6,2,4,2,2
+Ekaterina Konstantinidi,1467,142,108,109,21,8,3,5,2,0
+Nemanja Radulović,1464,165,118,124,19,6,2,4,1,4
+Bence Joó,1444,112,88,87,22,7,2,5,1,2
+Valentina Kerestes,1440,117,95,96,6,3,0,3,0,0
+Aleksandar Uzelac,1440,140,97,93,14,5,1,4,1,2
+        `;
+
+        // Function to create the table
+        function createTable(tableData, container, positionData) {
+            const table = document.createElement("table");
+            const headerRow = table.insertRow();
+
+            // Create headers
+            tableData[0].forEach(header => {
+                const th = document.createElement("th");
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+
+            // Create rows
+            for (let i = 1; i < tableData.length; i++) {
+                const row = table.insertRow();
+                tableData[i].forEach((cell, colIndex) => {
+                    const td = row.insertCell();
+                    if (colIndex === 0) {  // First column is the player name
+                        const playerName = document.createElement("span");
+                        playerName.classList.add("player-name");
+                        playerName.textContent = cell;
+                        playerName.onclick = () => showPlayerPositions(cell, positionData);
+                        td.appendChild(playerName);
+                    } else {
+                        td.textContent = cell;
+                    }
+                });
+            }
+
+            container.appendChild(table);
+        }
+
+        // Function to show positions of a player
+        function showPlayerPositions(playerName, positionData) {
+            const output = document.getElementById("output");
+            let playerPositions = '';
+
+            for (const [colName, playerData] of Object.entries(positionData)) {
+                if (playerData[playerName]) {
+                    const position = playerData[playerName];
+                    const percentage = parseFloat(position);
+                    playerPositions += `Вы лучше, чем ${percentage}% позиции в столбце ${colName}\n`;
+                }
+            }
+
+            if (playerPositions) {
+                output.textContent = `Результаты для игрока ${playerName}:\n${playerPositions}`;
+                showPopup();
+            } else {
+                output.textContent = `Нет данных для игрока: ${playerName}`;
+                showPopup();
+            }
+        }
+
+        // Function to calculate positions
+        function calculatePositions(tableData) {
+            const headers = tableData[0];
+            const positions = {};
+            const totalRows = tableData.length - 1; // Exclude the header row
+
+            for (let col = 1; col < headers.length; col++) { // Start at 1 to skip "Name"
+                const colName = headers[col];
+                const values = tableData.slice(1).map(row => parseFloat(row[col]));
+                const sorted = [...values].sort((a, b) => a - b);
+
+                positions[colName] = {};
+                values.forEach((value, rowIndex) => {
+                    const position = totalRows - sorted.indexOf(value); // Position in inverted order
+                    const normalizedPosition = (position - 1) / totalRows; // Adjusted formula for normalization
+                    const finalPercentage = ((1 - normalizedPosition) * 100).toFixed(1); // Convert to percentage
+                    positions[colName][tableData[rowIndex + 1][0]] = `${finalPercentage}%`;
+                });
+            }
+
+            return positions;
+        }
+
+        // Function to show popup
+        function showPopup() {
+            document.getElementById("popup").style.display = "block";
+            document.getElementById("popup-overlay").style.display = "block";
+        }
+
+        // Function to close popup
+        function closePopup() {
+            document.getElementById("popup").style.display = "none";
+            document.getElementById("popup-overlay").style.display = "none";
+        }
+
+        // Event listener to close the popup
+        document.getElementById("close-popup").onclick = closePopup;
+
+        // Function to display the table and calculate positions
+        function showTable() {
+            const tableData = csvData.trim().split("\n").map(row => row.split(","));
+            const container = document.getElementById("tableContainer");
+
+            if (!container.innerHTML) { // Only load the table once
+                const positionData = calculatePositions(tableData); // Calculate position data once when table is loaded
+                createTable(tableData, container, positionData);
+            }
+        }
+    </script>
+</body>
+</html>
