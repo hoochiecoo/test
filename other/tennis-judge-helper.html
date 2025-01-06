@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Score Emulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .score-board {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .player {
+            margin: 0 20px;
+        }
+        .button-container {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tennis Score Emulator</h1>
+    <div class="score-board">
+        <div class="player" id="player1">
+            <h2>Player 1</h2>
+            <p>Points: <span id="player1-points">0</span></p>
+            <p>Games: <span id="player1-games">0</span></p>
+            <p>Sets: <span id="player1-sets">0</span></p>
+        </div>
+        <div class="player" id="player2">
+            <h2>Player 2</h2>
+            <p>Points: <span id="player2-points">0</span></p>
+            <p>Games: <span id="player2-games">0</span></p>
+            <p>Sets: <span id="player2-sets">0</span></p>
+        </div>
+    </div>
+
+    <div class="button-container">
+        <button onclick="scorePoint('player1')">Player 1 Scores</button>
+        <button onclick="scorePoint('player2')">Player 2 Scores</button>
+    </div>
+
+    <script>
+        const pointsSequence = [0, 15, 30, 40, 'Advantage', 'Win'];
+
+        let player1 = { points: 0, games: 0, sets: 0 };
+        let player2 = { points: 0, games: 0, sets: 0 };
+
+        function scorePoint(player) {
+            let scorer = player === 'player1' ? player1 : player2;
+            let opponent = player === 'player1' ? player2 : player1;
+
+            // Increment points
+            scorer.points++;
+
+            // Check for win logic
+            if (scorer.points > 3 && (scorer.points - opponent.points >= 2)) {
+                scorer.games++;
+                scorer.points = 0;
+                opponent.points = 0;
+
+                // Check for set win logic
+                if (scorer.games >= 6 && (scorer.games - opponent.games >= 2)) {
+                    scorer.sets++;
+                    scorer.games = 0;
+                    opponent.games = 0;
+                }
+            } else if (scorer.points > 3 && opponent.points === 3) {
+                scorer.points = 4; // Advantage
+            } else if (scorer.points === 4 && opponent.points === 4) {
+                scorer.points = 3; // Back to Deuce
+                opponent.points = 3;
+            }
+
+            updateScoreboard();
+        }
+
+        function updateScoreboard() {
+            document.getElementById('player1-points').innerText = pointsSequence[player1.points];
+            document.getElementById('player2-points').innerText = pointsSequence[player2.points];
+            document.getElementById('player1-games').innerText = player1.games;
+            document.getElementById('player2-games').innerText = player2.games;
+            document.getElementById('player1-sets').innerText = player1.sets;
+            document.getElementById('player2-sets').innerText = player2.sets;
+        }
+    </script>
+</body>
+</html>
