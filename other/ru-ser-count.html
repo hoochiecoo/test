@@ -60,6 +60,14 @@
             'стајати', 'седети', 'шетати', 'лежати', 'коштати'
         ];
 
+        const verbsTranslationsLat = [
+            'praviti', 'ići', 'čitati', 'pisati', 'govoriti',
+            'misliti', 'znati', 'voleti', 'raditi', 'igrati',
+            'živeti', 'učiti se', 'sećati se', 'trčati', 'spavati',
+            'piti', 'kuvati', 'crtati', 'čuti', 'videti',
+            'stajati', 'sedeti', 'šetati', 'ležati', 'koštati'
+        ];
+
         const words = [
             'уже', 'хотя бы', 'срочно', 'даже', 'когда-нибудь', 'почти', 
             'особенно', 'всегда', 'наконец', 'потом', 'например', 'по-настоящему', 
@@ -76,90 +84,98 @@
             'све', 'назад'
         ];
 
+        const wordsTranslationsLat = [
+            'veče', 'barem', 'hitno', 'čak', 'nekada', 'skoro',
+            'posebno', 'uvek', 'konačno', 'potom', 'na primer', 'zaista',
+            'poneka', 'vrlo', 'naopako', 'umesto', 'nadam se', 'posebno',
+            'snažno', 'svaki put', 'pravo', 'iznenada', 'neobično', 'osim toga',
+            'sve', 'nazad'
+        ];
+
         const nouns = [
-            { ru: 'человек', sr: 'човек' },
-            { ru: 'дом', sr: 'кућа' },
-            { ru: 'работа', sr: 'рад' },
-            { ru: 'время', sr: 'време' },
-            { ru: 'день', sr: 'дан' },
-            { ru: 'ночь', sr: 'ноћ' },
-            { ru: 'книга', sr: 'књига' },
-            { ru: 'собака', sr: 'пас' },
-            { ru: 'кот', sr: 'мачка' },
-            { ru: 'стол', sr: 'сто' },
-            { ru: 'машина', sr: 'аутомобил' },
-            { ru: 'письмо', sr: 'писмо' },
-            { ru: 'молоко', sr: 'млеко' },
-            { ru: 'яблоко', sr: 'јабука' },
-            { ru: 'река', sr: 'река' },
-            { ru: 'город', sr: 'град' },
-            { ru: 'лес', sr: 'шума' },
-            { ru: 'солнце', sr: 'сунце' },
-            { ru: 'связь', sr: 'повезаност' },
-            { ru: 'дерево', sr: 'дрво' },
-            { ru: 'улица', sr: 'улица' },
-            { ru: 'вода', sr: 'вода' },
-            { ru: 'свет', sr: 'светло' },
-            { ru: 'друзья', sr: 'пријатељи' },
-            { ru: 'подарок', sr: 'поклон' }
+            { ru: 'человек', sr: 'човек', srLat: 'čovek' },
+            { ru: 'дом', sr: 'кућа', srLat: 'kuća' },
+            { ru: 'работа', sr: 'рад', srLat: 'rad' },
+            { ru: 'время', sr: 'време', srLat: 'vreme' },
+            { ru: 'день', sr: 'дан', srLat: 'dan' },
+            { ru: 'ночь', sr: 'ноћ', srLat: 'noć' },
+            { ru: 'книга', sr: 'књига', srLat: 'knjiga' },
+            { ru: 'собака', sr: 'пас', srLat: 'pas' },
+            { ru: 'кот', sr: 'мачка', srLat: 'mačka' },
+            { ru: 'стол', sr: 'сто', srLat: 'sto' },
+            { ru: 'машина', sr: 'аутомобил', srLat: 'automobil' },
+            { ru: 'письмо', sr: 'писмо', srLat: 'pismo' },
+            { ru: 'молоко', sr: 'млеко', srLat: 'mleko' },
+            { ru: 'яблоко', sr: 'јабука', srLat: 'jabuka' },
+            { ru: 'река', sr: 'река', srLat: 'reka' },
+            { ru: 'город', sr: 'град', srLat: 'grad' },
+            { ru: 'лес', sr: 'шума', srLat: 'šuma' },
+            { ru: 'солнце', sr: 'сунце', srLat: 'sunce' },
+            { ru: 'связь', sr: 'повезаност', srLat: 'povezanost' },
+            { ru: 'дерево', sr: 'дрво', srLat: 'drvo' },
+            { ru: 'улица', sr: 'улица', srLat: 'ulica' },
+            { ru: 'вода', sr: 'вода', srLat: 'voda' },
+            { ru: 'свет', sr: 'светло', srLat: 'svetlo' },
+            { ru: 'друзья', sr: 'пријатељи', srLat: 'prijatelji' },
+            { ru: 'подарок', sr: 'поклон', srLat: 'poklon' }
         ];
 
         const prepositions = [
-            { ru: 'на', sr: 'на' },
-            { ru: 'в', sr: 'у' },
-            { ru: 'с', sr: 'с' },
-            { ru: 'по', sr: 'по' },
-            { ru: 'из', sr: 'из' },
-            { ru: 'к', sr: 'к' },
-            { ru: 'для', sr: 'за' },
-            { ru: 'от', sr: 'од' },
-            { ru: 'при', sr: 'при' },
-            { ru: 'между', sr: 'између' },
-            { ru: 'через', sr: 'кроз' },
-            { ru: 'над', sr: 'над' },
-            { ru: 'под', sr: 'под' },
-            { ru: 'перед', sr: 'пред' },
-            { ru: 'вокруг', sr: 'око' },
-            { ru: 'за', sr: 'за' },
-            { ru: 'после', sr: 'после' },
-            { ru: 'до', sr: 'до' },
-            { ru: 'вдоль', sr: 'уз' },
-            { ru: 'среди', sr: 'међу' },
-            { ru: 'вместо', sr: 'уместо' },
-            { ru: 'из-за', sr: 'иза' },
-            { ru: 'для', sr: 'за' },
-            { ru: 'напротив', sr: 'напротив' },
-            { ru: 'помимо', sr: 'осим' }
+            { ru: 'на', sr: 'на', srLat: 'na' },
+            { ru: 'в', sr: 'у', srLat: 'u' },
+            { ru: 'с', sr: 'с', srLat: 's' },
+            { ru: 'по', sr: 'по', srLat: 'po' },
+            { ru: 'из', sr: 'из', srLat: 'iz' },
+            { ru: 'к', sr: 'к', srLat: 'k' },
+            { ru: 'для', sr: 'за', srLat: 'za' },
+            { ru: 'от', sr: 'од', srLat: 'od' },
+            { ru: 'при', sr: 'при', srLat: 'pri' },
+            { ru: 'между', sr: 'између', srLat: 'između' },
+            { ru: 'через', sr: 'кроз', srLat: 'kroz' },
+            { ru: 'над', sr: 'над', srLat: 'nad' },
+            { ru: 'под', sr: 'под', srLat: 'pod' },
+            { ru: 'перед', sr: 'пред', srLat: 'pred' },
+            { ru: 'вокруг', sr: 'око', srLat: 'oko' },
+            { ru: 'за', sr: 'за', srLat: 'za' },
+            { ru: 'после', sr: 'после', srLat: 'posle' },
+            { ru: 'до', sr: 'до', srLat: 'do' },
+            { ru: 'вдоль', sr: 'уз', srLat: 'uz' },
+            { ru: 'среди', sr: 'међу', srLat: 'među' },
+            { ru: 'вместо', sr: 'уместо', srLat: 'umesto' },
+            { ru: 'из-за', sr: 'иза', srLat: 'iza' },
+            { ru: 'для', sr: 'за', srLat: 'za' },
+            { ru: 'напротив', sr: 'напротив', srLat: 'naprotiv' },
+            { ru: 'помимо', sr: 'осим', srLat: 'osim' }
         ];
 
         function generateForm() {
             let html = '';
 
             // Verbs Group
-            html += '<div class="group"><h2>Глаголы</h2><table><thead><tr><th>Выбрать</th><th>Глагол (Русский)</th><th>Глагол (Сербский)</th></tr></thead><tbody>';
+            html += '<div class="group"><h2>Глаголы</h2><table><thead><tr><th>Выбрать</th><th>Глагол (Русский)</th><th>Глагол (Сербский)</th><th>Глагол (Сербский Латиница)</th></tr></thead><tbody>';
             verbs.forEach((verb, index) => {
-                html += `<tr><td><input type="checkbox" class="verb-checkbox" data-index="${index}"></td><td>${verb}</td><td>${verbsTranslations[index]}</td></tr>`;
+                html += `<tr><td><input type="checkbox" class="verb-checkbox" data-index="${index}"></td><td>${verb}</td><td>${verbsTranslations[index]}</td><td>${verbsTranslationsLat[index]}</td></tr>`;
             });
             html += '</tbody></table></div>';
 
             // Words Group
-            html += '<div class="group"><h2>Слова для сравнения</h2><table><thead><tr><th>Выбрать</th><th>Слово (Русский)</th><th>Слово (Сербский)</th></tr></thead><tbody>';
+            html += '<div class="group"><h2>Слова для сравнения</h2><table><thead><tr><th>Выбрать</th><th>Слово (Русский)</th><th>Слово (Сербский)</th><th>Слово (Сербский Латиница)</th></tr></thead><tbody>';
             words.forEach((word, index) => {
-                html += `<tr><td><input type="checkbox" class="word-checkbox" data-index="${index}"></td><td>${word}</td><td>${wordsTranslations[index]}</td></tr>`;
+                html += `<tr><td><input type="checkbox" class="word-checkbox" data-index="${index}"></td><td>${word}</td><td>${wordsTranslations[index]}</td><td>${wordsTranslationsLat[index]}</td></tr>`;
             });
             html += '</tbody></table></div>';
 
             // Nouns Group
-            html += '<div class="group"><h2>Существительные</h2><table><thead><tr><th>Выбрать</th><th>Существительное (Русский)</th><th>Существительное (Сербский)</th></tr></thead><tbody>';
+            html += '<div class="group"><h2>Существительные</h2><table><thead><tr><th>Выбрать</th><th>Существительное (Русский)</th><th>Существительное (Сербский)</th><th>Существительное (Сербский Латиница)</th></tr></thead><tbody>';
             nouns.forEach((noun, index) => {
-                html += `<tr><td><input type="checkbox" class="noun-checkbox" data-index="${index}"></td><td>${noun.ru}</td><td>${noun.sr}</td></tr>`;
+                html += `<tr><td><input type="checkbox" class="noun-checkbox" data-index="${index}"></td><td>${noun.ru}</td><td>${noun.sr}</td><td>${noun.srLat}</td></tr>`;
             });
             html += '</tbody></table></div>';
 
             // Prepositions Group
-            html += '<div class="group"><h2>Предлоги</h2><table><thead><tr><th>Выбрать</th><th>Предлог (Русский)</th><th>Предлог (Сербский)</th></tr></thead><tbody>';
+            html += '<div class="group"><h2>Предлоги</h2><table><thead><tr><th>Выбрать</th><th>Предлог (Русский)</th><th>Предлог (Сербский)</th><th>Предлог (Сербский Латиница)</th></tr></thead><tbody>';
             prepositions.forEach((preposition, index) => {
-                html += `<tr><td><input type="checkbox" class="preposition-checkbox" data-index="${index}"></td><td>${preposition.ru}</td><td>${preposition.sr}</td></tr>`;
+                html += `<tr><td><input type="checkbox" class="preposition-checkbox" data-index="${index}"></td><td>${preposition.ru}</td><td>${preposition.sr}</td><td>${preposition.srLat}</td></tr>`;
             });
             html += '</tbody></table></div>';
 
@@ -229,12 +245,14 @@
             generateForm();
 
             // Event listeners for checkboxes
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', countChecked);
             });
         }
 
         init();
     </script>
+
 </body>
 </html>
