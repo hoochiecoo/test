@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Счетчик Глаголов, Слов, Существительных и Предлогов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .center {
+            text-align: center;
+        }
+        .group {
+            margin-bottom: 30px;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="center">Счетчик Глаголов, Слов, Существительных и Предлогов</h1>
+    <p class="center">Выберите глаголы, слова, существительные и предлоги, поставив галочки, и подсчитайте их количество и процент.</p>
+
+    <div id="form-container"></div>
+
+    <div id="result" class="center result"></div>
+
+    <script>
+        const verbs = [
+            'делать', 'идти', 'читать', 'писать', 'говорить',
+            'думать', 'знать', 'любить', 'работать', 'играть',
+            'жить', 'учиться', 'помнить', 'бежать', 'спать',
+            'пить', 'готовить', 'рисовать', 'слышать', 'видеть',
+            'стоять', 'сидеть', 'ходить', 'лежать', 'стоить'
+        ];
+
+        const verbsTranslations = [
+            'правити', 'ићи', 'читати', 'писати', 'говорити',
+            'мислити', 'знати', 'волети', 'радити', 'играти',
+            'живети', 'учити се', 'сећати се', 'трчати', 'спавати',
+            'пити', 'кувати', 'цртати', 'чути', 'видети',
+            'стајати', 'седети', 'шетати', 'лежати', 'коштати'
+        ];
+
+        const words = [
+            'уже', 'хотя бы', 'срочно', 'даже', 'когда-нибудь', 'почти', 
+            'особенно', 'всегда', 'наконец', 'потом', 'например', 'по-настоящему', 
+            'иногда', 'очень', 'наоборот', 'вместо', 'надеюсь', 'особо', 
+            'сильно', 'каждый раз', 'прямо', 'вдруг', 'необычно', 'вдобавок', 
+            'всего', 'обратно'
+        ];
+
+        const wordsTranslations = [
+            'вече', 'барем', 'хитно', 'чак', 'некада', 'скоро', 
+            'посебно', 'увек', 'коначно', 'потом', 'на пример', 'заиста', 
+            'понекад', 'врло', 'наопако', 'уместо', 'надам се', 'посебно', 
+            'снажно', 'сваки пут', 'право', 'изненада', 'необично', 'осим тога', 
+            'све', 'назад'
+        ];
+
+        const nouns = [
+            { ru: 'человек', sr: 'човек' },
+            { ru: 'дом', sr: 'кућа' },
+            { ru: 'работа', sr: 'рад' },
+            { ru: 'время', sr: 'време' },
+            { ru: 'день', sr: 'дан' },
+            { ru: 'ночь', sr: 'ноћ' },
+            { ru: 'книга', sr: 'књига' },
+            { ru: 'собака', sr: 'пас' },
+            { ru: 'кот', sr: 'мачка' },
+            { ru: 'стол', sr: 'сто' },
+            { ru: 'машина', sr: 'аутомобил' },
+            { ru: 'письмо', sr: 'писмо' },
+            { ru: 'молоко', sr: 'млеко' },
+            { ru: 'яблоко', sr: 'јабука' },
+            { ru: 'река', sr: 'река' },
+            { ru: 'город', sr: 'град' },
+            { ru: 'лес', sr: 'шума' },
+            { ru: 'солнце', sr: 'сунце' },
+            { ru: 'связь', sr: 'повезаност' },
+            { ru: 'дерево', sr: 'дрво' },
+            { ru: 'улица', sr: 'улица' },
+            { ru: 'вода', sr: 'вода' },
+            { ru: 'свет', sr: 'светло' },
+            { ru: 'друзья', sr: 'пријатељи' },
+            { ru: 'подарок', sr: 'поклон' }
+        ];
+
+        const prepositions = [
+            { ru: 'на', sr: 'на' },
+            { ru: 'в', sr: 'у' },
+            { ru: 'с', sr: 'с' },
+            { ru: 'по', sr: 'по' },
+            { ru: 'из', sr: 'из' },
+            { ru: 'к', sr: 'к' },
+            { ru: 'для', sr: 'за' },
+            { ru: 'от', sr: 'од' },
+            { ru: 'при', sr: 'при' },
+            { ru: 'между', sr: 'између' },
+            { ru: 'через', sr: 'кроз' },
+            { ru: 'над', sr: 'над' },
+            { ru: 'под', sr: 'под' },
+            { ru: 'перед', sr: 'пред' },
+            { ru: 'вокруг', sr: 'око' },
+            { ru: 'за', sr: 'за' },
+            { ru: 'после', sr: 'после' },
+            { ru: 'до', sr: 'до' },
+            { ru: 'вдоль', sr: 'уз' },
+            { ru: 'среди', sr: 'међу' },
+            { ru: 'вместо', sr: 'уместо' },
+            { ru: 'из-за', sr: 'иза' },
+            { ru: 'для', sr: 'за' },
+            { ru: 'напротив', sr: 'напротив' },
+            { ru: 'помимо', sr: 'осим' }
+        ];
+
+        function generateForm() {
+            let html = '';
+
+            // Verbs Group
+            html += '<div class="group"><h2>Глаголы</h2><table><thead><tr><th>Выбрать</th><th>Глагол (Русский)</th><th>Глагол (Сербский)</th></tr></thead><tbody>';
+            verbs.forEach((verb, index) => {
+                html += `<tr><td><input type="checkbox" class="verb-checkbox" data-index="${index}"></td><td>${verb}</td><td>${verbsTranslations[index]}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+
+            // Words Group
+            html += '<div class="group"><h2>Слова для сравнения</h2><table><thead><tr><th>Выбрать</th><th>Слово (Русский)</th><th>Слово (Сербский)</th></tr></thead><tbody>';
+            words.forEach((word, index) => {
+                html += `<tr><td><input type="checkbox" class="word-checkbox" data-index="${index}"></td><td>${word}</td><td>${wordsTranslations[index]}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+
+            // Nouns Group
+            html += '<div class="group"><h2>Существительные</h2><table><thead><tr><th>Выбрать</th><th>Существительное (Русский)</th><th>Существительное (Сербский)</th></tr></thead><tbody>';
+            nouns.forEach((noun, index) => {
+                html += `<tr><td><input type="checkbox" class="noun-checkbox" data-index="${index}"></td><td>${noun.ru}</td><td>${noun.sr}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+
+            // Prepositions Group
+            html += '<div class="group"><h2>Предлоги</h2><table><thead><tr><th>Выбрать</th><th>Предлог (Русский)</th><th>Предлог (Сербский)</th></tr></thead><tbody>';
+            prepositions.forEach((preposition, index) => {
+                html += `<tr><td><input type="checkbox" class="preposition-checkbox" data-index="${index}"></td><td>${preposition.ru}</td><td>${preposition.sr}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+
+            document.getElementById('form-container').innerHTML = html;
+        }
+
+        function countChecked() {
+            const verbCheckboxes = document.querySelectorAll('.verb-checkbox');
+            const wordCheckboxes = document.querySelectorAll('.word-checkbox');
+            const nounCheckboxes = document.querySelectorAll('.noun-checkbox');
+            const prepositionCheckboxes = document.querySelectorAll('.preposition-checkbox');
+
+            let verbCount = 0;
+            let wordCount = 0;
+            let nounCount = 0;
+            let prepositionCount = 0;
+
+            // Count selected verbs
+            verbCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    verbCount++;
+                }
+            });
+
+            // Count selected words
+            wordCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    wordCount++;
+                }
+            });
+
+            // Count selected nouns
+            nounCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    nounCount++;
+                }
+            });
+
+            // Count selected prepositions
+            prepositionCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    prepositionCount++;
+                }
+            });
+
+            const total = verbCheckboxes.length + wordCheckboxes.length + nounCheckboxes.length + prepositionCheckboxes.length;
+            const totalChecked = verbCount + wordCount + nounCount + prepositionCount;
+            const percentage = ((totalChecked / total) * 100).toFixed(2);
+
+            document.getElementById('result').innerHTML = 
+                `Общее количество: ${totalChecked} из ${total} (${percentage}%)`;
+
+            // Group statistics
+            displayGroupStatistics('Глаголы', verbCount, verbCheckboxes.length);
+            displayGroupStatistics('Слова для сравнения', wordCount, wordCheckboxes.length);
+            displayGroupStatistics('Существительные', nounCount, nounCheckboxes.length);
+            displayGroupStatistics('Предлоги', prepositionCount, prepositionCheckboxes.length);
+        }
+
+        function displayGroupStatistics(groupName, selectedCount, totalCount) {
+            const percentage = ((selectedCount / totalCount) * 100).toFixed(2);
+            document.getElementById('result').innerHTML += 
+                `<br>${groupName}: ${selectedCount} из ${totalCount} (${percentage}%)`;
+        }
+
+        function init() {
+            generateForm();
+
+            // Event listeners for checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', countChecked);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
