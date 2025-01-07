@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Leaflet Map with Movable Dot and Nearby Streets</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        display: flex;
+        height: 100vh;
+      }
+      #map {
+        width: 50%;
+        height: 100%;
+      }
+      #actions {
+        width: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f0f0f0;
+        flex-direction: column;
+        padding: 20px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      #locationName {
+        margin-top: 20px;
+        font-size: 16px;
+      }
+      #nearbyStreets {
+        margin-top: 20px;
+        font-size: 14px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      a {
+        color: #0066cc;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="actions">
+      <button id="actionButton">Get Nearby Streets</button>
+      <div id="locationName"></div>
+      <div id="nearbyStreets"></div>
+    </div>
+
+    <script>
+      var map = L.map('map').setView([46.100376, 19.667587], 13); // Initial coordinates
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      var movableDot = null;
+      var streetPolylines = [];
+
+      map.on('click', function (e) {
+        var latlng = e.latlng;
+
+        if (movableDot) {
+          movableDot.setLatLng(latlng);
+        } else {
+          movableDot = L.circleMarker(latlng, {
+            radius: 10,
+            fillColor: "#FF0000",
+            color: "#FF0000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          }).addTo(map);
+        }
+      });
+
+      document.getElementById("actionButton").addEventListener("click", function() {
+        if (movableDot) {
+          var lat = movableDot.getLatLng().lat;
+          var lon = movableDot.getLatLng().lng;
+          
+          var query = `
+            [out:json];
+            (
+              way(around:500, ${lat}, ${lon})[highway];
+              relation(around:500, ${lat}, ${lon})[highway];
+            );
+            out body;
+          `;
+
+          var overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+          fetch(overpassUrl)
+            .then(response => response.json())
+            .then(data => {
+              var nearbyStreetsList = document.getElementById("nearbyStreets");
+              nearbyStreetsList.innerHTML = "<strong>Nearby Streets:</strong><br>";
+
+              streetPolylines.forEach(function(polyline) {
+                map.removeLayer(polyline);
+              });
+              streetPolylines = [];
+
+              if (data && data.elements) {
+                var streetNames = new Set();
+
+                data.elements.forEach(function(element) {
+                  if (element.tags && element.tags['name:sr-Latn']) {
+                    // Get the Latin transliterated name
+                    var streetName = element.tags['name:sr-Latn'];
+                    streetNames.add(streetName);
+
+                    if (element.type === "way" && element.geometry) {
+                      var latlngs = element.geometry.map(function(geo) {
+                        return [geo.lat, geo.lon];
+                      });
+
+                      var polyline = L.polyline(latlngs, {
+                        color: 'blue',
+                        weight: 4,
+                        opacity: 0.7
+                      }).addTo(map);
+
+                      streetPolylines.push(polyline);
+                    }
+                  }
+                });
+
+                if (streetNames.size > 0) {
+                  streetNames.forEach(function(street) {
+                    var streetLink = `<a href="#" class="street-link" data-street="${street}">${street}</a>`;
+                    nearbyStreetsList.innerHTML += streetLink + "<br>";
+                  });
+                } else {
+                  nearbyStreetsList.innerHTML += "No street names found.";
+                }
+              } else {
+                nearbyStreetsList.innerHTML += "No streets found in the nearby area.";
+              }
+            })
+            .catch(error => {
+              document.getElementById("nearbyStreets").innerHTML = "Error fetching nearby streets.";
+              console.error(error);
+            });
+        } else {
+          document.getElementById("locationName").textContent = "Click on the map to place the dot.";
+        }
+      });
+
+      // Function to open Google Street View in a new tab
+      function openStreetViewTab(streetName) {
+        // Construct the search URL for Street View
+        var searchQuery = `${streetName} 11`;
+        var encodedQuery = encodeURIComponent(searchQuery);
+        
+        // Use the Nominatim API to get latitude and longitude of the address
+        var searchUrl = `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&addressdetails=1`;
+
+        fetch(searchUrl)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              var address = data[0];
+              var lat = address.lat;
+              var lon = address.lon;
+              
+              // Create Google Street View URL
+              var streetViewUrl = `https://www.google.com/maps?q=${encodedQuery}&layer=c&cbll=${lat},${lon}`;
+
+              // Open Google Street View in a new tab
+              window.open(streetViewUrl, '_blank');
+            } else {
+              alert("Address not found for " + searchQuery);
+            }
+          })
+          .catch(error => {
+            console.error("Error fetching Street View:", error);
+            alert("Error fetching Street View.");
+          });
+      }
+
+      // Event listener for street name clicks
+      document.getElementById("nearbyStreets").addEventListener("click", function(e) {
+        if (e.target && e.target.classList.contains("street-link")) {
+          var streetName = e.target.getAttribute("data-street");
+          openStreetViewTab(streetName);
+        }
+      });
+    </script>
+  </body>
+</html>
