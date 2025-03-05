@@ -121,7 +121,7 @@
                 <tr>
                     <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left">Имя</th>
                     <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left">Средний результат</th>
-                    <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left"></th> </tr>
+                </tr>
             </thead>
             <tbody id="other-results-table-body">
             </tbody>
@@ -224,7 +224,6 @@
             otherResultsTableBody.innerHTML = '';
             modalShown = false;
 
-
             const userResultData = {
                 'Name': 'Ваш результат (Вы)',
                 'AVG': userResult.toString()
@@ -237,14 +236,12 @@
                 let tr = document.createElement('tr');
                 let nameTd = document.createElement('td');
                 let avgTd = document.createElement('td');
-                let actionsTd = document.createElement('td');
 
                 nameTd.textContent = row['Name'];
                 avgTd.textContent = row['AVG'];
 
                 tr.appendChild(nameTd);
                 tr.appendChild(avgTd);
-                tr.appendChild(actionsTd);
 
                 if (row === userResultData) {
                     tr.classList.add('font-bold', 'text-green-500', 'bg-green-100');
@@ -254,11 +251,11 @@
                     avgTd.classList.add('font-bold', 'text-green-500');
 
                     let dropdownDiv = document.createElement('div');
-                    dropdownDiv.classList.add('dropdown');
+                    dropdownDiv.classList.add('dropdown', 'inline-block', 'ml-2'); // inline-block and ml-2 classes added here for inline display and margin
 
                     let dropdownButton = document.createElement('button');
-                    dropdownButton.textContent = 'Забрать подарок'; // Изменено слово "Действия" на "Забрать подарок"
-                    dropdownButton.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800', 'font-bold', 'py-2', 'px-4', 'rounded', 'inline-flex', 'items-center');
+                    dropdownButton.textContent = 'Забрать подарок';
+                    dropdownButton.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800', 'font-bold', 'py-1', 'px-2', 'rounded', 'italic', 'inline-flex', 'items-center'); // Reduced padding, italic class added
 
                     let dropdownContentDiv = document.createElement('div');
                     dropdownContentDiv.classList.add('dropdown-content');
@@ -270,13 +267,12 @@
                     dropdownContentDiv.appendChild(offerButton);
                     dropdownDiv.appendChild(dropdownButton);
                     dropdownDiv.appendChild(dropdownContentDiv);
-                    actionsTd.appendChild(dropdownDiv);
+                    avgTd.appendChild(dropdownDiv); // Append dropdown to avgTd
 
                 }
                 tr.classList.add('border', 'border-gray-300');
                 nameTd.classList.add('p-2', 'text-left');
                 avgTd.classList.add('p-2', 'text-left');
-                actionsTd.classList.add('p-2', 'text-center');
 
 
                 otherResultsTableBody.appendChild(tr);
