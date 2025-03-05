@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эмулятор Воронки</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Стили для таблицы */
+        .results-table {
+            @apply w-full text-left bg-white rounded-lg shadow-md;
+            border-collapse: collapse; /* Убираем двойные границы между ячейками */
+        }
+
+        .results-table th, .results-table td {
+            @apply px-4 py-2 border-b border-gray-200;
+            /* padding: 8px;
+            border-bottom: 1px solid #ddd; */
+        }
+
+        .results-table th {
+            @apply font-bold bg-gray-100 text-gray-700;
+            /* font-weight: bold;
+            background-color: #f3f4f6;
+            color: #6b7280; */
+        }
+
+        .results-table tbody tr:last-child td {
+            border-bottom: none; /* Убираем границу снизу у последней строки */
+        }
+
+        /* Стили для простой таблицы, как в примере */
+        #other-results-table {
+            @apply w-full border-collapse mt-2;
+        }
+
+        #other-results-table th {
+            @apply border border-gray-300 p-2 bg-gray-200 font-bold text-left;
+        }
+
+        #other-results-table td {
+            @apply border border-gray-300 p-2 text-left;
+        }
+
+
+        /* Стили для плавающей кнопки */
+        .floating-button {
+            position: fixed; /* Фиксированное позиционирование относительно viewport */
+            bottom: 20px; /* Отступ от нижнего края */
+            right: 20px; /* Отступ от правого края */
+            background-color: #4f46e5; /* indigo-500 */
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+            z-index: 50; /* Чтобы кнопка была поверх всего */
+        }
+
+        .floating-button:hover {
+            background-color: #6366f1; /* indigo-400 */
+        }
+
+        /* Стили для выпадающего блока */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            padding: 10px;
+            z-index: 1;
+            right: 0; /* Выпадашка справа от кнопки */
+            top: 100%; /* Выпадашка под кнопкой */
+            margin-top: 5px; /* Отступ от кнопки */
+            border-radius: 0.375rem; /* rounded-lg */
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+        }
+
+        .dropdown-content button {
+            @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline block w-full text-center;
+            /* Доп. стили для кнопки, если нужно */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+<body class="font-sans flex flex-col items-center p-5 bg-gray-100">
+    <header class="bg-blue-600 text-white p-4 text-center mb-8 rounded-md shadow-md w-full max-w-lg">
+        <h1 class="text-3xl font-bold">bowlmates.club</h1>
+    </header>
+
+    <div class="container bg-white p-8 rounded-lg shadow-md text-center mb-5">
+        <h1 class="text-2xl text-gray-800 mb-4">Введите ваш результат</h1>
+        <input type="number" id="userResult" placeholder="Ваш результат" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4">
+        <button onclick="checkResult()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Проверить результат</button>
+    </div>
+
+    <div id="result-window" class="container bg-white p-8 rounded-lg shadow-md text-center mb-5 hidden">
+        <h2 class="text-xl text-gray-800 mb-4">Отличный результат!</h2>
+        <p id="result-comparison" class="text-gray-700">Ваш результат лучше, чем у <span id="percentage" class="font-semibold"></span>% игроков!</p>
+        <button onclick="showOtherResults()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Посмотреть результаты других</button>
+    </div>
+
+    <div id="results-others" class="container bg-white p-8 rounded-lg shadow-md text-center mb-5 hidden">
+        <div id="scroll-link-container" class="text-center p-2">
+            <a href="#user-result-row" class="text-blue-500 hover:text-blue-700 font-semibold">прокрутить до моего результата</a>
+        </div>
+        <h2 class="text-xl text-gray-800 mb-4">Результаты других участников</h2>
+        <table id="other-results-table" class="w-full border-collapse mt-2">
+            <thead>
+                <tr>
+                    <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left">Имя</th>
+                    <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left">Средний результат</th>
+                    <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left"></th> </tr>
+            </thead>
+            <tbody id="other-results-table-body">
+            </tbody>
+        </table>
+        <button onclick="showModal()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Получить бесплатное участие</button>
+    </div>
+
+    <div id="offerModal" class="modal hidden fixed z-10 left-0 top-0 w-full h-full overflow-auto bg-gray-900 bg-opacity-50">
+        <div class="modal-content bg-white m-auto mt-40 p-6 border border-gray-400 rounded-lg text-center w-4/5 md:w-1/2">
+            <span class="close-button absolute top-0 right-0 text-gray-600 hover:text-gray-900 text-2xl font-bold p-2 cursor-pointer" onclick="closeModal()">&times;</span>
+            <h2 class="text-xl text-gray-800 mb-4">Мы приглашаем тебя поиграть с нами в дружеском режиме мини соревнования!</h2>
+            <p class="text-gray-700 mb-4">2 часа игры / 6 игр / 3 разных соперника + советы от профи тренера</p>
+            <p class="text-gray-700 mb-4">Для активации и записи на мини-соревнование напишите нам в WhatsApp:</p>
+            <div class="mb-4">
+                <a href="https://wa.me/381629308735" target="_blank" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline inline-block">Написать в WhatsApp</a>
+            </div>
+            <div class="flex justify-center space-x-4 mt-2">
+                <a href="https://instagram.com/bowling_subotica" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline inline-block">Instagram</a>
+                <a href="https://t.me/anatoly_bowling" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline inline-block">Telegram</a>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="showModal()" class="floating-button">
+        Получить подарок
+    </button>
+
+    <script>
+        let sheetData = [];
+        let modalShown = false;
+        let userResultRow;
+        let modalTimer;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchData();
+        });
+
+        function fetchData() {
+            const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ097fHhFOH3v_RYrE-IRuD2GWy-ZoI7dgv38IG-tmUzBZJIlxVl6bljhcHm_3tyrdIk7_clVL6WnkB/pub?gid=659161648&single=true&output=csv';
+
+            fetch(csvUrl)
+                .then(response => response.text())
+                .then(csvText => {
+                    sheetData = parseCSV(csvText);
+                    console.log('Данные из Google Sheets загружены:', sheetData);
+                })
+                .catch(error => console.error('Ошибка загрузки данных:', error));
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',');
+            let data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const currentLine = lines[i].split(',');
+                if (currentLine.length === headers.length) {
+                    let obj = {};
+                    for (let j = 0; j < headers.length; j++) {
+                        obj[headers[j].trim()] = currentLine[j].trim();
+                    }
+                    data.push(obj);
+                }
+            }
+            return data;
+        }
+
+
+        function checkResult() {
+            const userResult = parseFloat(document.getElementById('userResult').value);
+            if (isNaN(userResult)) {
+                alert("Пожалуйста, введите корректное числовое значение результата.");
+                return;
+            }
+
+            if (!sheetData || sheetData.length === 0) {
+                alert("Данные еще не загружены. Попробуйте позже.");
+                return;
+            }
+
+            let betterThanCount = 0;
+            sheetData.forEach(row => {
+                const avgValue = parseFloat(row['AVG']);
+                if (!isNaN(avgValue) && userResult > avgValue) {
+                    betterThanCount++;
+                }
+            });
+
+            const percentage = ((betterThanCount / sheetData.length) * 100).toFixed(0);
+            document.getElementById('percentage').textContent = percentage;
+            document.getElementById('result-window').classList.remove('hidden');
+            document.getElementById('result-window').classList.add('block');
+        }
+
+        function showOtherResults() {
+            const resultsOthersDiv = document.getElementById('results-others');
+            const otherResultsTableBody = document.querySelector('#other-results-table tbody');
+            const userResult = parseFloat(document.getElementById('userResult').value);
+
+            otherResultsTableBody.innerHTML = '';
+            modalShown = false;
+
+
+            const userResultData = {
+                'Name': 'Ваш результат (Вы)',
+                'AVG': userResult.toString()
+            };
+
+            const combinedData = [...sheetData, userResultData];
+            const sortedData = combinedData.sort((a, b) => parseFloat(b['AVG']) - parseFloat(a['AVG']));
+
+            sortedData.forEach(row => {
+                let tr = document.createElement('tr');
+                let nameTd = document.createElement('td');
+                let avgTd = document.createElement('td');
+                let actionsTd = document.createElement('td');
+
+                nameTd.textContent = row['Name'];
+                avgTd.textContent = row['AVG'];
+
+                tr.appendChild(nameTd);
+                tr.appendChild(avgTd);
+                tr.appendChild(actionsTd);
+
+                if (row === userResultData) {
+                    tr.classList.add('font-bold', 'text-green-500', 'bg-green-100');
+                    userResultRow = tr;
+                    userResultRow.id = 'user-result-row';
+                    nameTd.classList.add('font-bold', 'text-green-500');
+                    avgTd.classList.add('font-bold', 'text-green-500');
+
+                    let dropdownDiv = document.createElement('div');
+                    dropdownDiv.classList.add('dropdown');
+
+                    let dropdownButton = document.createElement('button');
+                    dropdownButton.textContent = 'Забрать подарок'; // Изменено слово "Действия" на "Забрать подарок"
+                    dropdownButton.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800', 'font-bold', 'py-2', 'px-4', 'rounded', 'inline-flex', 'items-center');
+
+                    let dropdownContentDiv = document.createElement('div');
+                    dropdownContentDiv.classList.add('dropdown-content');
+
+                    let offerButton = document.createElement('button');
+                    offerButton.textContent = 'Получить бесплатное участие';
+                    offerButton.onclick = showModal;
+
+                    dropdownContentDiv.appendChild(offerButton);
+                    dropdownDiv.appendChild(dropdownButton);
+                    dropdownDiv.appendChild(dropdownContentDiv);
+                    actionsTd.appendChild(dropdownDiv);
+
+                }
+                tr.classList.add('border', 'border-gray-300');
+                nameTd.classList.add('p-2', 'text-left');
+                avgTd.classList.add('p-2', 'text-left');
+                actionsTd.classList.add('p-2', 'text-center');
+
+
+                otherResultsTableBody.appendChild(tr);
+            });
+
+
+            document.getElementById('result-window').classList.remove('block');
+            document.getElementById('result-window').classList.add('hidden');
+            resultsOthersDiv.classList.remove('hidden');
+            resultsOthersDiv.classList.add('block');
+        }
+
+        function showModal() {
+            document.getElementById('offerModal').classList.remove('hidden');
+            document.getElementById('offerModal').classList.add('block');
+        }
+
+        function closeModal() {
+            document.getElementById('offerModal').classList.remove('block');
+            document.getElementById('offerModal').classList.add('hidden');
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('offerModal')) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
