@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эмулятор Воронки</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans flex flex-col items-center p-5 bg-gray-100">
+    <div class="container bg-white p-8 rounded-lg shadow-md text-center mb-5">
+        <h1 class="text-2xl text-gray-800 mb-4">Введите ваш результат</h1>
+        <input type="number" id="userResult" placeholder="Ваш результат" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4">
+        <button onclick="checkResult()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Проверить результат</button>
+    </div>
+
+    <div id="result-window" class="container bg-white p-8 rounded-lg shadow-md text-center mb-5 hidden">
+        <h2 class="text-xl text-gray-800 mb-4">Отличный результат!</h2>
+        <p id="result-comparison" class="text-gray-700">Ваш результат лучше, чем у <span id="percentage" class="font-semibold"></span>% игроков!</p>
+        <button onclick="showOtherResults()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Посмотреть результаты других</button>
+    </div>
+
+    <div id="results-others" class="container bg-white p-8 rounded-lg shadow-md text-center mb-5 hidden">
+        <h2 class="text-xl text-gray-800 mb-4">Результаты других участников</h2>
+        <table id="other-results-table" class="w-full border-collapse mt-2">
+            <thead>
+                <tr>
+                    <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left">Имя</th>
+                    <th class="border border-gray-300 p-2 bg-gray-200 font-bold text-left">Средний результат</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+        <button onclick="showModal()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Получить бесплатное участие</button>
+    </div>
+
+    <div id="offerModal" class="modal hidden fixed z-10 left-0 top-0 w-full h-full overflow-auto bg-gray-900 bg-opacity-50">
+        <div class="modal-content bg-white m-auto mt-40 p-6 border border-gray-400 rounded-lg text-center w-4/5 md:w-1/2">
+            <span class="close-button absolute top-0 right-0 text-gray-600 hover:text-gray-900 text-2xl font-bold p-2 cursor-pointer" onclick="closeModal()">&times;</span>
+            <h2 class="text-xl text-gray-800 mb-4">Мы приглашаем тебя поиграть с нами в дружеском режиме мини соревнования!</h2>
+            <p class="text-gray-700 mb-4">2 часа игры / 6 игр / 3 разных соперника + советы от профи тренера</p>
+            <p class="text-gray-700 mb-4">Для активации и записи на мини-соревнование напишите нам в WhatsApp:</p>
+            <div class="mb-4">
+                <a href="https://wa.me/381629308735" target="_blank" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline inline-block">Написать в WhatsApp</a>
+            </div>
+            <div class="flex justify-center space-x-4 mt-2">
+                <a href="https://instagram.com/bowling_subotica" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline inline-block">Instagram</a>
+                <a href="https://t.me/anatoly_bowling" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline inline-block">Telegram</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sheetData = []; // Переменная для хранения данных из Google Sheets
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchData(); // Загрузка данных при загрузке страницы
+        });
+
+        function fetchData() {
+            const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ097fHhFOH3v_RYrE-IRuD2GWy-ZoI7dgv38IG-tmUzBZJIlxVl6bljhcHm_3tyrdIk7_clVL6WnkB/pub?gid=659161648&single=true&output=csv';
+
+            fetch(csvUrl)
+                .then(response => response.text())
+                .then(csvText => {
+                    sheetData = parseCSV(csvText);
+                    console.log('Данные из Google Sheets загружены:', sheetData);
+                })
+                .catch(error => console.error('Ошибка загрузки данных:', error));
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',');
+            let data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const currentLine = lines[i].split(',');
+                if (currentLine.length === headers.length) { // Проверка на корректность строки
+                    let obj = {};
+                    for (let j = 0; j < headers.length; j++) {
+                        obj[headers[j].trim()] = currentLine[j].trim(); // trim для удаления пробелов
+                    }
+                    data.push(obj);
+                }
+            }
+            return data;
+        }
+
+
+        function checkResult() {
+            const userResult = parseFloat(document.getElementById('userResult').value);
+            if (isNaN(userResult)) {
+                alert("Пожалуйста, введите корректное числовое значение результата.");
+                return;
+            }
+
+            if (!sheetData || sheetData.length === 0) {
+                alert("Данные еще не загружены. Попробуйте позже.");
+                return;
+            }
+
+            let betterThanCount = 0;
+            sheetData.forEach(row => {
+                const avgValue = parseFloat(row['AVG']); // Используем 'AVG' как имя колонки
+                if (!isNaN(avgValue) && userResult > avgValue) {
+                    betterThanCount++;
+                }
+            });
+
+            const percentage = ((betterThanCount / sheetData.length) * 100).toFixed(0);
+            document.getElementById('percentage').textContent = percentage;
+            document.getElementById('result-window').classList.remove('hidden');
+            document.getElementById('result-window').classList.add('block');
+        }
+
+        function showOtherResults() {
+            const resultsOthersDiv = document.getElementById('results-others');
+            const otherResultsTableBody = document.querySelector('#other-results-table tbody');
+            const userResult = parseFloat(document.getElementById('userResult').value);
+
+            otherResultsTableBody.innerHTML = ''; // Очищаем таблицу
+
+            // 1. Создаем объект для результата пользователя
+            const userResultData = {
+                'Name': 'Ваш результат (Вы)', // или любое другое имя
+                'AVG': userResult.toString() // Убедитесь, что AVG - это строка для консистентности, или конвертируйте в Number позже
+            };
+
+            // 2. Объединяем данные из Google Sheets с результатом пользователя
+            const combinedData = [...sheetData, userResultData];
+
+            // 3. Сортируем объединенные данные по 'AVG' в убывающем порядке
+            const sortedData = combinedData.sort((a, b) => parseFloat(b['AVG']) - parseFloat(a['AVG']));
+
+            // 4. Заполняем таблицу на основе отсортированных данных
+            sortedData.forEach(row => {
+                let tr = document.createElement('tr');
+                let nameTd = document.createElement('td');
+                let avgTd = document.createElement('td');
+
+                nameTd.textContent = row['Name'];
+                avgTd.textContent = row['AVG'];
+                tr.appendChild(nameTd);
+                tr.appendChild(avgTd);
+
+                // 5. Проверяем, является ли текущая строка строкой результата пользователя и выделяем ее
+                if (row === userResultData) { // Сравниваем объекты, а не только значения
+                    tr.classList.add('user-result', 'font-bold', 'text-green-500', 'bg-green-100');
+                    nameTd.classList.add('font-bold', 'text-green-500', 'bg-green-100');
+                    avgTd.classList.add('font-bold', 'text-green-500', 'bg-green-100');
+                }
+                 tr.classList.add('border', 'border-gray-300');
+                 nameTd.classList.add('p-2', 'text-left');
+                 avgTd.classList.add('p-2', 'text-left');
+
+
+                otherResultsTableBody.appendChild(tr);
+            });
+
+
+            document.getElementById('result-window').classList.remove('block');
+            document.getElementById('result-window').classList.add('hidden');
+            resultsOthersDiv.classList.remove('hidden');
+            resultsOthersDiv.classList.add('block');
+        }
+
+
+        function showModal() {
+            document.getElementById('offerModal').classList.remove('hidden');
+            document.getElementById('offerModal').classList.add('block');
+            document.getElementById('results-others').classList.remove('block');
+            document.getElementById('results-others').classList.add('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('offerModal').classList.remove('block');
+            document.getElementById('offerModal').classList.add('hidden');
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('offerModal')) {
+                closeModal();
+            }
+        }
+    </script>
+
+</body>
+</html>
