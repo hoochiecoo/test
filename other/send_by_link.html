@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Форма для Google Forms</title>
+</head>
+<body>
+
+    <h2>Отправить данные в Google Form</h2>
+
+    <form id="googleForm" action="https://docs.google.com/forms/u/0/d/e/1FAIpQLSfAkvgz6lD9ttExQGWu4qwfoqmOzo4oK5aBwcV3ppIVe186vA/formResponse" method="POST">
+        <input type="hidden" id="id_input" name="entry.1358136925" value="">
+
+        <div>
+            <label for="date_input">Дата:</label>
+            <input type="text" id="date_input" name="entry.499798291">
+        </div>
+
+        <button type="submit">Отправить</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Получаем параметры URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const idParam = urlParams.get('id');
+
+            // Заполняем скрытое поле ID, если параметр 'id' существует
+            if (idParam) {
+                document.getElementById('id_input').value = idParam;
+            } else {
+                alert("Параметр 'id' не найден в URL.");
+            }
+        });
+    </script>
+
+</body>
+</html>
