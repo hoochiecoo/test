@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Editor</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        label { display: block; margin-top: 12px; font-weight: bold; }
+        input[type="text"] { width: 90%; max-width: 400px; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 18px; margin-top: 20px; cursor: pointer; background-color: #4285F4; color: white; border: none; border-radius: 4px; font-size: 1em; }
+        button:hover { background-color: #357ae8; }
+        #signout_button { background-color: #db4437; margin-left: 10px; }
+        #signout_button:hover { background-color: #c53929; }
+        #status, #result { margin-top: 15px; padding: 10px; border-radius: 4px; }
+        #status { background-color: #f0f0f0; border: 1px solid #ddd; }
+        #result { background-color: #e6f4ea; border: 1px solid #c8e6c9; white-space: pre-wrap; word-wrap: break-word; }
+        #result.error { background-color: #fce8e6; border: 1px solid #f4c7c3; color: #a50e0e; }
+        .action-section { border: 1px solid #ddd; padding: 20px; margin-top: 20px; border-radius: 5px; background-color: #fafafa; }
+        .config-note { background-color: #fff9c4; padding: 10px; border: 1px solid #fbc02d; border-radius: 4px; margin-bottom: 20px;}
+        pre { background-color: #eee; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>Google Sheets Editor (by Header)</h1>
+
+    <div class="config-note">
+        <strong>Note:</strong> Ensure this page is hosted on the URL registered as an "Authorized JavaScript origin" in your Google Cloud OAuth credentials (e.g., your `https://username.github.io` URL).
+    </div>
+
+    <!-- Authorization Buttons -->
+    <button id="authorize_button" style="display: none;">Authorize Google Sheets Access</button>
+    <button id="signout_button" style="display: none;">Sign Out</button>
+
+    <div id="status">Loading Google API Client...</div>
+
+    <!-- Action Section (hidden until authorized and headers loaded) -->
+    <div class="action-section" id="action_section" style="display: none;">
+         <h2>Edit Cell</h2>
+         <p>Find a row using a value in an 'Identifier Column' and update a value in a 'Target Column' within that row.</p>
+         <div id="headers_info" style="margin-bottom: 15px; font-style: italic;"></div>
+
+         <label for="identifier_header">Identifier Column Header Name:</label>
+         <input type="text" id="identifier_header" placeholder="e.g., ID or Email (Exact Match)">
+
+         <label for="identifier_value">Value in Identifier Column (to find the row):</label>
+         <input type="text" id="identifier_value" placeholder="e.g., 101 or user@example.com">
+
+         <label for="target_header">Target Column Header Name (to edit):</label>
+         <input type="text" id="target_header" placeholder="e.g., Status or Notes (Exact Match)">
+
+         <label for="new_value">New Value for Target Cell:</label>
+         <input type="text" id="new_value" placeholder="Enter the new value">
+
+         <button id="update_button">Update Cell</button>
+    </div>
+
+    <div id="result"></div>
+
+    <!-- Load Google API Client -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="handleClientLoad()"></script>
+
+    <script>
+        // --- CONFIGURATION ---
+        // TODO: REPLACE WITH YOUR ACTUAL VALUES
+        const CLIENT_ID = 'YOUR_GOOGLE_CLOUD_OAUTH_CLIENT_ID.apps.googleusercontent.com'; // <-- REPLACE THIS
+        const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // <-- REPLACE THIS
+        const SHEET_NAME = 'Sheet1'; // <-- REPLACE THIS (Exact tab name)
+        // --- END CONFIGURATION ---
+
+        const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+        const SCOPES = "https://www.googleapis.com/auth/spreadsheets"; // Read/write scope
+
+        // DOM Elements
+        const authorizeButton = document.getElementById('authorize_button');
+        const signoutButton = document.getElementById('signout_button');
+        const statusDiv = document.getElementById('status');
+        const actionSection = document.getElementById('action_section');
+        const headersInfoDiv = document.getElementById('headers_info');
+        const updateButton = document.getElementById('update_button');
+        const resultDiv = document.getElementById('result');
+
+        // Global State
+        let gapiLoaded = false;
+        let gapiAuth2 = null;
+        let headers = [];       // Array of header names: ['HeaderA', 'HeaderB']
+        let headerMap = {};     // Map header names to 0-based column index: {HeaderA: 0, HeaderB: 1}
+        let isAuthorized = false;
+
+        /**
+         * Called when the Google API client library loads.
+         */
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+            gapiLoaded = true;
+            statusDiv.textContent = 'Google API Client Loaded.';
+            console.log("GAPI client loaded.");
+        }
+
+        /**
+         * Initializes the API client library and sets up sign-in state listeners.
+         */
+        function initClient() {
+            console.log("Initializing GAPI client...");
+            if (!CLIENT_ID || CLIENT_ID.includes('YOUR_GOOGLE_CLOUD_OAUTH_CLIENT_ID')) {
+                statusDiv.textContent = 'ERROR: Client ID not configured in the script. Please edit the HTML file.';
+                console.error("Client ID not configured.");
+                return;
+            }
+             if (!SPREADSHEET_ID || SPREADSHEET_ID.includes('YOUR_SPREADSHEET_ID')) {
+                statusDiv.textContent = 'ERROR: Spreadsheet ID not configured in the script. Please edit the HTML file.';
+                console.error("Spreadsheet ID not configured.");
+                return;
+            }
+
+            gapi.client.init({
+                clientId: CLIENT_ID,
+                discoveryDocs: DISCOVERY_DOCS,
+                scope: SCOPES
+            }).then(() => {
+                console.log("GAPI client initialized.");
+                gapiAuth2 = gapi.auth2.getAuthInstance();
+                statusDiv.textContent = 'Google API Client Initialized.';
+
+                // Listen for sign-in state changes.
+                gapiAuth2.isSignedIn.listen(updateSigninStatus);
+
+                // Handle the initial sign-in state.
+                updateSigninStatus(gapiAuth2.isSignedIn.get());
+
+                // Assign click handlers
+                authorizeButton.onclick = handleAuthClick;
+                signoutButton.onclick = handleSignoutClick;
+                updateButton.onclick = handleUpdateCell;
+
+            }).catch(error => {
+                handleError('API Client Initialization Error', error);
+            });
+        }
+
+        /**
+         * Updates the UI based on the user's signed-in status.
+         * @param {boolean} isSignedIn True if the user is signed in.
+         */
+        function updateSigninStatus(isSignedIn) {
+             isAuthorized = isSignedIn; // Update global auth state
+            if (isSignedIn) {
+                statusDiv.textContent = 'Authorized successfully. Loading sheet headers...';
+                authorizeButton.style.display = 'none';
+                signoutButton.style.display = 'inline-block';
+                actionSection.style.display = 'none'; // Hide until headers are loaded
+                resultDiv.textContent = '';
+                resultDiv.className = '';
+                console.log("User is signed in.");
+                loadSheetHeaders(); // Load headers automatically
+            } else {
+                statusDiv.textContent = 'Authorization required.';
+                authorizeButton.style.display = 'inline-block';
+                signoutButton.style.display = 'none';
+                actionSection.style.display = 'none';
+                headersInfoDiv.textContent = '';
+                resultDiv.textContent = '';
+                resultDiv.className = '';
+                console.log("User is signed out or not authorized.");
+                headers = [];
+                headerMap = {};
+            }
+        }
+
+        /**
+         * Sign in the user upon button click.
+         */
+        function handleAuthClick(event) {
+            if (gapiAuth2) {
+                console.log("Attempting sign in...");
+                gapiAuth2.signIn().catch(err => {
+                    // Handle errors where popup is blocked or user closes popup
+                     if (err.error === "popup_closed_by_user") {
+                        console.warn("Sign-in popup closed by user.");
+                        statusDiv.textContent = "Sign-in cancelled or popup blocked. Please allow popups for this site.";
+                    } else if (err.error === "access_denied") {
+                        console.warn("User denied access.");
+                        statusDiv.textContent = "Access denied. Please grant permission to proceed.";
+                    } else {
+                        handleError('Sign-in Error', err)
+                    }
+                });
+            } else {
+                console.error("gapiAuth2 not initialized before sign-in attempt.");
+                statusDiv.textContent = "Error: Auth instance not ready. Please refresh.";
+            }
+        }
+
+        /**
+         * Sign out the user upon button click.
+         */
+        function handleSignoutClick(event) {
+            if (gapiAuth2) {
+                gapiAuth2.signOut();
+                // The updateSigninStatus listener will handle UI changes
+                console.log("User signed out.");
+            }
+        }
+
+        /**
+         * Loads the first row (headers) from the specified sheet.
+         */
+        async function loadSheetHeaders() {
+            clearResult();
+            if (!isAuthorized) {
+                 console.warn("Attempted to load headers while not authorized.");
+                 statusDiv.textContent = "Authorization needed before loading headers.";
+                 return;
+             }
+            console.log(`Loading headers from: Spreadsheet=${SPREADSHEET_ID}, Sheet=${SHEET_NAME}`);
+            statusDiv.textContent = 'Loading sheet headers...';
+
+            try {
+                const range = `${SHEET_NAME}!1:1`; // Read the first row only
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: range,
+                });
+
+                if (response.result.values && response.result.values.length > 0) {
+                    headers = response.result.values[0];
+                    headerMap = {};
+                    headers.forEach((header, index) => {
+                        if (header && typeof header === 'string') { // Ensure header is a non-empty string
+                           headerMap[header.trim()] = index; // Map header name to 0-based column index
+                        }
+                    });
+
+                    if (Object.keys(headerMap).length > 0) {
+                         statusDiv.textContent = `Headers loaded successfully from sheet: ${SHEET_NAME}`;
+                         headersInfoDiv.textContent = `Detected Headers: ${headers.join(', ')}`;
+                         actionSection.style.display = 'block'; // Show action section now
+                         console.log("Headers loaded:", headers);
+                         console.log("Header map:", headerMap);
+                    } else {
+                         statusDiv.textContent = 'Error: No valid headers found in the first row. Ensure the first row contains text.';
+                         console.error("No valid string headers found in row 1:", response.result.values[0]);
+                         actionSection.style.display = 'none';
+                         headers = [];
+                         headerMap = {};
+                    }
+                } else {
+                    statusDiv.textContent = 'Error: Could not read the first row. Is the sheet name correct and the sheet not empty?';
+                    console.error("No values returned for header row range:", range);
+                    actionSection.style.display = 'none';
+                    headers = [];
+                    headerMap = {};
+                }
+            } catch (err) {
+                handleError('Error loading headers', err);
+                statusDiv.textContent = `Error loading headers. Check console for details. Is Spreadsheet ID/Sheet Name correct? (${err.result?.error?.message || err.message})`;
+                actionSection.style.display = 'none';
+                headers = [];
+                headerMap = {};
+            }
+        }
+
+        /**
+         * Finds a row based on a value in an identifier column and updates a cell in that row.
+         */
+        async function handleUpdateCell() {
+            clearResult();
+            if (!isAuthorized) {
+                 showErrorResult("Not authorized. Please sign in again.");
+                 return;
+            }
+            if (Object.keys(headerMap).length === 0) {
+                showErrorResult("Headers not loaded correctly. Cannot proceed.");
+                return;
+            }
+
+            // Get values from form
+            const identifierHeader = document.getElementById('identifier_header').value.trim();
+            const identifierValue = document.getElementById('identifier_value').value; // Don't trim value, could be significant
+            const targetHeader = document.getElementById('target_header').value.trim();
+            const newValue = document.getElementById('new_value').value;
+
+            // Basic validation
+            if (!identifierHeader || !identifierValue || !targetHeader) {
+                showErrorResult("Please fill in all Identifier and Target fields.");
+                return;
+            }
+
+            console.log(`Update requested: Find row where [${identifierHeader}] is "${identifierValue}", then set [${targetHeader}] to "${newValue}"`);
+            resultDiv.textContent = 'Processing update...';
+            resultDiv.className = ''; // Reset class
+
+            // --- Find Column Indices from Header Map ---
+            const identifierColIndex = headerMap[identifierHeader];
+            const targetColIndex = headerMap[targetHeader];
+
+            if (identifierColIndex === undefined) {
+                showErrorResult(`Error: Identifier column header "${identifierHeader}" not found in the sheet's headers. Detected headers: ${headers.join(', ')}`);
+                return;
+            }
+            if (targetColIndex === undefined) {
+                showErrorResult(`Error: Target column header "${targetHeader}" not found in the sheet's headers. Detected headers: ${headers.join(', ')}`);
+                return;
+            }
+
+            // Convert 0-based index to A1 notation letter (A, B, C...)
+            const identifierColLetter = columnToLetter(identifierColIndex);
+            const targetColLetter = columnToLetter(targetColIndex);
+            console.log(`Identifier column: ${identifierColLetter} (Index ${identifierColIndex}), Target column: ${targetColLetter} (Index ${targetColIndex})`);
+
+            try {
+                // --- Find Row Number ---
+                // Read the entire identifier column to find the matching value
+                // Start from row 2 to skip the header row (A2:A)
+                const identifierColumnRange = `${SHEET_NAME}!${identifierColLetter}2:${identifierColLetter}`;
+                console.log(`Searching for value in range: ${identifierColumnRange}`);
+                resultDiv.textContent = `Searching for "${identifierValue}" in column "${identifierHeader}"...`;
+
+                const getResponse = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: identifierColumnRange,
+                    // valueRenderOption: 'UNFORMATTED_VALUE', // Consider this if dealing with formatted numbers/dates
+                    // dateTimeRenderOption: 'SERIAL_NUMBER' // If comparing dates/times
+                });
+
+                let targetRowIndex = -1; // 0-based index relative to the start of the *returned data* (which starts at row 2)
+                if (getResponse.result.values) {
+                    console.log(`Found ${getResponse.result.values.length} potential rows in column ${identifierColLetter}`);
+                    for (let i = 0; i < getResponse.result.values.length; i++) {
+                        // Check if the cell in the identifier column matches the value
+                        // Compare as strings for reliable matching, regardless of underlying type from Sheets API
+                        if (getResponse.result.values[i] && String(getResponse.result.values[i][0]) === String(identifierValue)) {
+                            targetRowIndex = i;
+                            console.log(`Match found at data index ${i}`);
+                            break;
+                        }
+                    }
+                } else {
+                     console.log(`No data found in the identifier column range ${identifierColumnRange}.`);
+                }
+
+                if (targetRowIndex === -1) {
+                    showErrorResult(`Error: Value "${identifierValue}" not found in column "${identifierHeader}" (searched from row 2 downwards).`);
+                    return;
+                }
+
+                // Calculate the actual row number in the sheet (1-based index)
+                // Since we started reading from row 2, the actual sheet row is data_index + 2
+                const targetRowNumber = targetRowIndex + 2;
+                const targetCellRange = `${SHEET_NAME}!${targetColLetter}${targetRowNumber}`;
+                console.log(`Value found in sheet row ${targetRowNumber}. Target cell for update: ${targetCellRange}`);
+                resultDiv.textContent = `Found row ${targetRowNumber}. Updating cell ${targetCellRange}...`;
+
+                // --- Update the Target Cell ---
+                const updateResponse = await gapi.client.sheets.spreadsheets.values.update({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: targetCellRange,
+                    valueInputOption: 'USER_ENTERED', // Interprets input like typing in the UI (e.g., 'TRUE' becomes boolean, '1/1/2024' becomes date)
+                                                     // Use 'RAW' to input as a pure string.
+                    resource: {
+                        values: [[newValue]] // Value must be nested in a 2D array [[value]] for single cell
+                    }
+                });
+
+                console.log("Update API Response:", updateResponse);
+                resultDiv.textContent = `Update successful!\nRange updated: ${updateResponse.result.updatedRange}\nCells updated: ${updateResponse.result.updatedCells}`;
+                resultDiv.className = ''; // Ensure default success styling
+
+            } catch (err) {
+                handleError('Error during update process', err);
+                showErrorResult(`Error updating cell: ${err.result?.error?.message || err.message}. Check console for details.`);
+            }
+        }
+
+        /** Helper: Clears the result div */
+        function clearResult() {
+             resultDiv.textContent = '';
+             resultDiv.className = '';
+        }
+
+        /** Helper: Shows error message in result div */
+        function showErrorResult(message) {
+            resultDiv.textContent = message;
+            resultDiv.className = 'error'; // Apply error styling
+            console.error("Error shown to user:", message);
+        }
+
+
+        /**
+         * Helper function to convert 0-based column index to A1 notation letter.
+         * 0 -> A, 1 -> B, 25 -> Z, 26 -> AA, 27 -> AB, etc.
+         * @param {number} column Index (0-based).
+         * @returns {string} A1 notation letter.
+         */
+        function columnToLetter(column) {
+            let temp, letter = '';
+            while (column >= 0) {
+                temp = column % 26;
+                letter = String.fromCharCode(temp + 65) + letter;
+                column = Math.floor(column / 26) - 1;
+            }
+            return letter;
+        }
+
+       /**
+        * Handles and logs errors from API calls or initialization.
+        * @param {string} context A description of where the error occurred.
+        * @param {object} error The error object, possibly from the API response or JS error.
+        */
+       function handleError(context, error) {
+            console.error(`Error Context: ${context}`);
+            console.error('Error Details:', error);
+
+            let message = error.message || 'An unknown error occurred.'; // Default JS error message
+
+            // Check if it's a Google API error structure
+            if (error.result && error.result.error) {
+                message = `${error.result.error.message} (Code: ${error.result.error.code}, Status: ${error.result.error.status})`;
+            } else if (typeof error === 'string') {
+                // Sometimes errors might be simple strings (e.g., from auth flow)
+                message = error;
+            } else if (error.details) {
+                 // GAPI auth errors sometimes have a 'details' field
+                 message = error.details;
+            }
+
+
+            statusDiv.textContent = `Error: ${context}. ${message}`;
+            // Also display in resultDiv if appropriate context
+            if (context.includes('update') || context.includes('loading headers')) {
+                 showErrorResult(`Error during ${context}: ${message}`);
+            }
+       }
+
+    </script>
+
+</body>
+</html>
