@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subotica Map with Clickable Dots and Slideshow (URL Params)</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; }
+
+        #imageModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 15px;
+            padding-top: 45px; /* Space for close button */
+            display: none; /* Initially hidden */
+            z-index: 1001; /* Higher than map controls */
+            text-align: center;
+            border-radius: 8px;
+            width: auto; /* auto width based on canvas */
+            max-width: 90%; /* prevent it from being too wide on small screens */
+        }
+        #imageCanvas {
+            /* width and height are set by JS on the canvas object */
+            display: block;
+            margin: 0 auto 10px auto; /* Center horizontally, add margin below */
+            cursor: pointer; /* Indicate it's clickable for next image */
+            border: 1px solid #eee; /* Light border around the canvas itself */
+            background-color: #f9f9f9; /* Light background for the canvas area */
+        }
+        #closeModalButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            font-weight: bold;
+            color: #888;
+            cursor: pointer;
+            line-height: 1;
+            padding: 5px;
+        }
+        #closeModalButton:hover {
+            color: #333;
+        }
+        #imageInfo {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            min-height: 1.2em; /* Prevent layout shift if text appears/disappears */
+        }
+        #clearMarkersButton {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000; /* Below modal, but above map elements */
+            padding: 8px 15px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+        #clearMarkersButton:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="imageModal">
+    <button id="closeModalButton" title="Close">×</button>
+    <canvas id="imageCanvas"></canvas>
+    <div id="imageInfo"></div>
+</div>
+
+<button id="clearMarkersButton">Clear All Markers</button>
+
+<script>
+    // Default map settings
+    const defaultLat = 46.1003;
+    const defaultLng = 19.6675;
+    const defaultZoom = 13;
+
+    // Initialize the map - view will be set later based on URL or defaults
+    const map = L.map('map');
+
+    // Add a tile layer (using OpenStreetMap)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    let drawnCircles = []; // Array to store the circle objects
+
+    // Modal and Canvas elements
+    const imageModal = document.getElementById('imageModal');
+    const canvasElement = document.getElementById('imageCanvas');
+    const closeModalButton = document.getElementById('closeModalButton');
+    const imageInfoElement = document.getElementById('imageInfo');
+    
+    let currentImageIndex = 0;
+    const images = [ // Using the original image URLs
+        'https://lh3.googleusercontent.com/u/0/d/1TR3yzOSLVExlQB6bs0szYdkQ3Rnn3jDJ=w1459-h1636-iv1?auditContext=prefetch',
+        'https://lh3.googleusercontent.com/u/0/d/18x-4WM567hy4dtCdwIKH5ta4cpkQ23l2=w1459-h1636-iv1?auditContext=forDisplay'
+    ];
+    const CANVAS_WIDTH = 400;
+    const CANVAS_HEIGHT = 300;
+
+    let canvasClickHandler = null; // To store the current canvas click handler
+
+    // Function to update the URL with map state and circle coordinates
+    function updateUrl() {
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        const currentLat = center.lat.toFixed(6);
+        const currentLng = center.lng.toFixed(6);
+
+        const circleCoords = drawnCircles.map(circle => {
+            const latlng = circle.getLatLng();
+            return `${latlng.lat.toFixed(6)},${latlng.lng.toFixed(6)}`;
+        }).join(';');
+
+        const params = new URLSearchParams();
+        params.set('lat', currentLat);
+        params.set('lng', currentLng);
+        params.set('zoom', zoom);
+        if (circleCoords) {
+             params.set('coords', circleCoords);
+        }
+
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    }
+
+    // Function to load map state and circles from URL
+    function loadStateFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const urlLat = parseFloat(params.get('lat'));
+        const urlLng = parseFloat(params.get('lng'));
+        const urlZoom = parseInt(params.get('zoom'), 10);
+        const urlCoordsParam = params.get('coords');
+
+        let initialLat = defaultLat;
+        let initialLng = defaultLng;
+        let initialZoom = defaultZoom;
+
+        if (!isNaN(urlLat) && !isNaN(urlLng)) {
+            initialLat = urlLat;
+            initialLng = urlLng;
+        }
+        if (!isNaN(urlZoom)) {
+            initialZoom = urlZoom;
+        }
+
+        // Set the map view
+        map.setView([initialLat, initialLng], initialZoom);
+
+        // Load circles from URL
+        if (urlCoordsParam) {
+            try {
+                const urlCoords = urlCoordsParam.split(';').map(coordStr => {
+                    const parts = coordStr.split(',');
+                    if (parts.length === 2) {
+                        const lat = parseFloat(parts[0]);
+                        const lng = parseFloat(parts[1]);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            return L.latLng(lat, lng);
+                        }
+                    }
+                    return null;
+                }).filter(coord => coord != null);
+
+                urlCoords.forEach(coord => addCircleToMap(coord, false)); // Add circles without saving immediately
+            } catch (e) {
+                console.error("Failed to parse URL coordinates:", e);
+            }
+        }
+         // After loading, save the state to ensure URL reflects initial load (including circles)
+         updateUrl();
+    }
+
+    // Function to add a circle to the map and the drawnCircles array
+    function addCircleToMap(latlng, updateUrlFlag = true) {
+        const circle = L.circleMarker(latlng, {
+            color: '#333',      // Dark border for visibility
+            fillColor: 'white', // White fill
+            fillOpacity: 0.7,
+            weight: 1.5,        // Border weight
+            radius: 8
+        }).addTo(map);
+
+        circle.on('click', function(e) {
+            L.DomEvent.stopPropagation(e); // Prevent map click event when clicking on circle
+            openImageCanvas(latlng);
+        });
+
+        drawnCircles.push(circle);
+
+        if (updateUrlFlag) {
+            updateUrl();
+        }
+    }
+
+   function drawImageOnCanvas() {
+        if (!canvasElement || images.length === 0) return;
+        const ctx = canvasElement.getContext('2d');
+        
+        canvasElement.width = CANVAS_WIDTH;
+        canvasElement.height = CANVAS_HEIGHT;
+
+        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        ctx.fillStyle = "#666"; // Adjusted color for loading text
+        ctx.font = "16px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Loading image...", canvasElement.width / 2, canvasElement.height / 2);
+
+        const img = new Image();
+        img.crossOrigin = "Anonymous";  
+        img.src = images[currentImageIndex];
+        
+        img.onload = function() {
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            const hRatio = canvasElement.width / img.width;
+            const vRatio = canvasElement.height / img.height;
+            const ratio = Math.min(hRatio, vRatio); // Preserves aspect ratio, fits within canvas
+            const centerShift_x = (canvasElement.width - img.width * ratio) / 2;
+            const centerShift_y = (canvasElement.height - img.height * ratio) / 2;
+
+            ctx.drawImage(img, 0, 0, img.width, img.height,
+                          centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
+        };
+        img.onerror = function() {
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            ctx.fillStyle = "#D32F2F"; // A more distinct red for error
+            ctx.font = "bold 16px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Error loading image.", canvasElement.width / 2, canvasElement.height / 2);
+            console.error("Error loading image:", images[currentImageIndex]);
+        };
+
+        if (imageInfoElement) {
+            imageInfoElement.textContent = `Image ${currentImageIndex + 1} of ${images.length}`;
+        }
+    }
+
+    function openImageCanvas(latlngAssociated) { // latlngAssociated can be used later
+        currentImageIndex = 0; // Reset to first image when opening
+        imageModal.style.display = 'block';
+        drawImageOnCanvas();
+
+        // Remove previous canvas click listener if it exists
+        if (canvasClickHandler) {
+            canvasElement.removeEventListener('click', canvasClickHandler);
+        }
+        // Define new canvas click listener
+        canvasClickHandler = function() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            drawImageOnCanvas();
+        };
+        canvasElement.addEventListener('click', canvasClickHandler);
+    }
+    
+    // Setup close button listener once
+    closeModalButton.addEventListener('click', () => {
+        imageModal.style.display = 'none';
+        if (canvasClickHandler) { // Clean up canvas listener specifically
+            canvasElement.removeEventListener('click', canvasClickHandler);
+            canvasClickHandler = null; // Important to clear the stored handler
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && imageModal.style.display === 'block') {
+            closeModalButton.click(); // Trigger the close button's click logic
+        }
+    });
+
+    // Add click event listener to the map to add new circles
+    map.on('click', function(e) {
+        addCircleToMap(e.latlng);
+    });
+
+    // Update URL when the map view changes (drag or zoom)
+    map.on('moveend', updateUrl);
+    map.on('zoomend', updateUrl);
+
+
+    // Load state from URL when the page loads
+    loadStateFromUrl();
+
+    // "Clear All Markers" button functionality
+    document.getElementById('clearMarkersButton').addEventListener('click', function() {
+        if (confirm("Are you sure you want to clear all markers? This action cannot be undone.")) {
+            drawnCircles.forEach(circle => map.removeLayer(circle));
+            drawnCircles = []; // Clear the array
+            updateUrl(); // This will clear coords from URL and update map location/zoom
+            console.log("All markers cleared.");
+        }
+    });
+
+</script>
+
+</body>
+</html>
