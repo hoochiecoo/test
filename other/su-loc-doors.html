@@ -219,26 +219,30 @@
         }
     }
 
-   function drawImageOnCanvas() {
-        if (!canvasElement || images.length === 0) return;
+  function drawImageOnCanvas() {
+        if (!canvasElement || images.length === 0) {
+            // Clear canvas if no images or element missing
+            const ctx = canvasElement.getContext('2d');
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            if (imageInfoElement) {
+                 imageInfoElement.textContent = 'No images available.';
+            }
+            return;
+        }
         const ctx = canvasElement.getContext('2d');
         
-        canvasElement.width = CANVAS_WIDTH;
-        canvasElement.height = CANVAS_HEIGHT;
-
-        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        ctx.fillStyle = "#666"; // Adjusted color for loading text
-        ctx.font = "16px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("Loading image...", canvasElement.width / 2, canvasElement.height / 2);
+        // Optional: Draw a subtle loading indicator *over* the current image
+        // instead of clearing entirely, but simply keeping the old image is often enough.
+        // For simplicity, we'll just keep the old image for now.
 
         const img = new Image();
         img.crossOrigin = "Anonymous";  
         img.src = images[currentImageIndex];
         
         img.onload = function() {
+            // Only clear and redraw *after* the new image has loaded
             ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
             const hRatio = canvasElement.width / img.width;
             const vRatio = canvasElement.height / img.height;
             const ratio = Math.min(hRatio, vRatio); // Preserves aspect ratio, fits within canvas
@@ -247,22 +251,35 @@
 
             ctx.drawImage(img, 0, 0, img.width, img.height,
                           centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
+            
+            if (imageInfoElement) {
+                 imageInfoElement.textContent = `Image ${currentImageIndex + 1} of ${images.length}`;
+            }
         };
         img.onerror = function() {
-            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            ctx.fillStyle = "#D32F2F"; // A more distinct red for error
-            ctx.font = "bold 16px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("Error loading image.", canvasElement.width / 2, canvasElement.height / 2);
+             // Keep the previous image if possible, just update info/overlay error
             console.error("Error loading image:", images[currentImageIndex]);
+            if (imageInfoElement) {
+                 imageInfoElement.textContent = `Image ${currentImageIndex + 1} of ${images.length} (Error Loading)`;
+                 // You could also draw an error message over the existing image here
+                 // ctx.fillStyle = "rgba(211, 47, 47, 0.7)"; // Semi-transparent red overlay
+                 // ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+                 // ctx.fillStyle = "white";
+                 // ctx.font = "bold 16px Arial";
+                 // ctx.textAlign = "center";
+                 // ctx.textBaseline = "middle";
+                 // ctx.fillText("Error loading image.", canvasElement.width / 2, canvasElement.height / 2);
+            }
+             // Optional: Advance to the next image automatically if one fails?
+             // currentImageIndex = (currentImageIndex + 1) % images.length;
+             // drawImageOnCanvas();
         };
 
-        if (imageInfoElement) {
-            imageInfoElement.textContent = `Image ${currentImageIndex + 1} of ${images.length}`;
+         // Update info immediately to show which image is *attempting* to load
+         if (imageInfoElement) {
+            imageInfoElement.textContent = `Loading Image ${currentImageIndex + 1} of ${images.length}...`;
         }
     }
-
     function openImageCanvas(latlngAssociated) { // latlngAssociated can be used later
         currentImageIndex = 0; // Reset to first image when opening
         imageModal.style.display = 'block';
