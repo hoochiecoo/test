@@ -1,0 +1,343 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; overflow: hidden; /* Prevent scrollbars from map/modal */ }
+        #map { height: 100vh; width: 100%; }
+        #clearMarkersBtn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000; /* Above map tiles, below modal */
+            padding: 10px;
+            background-color: white;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #clearMarkersBtn:hover {
+            background-color: #f4f4f4;
+        }
+
+        /* Modal styles for FULL SCREEN */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1001; /* Sit on top of everything */
+            left: 0;
+            top: 0;
+            width: 100vw; /* Full viewport width */
+            height: 100vh; /* Full viewport height */
+            background-color: rgba(0,0,0,0.9); /* Darker overlay for full screen */
+            /* Flexbox to center modal-content, though modal-content will be 100%x100% */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            position: relative; /* For absolute positioning of children like close button and counter */
+            width: 100%; /* Full width of parent modal */
+            height: 100%; /* Full height of parent modal */
+            padding: 0; /* No padding, image and controls manage their own space */
+            background-color: transparent; /* The modal background provides the overlay color */
+            border: none; /* No border for fullscreen */
+            border-radius: 0; /* No border-radius for fullscreen */
+            box-shadow: none; /* No shadow for fullscreen */
+            
+            display: flex; /* To center the image itself within this full-screen container */
+            flex-direction: column; /* Stack image and (if it were in flow) counter */
+            align-items: center; /* Center image horizontally */
+            justify-content: center; /* Center image vertically */
+        }
+
+        .close-button {
+            position: absolute; /* Positioned relative to .modal-content */
+            top: 15px;
+            right: 25px;
+            color: white;
+            font-size: 45px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10; /* Above the image */
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8); /* Shadow for better visibility */
+            line-height: 1; /* Ensure tight fit */
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #ccc;
+            text-decoration: none;
+        }
+
+        #modalImage {
+            max-width: 100%; /* Max width of its container (.modal-content) */
+            max-height: 100%; /* Max height of its container (.modal-content) */
+            object-fit: contain; /* Scale image down to fit, preserve aspect ratio */
+            cursor: pointer; /* Indicates it's clickable for next image */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            /* draggable="false" is on the img tag itself */
+        }
+
+        .image-counter {
+            position: absolute; /* Positioned relative to .modal-content */
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 10; /* Above the image */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    <button id="clearMarkersBtn">Clear All Markers</button>
+
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeModalBtn">&times;</span>
+            <img id="modalImage" src="" alt="Marker Image" draggable="false">
+            <div id="imageCounter" class="image-counter"></div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_SUBOTICA_LAT = 46.100376;
+        const DEFAULT_SUBOTICA_LNG = 19.665262;
+        const DEFAULT_ZOOM = 13;
+        
+        // UPDATED DEFAULT_MARKER_IMAGES with user-provided URLs
+        const DEFAULT_MARKER_IMAGES = [
+            'https://lh3.googleusercontent.com/u/0/d/1TR3yzOSLVExlQB6bs0szYdkQ3Rnn3jDJ=w1459-h1636-iv1?auditContext=prefetch',
+            'https://lh3.googleusercontent.com/u/0/d/18x-4WM567hy4dtCdwIKH5ta4cpkQ23l2=w1459-h1636-iv1?auditContext=forDisplay'
+        ];
+
+        let map;
+        let markersLayer = L.layerGroup(); // Layer group to manage markers
+
+        // Modal elements
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const imageCounter = document.getElementById('imageCounter');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        
+        let currentModalImages = [];
+        let currentModalImageIndex = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMap();
+            setupEventListeners();
+        });
+
+        function initializeMap() {
+            const initialState = loadStateFromURL();
+
+            map = L.map('map').setView(
+                initialState.center || [DEFAULT_SUBOTICA_LAT, DEFAULT_SUBOTICA_LNG],
+                initialState.zoom || DEFAULT_ZOOM
+            );
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            markersLayer.addTo(map);
+            loadMarkersFromURLData(initialState.markers);
+
+            map.on('moveend', updateURL);
+            map.on('zoomend', updateURL);
+            map.on('click', onMapClick);
+        }
+
+        function setupEventListeners() {
+            document.getElementById('clearMarkersBtn').addEventListener('click', clearAllMarkers);
+            closeModalBtn.addEventListener('click', closeModal);
+            modalImage.addEventListener('click', showNextImageInModal);
+            
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        function loadStateFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const lat = parseFloat(params.get('lat'));
+            const lng = parseFloat(params.get('lng'));
+            const zoom = parseInt(params.get('zoom'));
+            const markersString = params.get('markers');
+
+            const state = {};
+            if (!isNaN(lat) && !isNaN(lng)) state.center = [lat, lng];
+            if (!isNaN(zoom)) state.zoom = zoom;
+            
+            state.markers = [];
+            if (markersString) {
+                const markerDefs = markersString.split(';');
+                markerDefs.forEach(def => {
+                    const parts = def.split(',');
+                    if (parts.length >= 2) {
+                        const mLat = parseFloat(parts[0]);
+                        const mLng = parseFloat(parts[1]);
+                        const imagesStr = parts.length > 2 ? parts[2] : ""; // Image string is optional
+                        
+                        let images = [];
+                        if (imagesStr) {
+                            images = imagesStr.split('|')
+                                .map(imgStr => decodeURIComponent(imgStr))
+                                .filter(img => img.trim() !== "");
+                        }
+                        
+                        if (!isNaN(mLat) && !isNaN(mLng)) {
+                            // If images are found in URL, use them. Otherwise, use default.
+                            state.markers.push({ 
+                                lat: mLat, 
+                                lng: mLng, 
+                                images: images.length > 0 ? images : [...DEFAULT_MARKER_IMAGES] 
+                            });
+                        }
+                    }
+                });
+            }
+            return state;
+        }
+        
+        function updateURL() {
+            if (!map) return;
+
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            const params = new URLSearchParams();
+
+            params.set('lat', center.lat.toFixed(6));
+            params.set('lng', center.lng.toFixed(6));
+            params.set('zoom', zoom);
+
+            const markerStrings = [];
+            markersLayer.eachLayer(marker => {
+                const latLng = marker.getLatLng();
+                // Ensure marker.options.imageURLs exists and is an array
+                const images = Array.isArray(marker.options.imageURLs) ? marker.options.imageURLs : [];
+                const imagesStr = images.map(imgUrl => encodeURIComponent(imgUrl)).join('|');
+                // Only include imageStr if there are images to prevent "lat,lng,"
+                markerStrings.push(`${latLng.lat.toFixed(6)},${latLng.lng.toFixed(6)}${imagesStr ? ',' + imagesStr : ''}`);
+            });
+
+            if (markerStrings.length > 0) {
+                params.set('markers', markerStrings.join(';'));
+            } else {
+                params.delete('markers'); // Remove markers param if no markers
+            }
+
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            history.pushState({}, '', newUrl);
+        }
+
+        function onMapClick(e) {
+            // When a new marker is added, assign the current DEFAULT_MARKER_IMAGES
+            addMarkerToMap(e.latlng.lat, e.latlng.lng, [...DEFAULT_MARKER_IMAGES], true);
+        }
+
+        function addMarkerToMap(lat, lng, imageURLs, updateHistory = true) {
+            // Ensure imageURLs is always an array
+            const imagesForMarker = Array.isArray(imageURLs) ? imageURLs : [...DEFAULT_MARKER_IMAGES];
+
+            const marker = L.marker([lat, lng], { imageURLs: imagesForMarker });
+            marker.on('click', () => {
+                openModal(imagesForMarker); // Pass the specific images for this marker
+            });
+            markersLayer.addLayer(marker);
+            
+            if (updateHistory) {
+                updateURL();
+            }
+            return marker;
+        }
+
+        function loadMarkersFromURLData(markerDataArray) {
+            markersLayer.clearLayers(); 
+            if (markerDataArray && markerDataArray.length > 0) {
+                markerDataArray.forEach(data => {
+                    // Data.images should already be populated correctly by loadStateFromURL,
+                    // falling back to DEFAULT_MARKER_IMAGES if not in URL.
+                    addMarkerToMap(data.lat, data.lng, data.images, false); 
+                });
+            }
+        }
+
+        function clearAllMarkers() {
+            markersLayer.clearLayers();
+            updateURL();
+        }
+
+        // Modal functions
+        function openModal(imageURLs) {
+            // Ensure we have a valid array of images to show
+            if (!Array.isArray(imageURLs) || imageURLs.length === 0) {
+                console.warn("Attempted to open modal with no images or invalid imageURLs:", imageURLs);
+                // Optionally, show a default placeholder or error message in modal
+                // For now, just don't open if no images.
+                return;
+            }
+
+            currentModalImages = imageURLs;
+            currentModalImageIndex = 0;
+            displayCurrentImageInModal();
+            modal.style.display = "flex"; 
+            document.addEventListener('keydown', handleEscKey);
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+            document.removeEventListener('keydown', handleEscKey);
+        }
+
+        function handleEscKey(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        }
+
+        function displayCurrentImageInModal() {
+            if (currentModalImages.length === 0) { 
+                modalImage.src = ""; // Clear image
+                modalImage.alt = "No image available";
+                imageCounter.textContent = "";
+                return;
+            }
+            modalImage.src = currentModalImages[currentModalImageIndex];
+            modalImage.alt = `Marker Image ${currentModalImageIndex + 1}`;
+            imageCounter.textContent = `Image ${currentModalImageIndex + 1} of ${currentModalImages.length}`;
+        }
+
+        function showNextImageInModal() {
+            if (currentModalImages.length === 0) return;
+            currentModalImageIndex = (currentModalImageIndex + 1) % currentModalImages.length;
+            displayCurrentImageInModal();
+        }
+
+    </script>
+</body>
+</html>
