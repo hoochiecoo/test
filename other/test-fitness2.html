@@ -21,307 +21,108 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--background-color);
             color: var(--text-color);
-            overscroll-behavior-y: contain; /* Prevents pull-to-refresh */
+            overscroll-behavior-y: contain;
             overflow-x: hidden;
         }
 
         /* --- WebView Restrictions --- */
         * {
             box-sizing: border-box;
-            /* Prevent text selection */
-            -webkit-user-select: none; /* Safari/Chrome */
-            -moz-user-select: none;    /* Firefox */
-            -ms-user-select: none;     /* IE10+ */
-            user-select: none;
-            /* Disable callout on long press on iOS */
-            -webkit-touch-callout: none; 
-            /* Prevent dragging elements */
-            -webkit-user-drag: none;
-            user-drag: none;
-            /* Improve touch scrolling performance */
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none; user-drag: none;
             -webkit-overflow-scrolling: touch;
         }
 
         /* Main Layout */
-        main {
-            padding: 20px 15px 100px 15px; /* Bottom padding for nav */
-        }
-
-        .page {
-            display: none;
-        }
-
-        .page.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        main { padding: 20px 15px 100px 15px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0;
-        }
-        
-        .profile-pic {
-            width: 40px;
-            height: 40px;
-            background-color: var(--border-color);
-            border-radius: 50%;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a8a8e'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e");
-            background-size: 24px;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header h1 { font-size: 28px; font-weight: 700; margin: 0; }
+        .profile-pic { width: 40px; height: 40px; background-color: var(--border-color); border-radius: 50%; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a8a8e'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e"); background-size: 24px; background-position: center; background-repeat: no-repeat; }
 
         /* Reusable Components */
-        .card {
-            background-color: var(--surface-color);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            border: none;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: 600;
-            text-align: center;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        h2 {
-            font-size: 22px;
-            margin-top: 0;
-            margin-bottom: 16px;
-        }
+        .card { background-color: var(--surface-color); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .btn { display: block; width: 100%; padding: 15px; border: none; background-color: var(--primary-color); color: white; border-radius: 12px; font-size: 17px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 20px; }
+        h2 { font-size: 22px; margin-top: 0; margin-bottom: 16px; }
 
         /* Home Page */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .stat-card {
-            background-color: var(--surface-color);
-            border-radius: 16px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-        }
-
-        .stat-card .icon {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-        
-        .stat-card .value {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-        
-        .stat-card .label {
-            font-size: 14px;
-            color: var(--text-secondary-color);
-        }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-card { background-color: var(--surface-color); border-radius: 16px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .stat-card:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card .icon { font-size: 28px; margin-bottom: 8px; }
+        .stat-card .value { font-size: 24px; font-weight: 600; color: var(--primary-color); }
+        .stat-card .label { font-size: 14px; color: var(--text-secondary-color); }
 
         /* Charts Page */
-        .chart-container {
-            width: 100%;
-            height: 250px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .chart-bar {
-            width: 10%;
-            background-color: var(--primary-color);
-            border-radius: 5px 5px 0 0;
-            position: relative;
-            animation: barRaise 1s ease-out;
-        }
-        
-        .chart-labels {
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 20px 0 20px;
-            font-size: 12px;
-            color: var(--text-secondary-color);
-        }
-        @keyframes barRaise {
-            from { height: 0; }
-            to { /* height is set inline */ }
-        }
+        .chart-container { width: 100%; height: 250px; padding: 20px; display: flex; justify-content: space-around; align-items: flex-end; border-bottom: 1px solid var(--border-color); }
+        .chart-bar { width: 10%; background-color: var(--primary-color); border-radius: 5px 5px 0 0; position: relative; animation: barRaise 0.8s ease-out; }
+        .chart-bar .tooltip { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; opacity: 0; transition: opacity 0.2s; white-space: nowrap; pointer-events: none; }
+        .chart-bar:hover .tooltip { opacity: 1; }
+        .chart-labels { display: flex; justify-content: space-around; padding: 10px 20px 0 20px; font-size: 12px; color: var(--text-secondary-color); }
+        @keyframes barRaise { from { height: 0; } to { /* height is set inline */ } }
 
         /* Achievements Page */
-        .achievements-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 15px;
-            text-align: center;
-        }
-        .achievement {
-            opacity: 0.5;
-        }
-        .achievement.unlocked {
-            opacity: 1;
-        }
-        .achievement-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: var(--border-color);
-            margin: 0 auto 10px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .achievement.unlocked .achievement-icon {
-            background-color: #ffd700; /* Gold */
-        }
-        .achievement-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: var(--text-secondary-color);
-        }
-        .achievement.unlocked .achievement-icon svg {
-            fill: #fff;
-        }
-        .achievement-title {
-            font-size: 14px;
-            font-weight: 500;
-        }
+        .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; text-align: center; }
+        .achievement { opacity: 0.5; } .achievement.unlocked { opacity: 1; }
+        .achievement-icon { width: 80px; height: 80px; border-radius: 50%; background-color: var(--border-color); margin: 0 auto 10px auto; display: flex; align-items: center; justify-content: center; }
+        .achievement.unlocked .achievement-icon { background-color: #ffd700; }
+        .achievement-icon svg { width: 40px; height: 40px; fill: var(--text-secondary-color); }
+        .achievement.unlocked .achievement-icon svg { fill: #fff; }
+        .achievement-title { font-size: 14px; font-weight: 500; }
 
         /* Chat Page */
-        .chat-window {
-            height: calc(100vh - 200px); /* Adjust based on header/footer */
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        .chat-messages {
-            flex-grow: 1;
-            padding: 10px;
-        }
-        .message {
-            display: flex;
-            margin-bottom: 15px;
-            max-width: 80%;
-        }
-        .message-bubble {
-            padding: 10px 15px;
-            border-radius: 18px;
-            font-size: 16px;
-            line-height: 1.4;
-        }
-        .received {
-            align-self: flex-start;
-        }
-        .received .message-bubble {
-            background-color: var(--surface-color);
-            border-bottom-left-radius: 4px;
-        }
-        .sent {
-            align-self: flex-end;
-            margin-left: auto; /* Push to the right */
-        }
-        .sent .message-bubble {
-            background-color: var(--primary-color);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-        .chat-input-area {
-            display: flex;
-            padding: 10px;
-            background: var(--surface-color);
-            border-top: 1px solid var(--border-color);
-        }
-        .chat-input {
-            flex-grow: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 10px 15px;
-            font-size: 16px;
-            -webkit-user-select: text; /* Allow text selection ONLY in input fields */
-            user-select: text;
-        }
-        .send-btn {
-            background: none;
-            border: none;
-            padding: 0 10px;
-            cursor: pointer;
-        }
-        .send-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--primary-color);
-        }
-
-        /* Bottom Navigation */
-        nav {
+        .chat-window { min-height: calc(100vh - 250px); display: flex; flex-direction: column; }
+        .chat-messages { flex-grow: 1; padding: 10px; }
+        .message { display: flex; margin-bottom: 15px; max-width: 80%; animation: fadeIn 0.3s; }
+        .message-bubble { padding: 10px 15px; border-radius: 18px; font-size: 16px; line-height: 1.4; }
+        .received { align-self: flex-start; }
+        .received .message-bubble { background-color: var(--surface-color); border-bottom-left-radius: 4px; }
+        .sent { align-self: flex-end; margin-left: auto; }
+        .sent .message-bubble { background-color: var(--primary-color); color: white; border-bottom-right-radius: 4px; }
+        .quick-reply-container { padding: 0 10px 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; }
+        .quick-reply-btn { background-color: var(--surface-color); border: 1px solid var(--primary-color); color: var(--primary-color); padding: 8px 16px; border-radius: 20px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+        .quick-reply-btn:active { background-color: #eaf5ff; }
+        .chat-input-area { display: flex; padding: 10px; background: var(--surface-color); border-top: 1px solid var(--border-color); }
+        .chat-input { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 20px; padding: 10px 15px; font-size: 16px; -webkit-user-select: text; user-select: text; }
+        .send-btn { background: none; border: none; padding: 0 10px; cursor: pointer; }
+        .send-btn svg { width: 24px; height: 24px; fill: var(--primary-color); }
+        
+        /* --- Workout Overlay --- */
+        #workout-overlay {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 65px;
-            background-color: rgba(255,255,255,0.9);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
             display: flex;
-            justify-content: space-around;
-            border-top: 1px solid var(--border-color);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex: 1;
-            color: var(--text-secondary-color);
-            cursor: pointer;
-            transition: color 0.2s;
+            color: white;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
+        #workout-overlay.visible { opacity: 1; visibility: visible; }
+        .workout-modal { text-align: center; padding: 20px; }
+        #workout-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: rgba(255,255,255,0.8); }
+        #workout-display { font-size: 5rem; font-weight: 700; margin-bottom: 30px; font-variant-numeric: tabular-nums; }
+        #workout-display .unit { font-size: 1.5rem; opacity: 0.7; margin-left: 10px; }
+        #workout-display .subtext { font-size: 1.2rem; display: block; opacity: 0.7; margin-top: 10px; }
+        .workout-modal .btn { background-color: #e74c3c; margin-top: 30px; }
 
-        .nav-item.active {
-            color: var(--primary-color);
-        }
-
-        .nav-item svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 3px;
-        }
-
-        .nav-item span {
-            font-size: 11px;
-            font-weight: 500;
-        }
+        /* Bottom Navigation */
+        nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: space-around; border-top: 1px solid var(--border-color); padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-secondary-color); cursor: pointer; transition: color 0.2s; }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item svg { width: 24px; height: 24px; margin-bottom: 3px; }
+        .nav-item span { font-size: 11px; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -329,48 +130,27 @@
     <main>
         <!-- Home Page -->
         <div id="home" class="page active">
-            <div class="header">
-                <h1>Dashboard</h1>
-                <div class="profile-pic"></div>
-            </div>
+            <div class="header"><h1>Dashboard</h1><div class="profile-pic"></div></div>
             <div class="card">
                 <h2>Today's Summary</h2>
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="icon">👟</div><div class="value">8,450</div><div class="label">Steps</div></div>
-                    <div class="stat-card"><div class="icon">🔥</div><div class="value">310</div><div class="label">Calories</div></div>
-                    <div class="stat-card"><div class="icon">⚡️</div><div class="value">45</div><div class="label">Active Mins</div></div>
-                    <div class="stat-card"><div class="icon">❤️</div><div class="value">72</div><div class="label">BPM</div></div>
+                    <div class="stat-card" onclick="showChartFor('steps')"><div class="icon">👟</div><div class="value">8,450</div><div class="label">Steps</div></div>
+                    <div class="stat-card" onclick="showChartFor('calories')"><div class="icon">🔥</div><div class="value">310</div><div class="label">Calories</div></div>
+                    <div class="stat-card" onclick="showChartFor('active')"><div class="icon">⚡️</div><div class="value">45</div><div class="label">Active Mins</div></div>
+                    <div class="stat-card" onclick="showChartFor('bpm')"><div class="icon">❤️</div><div class="value">72</div><div class="label">BPM</div></div>
                 </div>
             </div>
              <div class="card">
                 <h2>Start a Workout</h2>
-                <p style="text-align:center; color: var(--text-secondary-color);">Ready to get moving? Choose an activity and let's go!</p>
-                <button class="btn">Start Running</button>
+                <p style="text-align:center; color: var(--text-secondary-color);">Ready to get moving? Ask the AI Coach for a personalized session.</p>
+                <button class="btn" onclick="showPage('chat')">Ask AI Coach</button>
             </div>
         </div>
 
         <!-- Charts Page -->
         <div id="charts" class="page">
             <div class="header"><h1>Progress</h1></div>
-            <div class="card">
-                <h2>Weekly Steps</h2>
-                <div class="chart-container">
-                    <div class="chart-bar" style="height: 60%;"></div>
-                    <div class="chart-bar" style="height: 80%;"></div>
-                    <div class="chart-bar" style="height: 50%;"></div>
-                    <div class="chart-bar" style="height: 95%;"></div>
-                    <div class="chart-bar" style="height: 75%;"></div>
-                    <div class="chart-bar" style="height: 40%;"></div>
-                    <div class="chart-bar" style="height: 85%;"></div>
-                </div>
-                 <div class="chart-labels">
-                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                </div>
-            </div>
-             <div class="card">
-                <h2>Calories Burned</h2>
-                 <p style="text-align:center; color: var(--text-secondary-color);">More chart data would be displayed here.</p>
-            </div>
+            <div class="card"><h2 id="chart-title">Weekly Steps</h2><div id="chart-body" class="chart-container"></div><div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div>
         </div>
 
         <!-- Achievements Page -->
@@ -379,11 +159,10 @@
             <div class="card">
                 <h2>Your Trophies</h2>
                 <div class="achievements-grid">
-                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.5 4.5c0 1.6-1.3 3-3 3s-3-1.4-3-3 1.3-3 3-3 3 1.4 3 3zm-6.2 3.8c-1 .8-1.7 2.1-1.7 3.4 0 2.4 2 4.3 4.4 4.3s4.4-1.9 4.4-4.3c0-1.3-.7-2.6-1.7-3.4C11.5 8.9 10 9.7 10 11.2V13h1v-1.8c0-1.1.8-2.1 1.8-2.8.8-.5 1.2-1.5 1.2-2.4 0-1.1-.9-2-2-2s-2 .9-2 2c0 .9.4 1.8 1.2 2.4.5.3 1.3.8 1.3 1.6v.2h-1v-.2c0-.5-.8-.9-1.3-1.2-.5-.3-1.2-.8-1.2-1.8zM18 13.5V12h-2v1.5c0 1.2-1.3 2.5-2.5 2.5S11 14.7 11 13.5V12H9v1.5c0 2.2 2.2 4.5 4.5 4.5s4.5-2.3 4.5-4.5z"/></svg></div><div class="achievement-title">First Run</div></div>
+                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 16.17l7.59-7.59L19 10l-9 9z"/></svg></div><div class="achievement-title">First Run</div></div>
                     <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></div><div class="achievement-title">10k Steps</div></div>
                     <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 2H9v4H7v6h2v2h2v-2h2V6h-2V2zM7 20h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg></div><div class="achievement-title">Perfect Week</div></div>
                     <div class="achievement"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 9h4v11H4zm6 0h4v11h-4zm6 0h4v11h-4z"/></svg></div><div class="achievement-title">Mountain Top</div></div>
-                    <div class="achievement"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 13H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm10 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 8c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg></div><div class="achievement-title"> Marathon</div></div>
                 </div>
             </div>
         </div>
@@ -393,15 +172,16 @@
             <div class="header"><h1>AI Coach</h1></div>
              <div class="chat-window">
                  <div class="chat-messages">
-                    <div class="message received"><div class="message-bubble">Hi there! I'm your AI fitness coach. How can I help you reach your goals today?</div></div>
-                    <div class="message sent"><div class="message-bubble">I want to improve my running stamina.</div></div>
-                    <div class="message received"><div class="message-bubble">Great goal! I recommend starting with interval training. Try a 20-minute session: 5 mins warm-up, then alternate 1 min of fast running with 2 mins of jogging.</div></div>
-                    <div class="message sent"><div class="message-bubble">Sounds good, I'll try that tomorrow.</div></div>
+                    <div class="message received"><div class="message-bubble">Hi there! What kind of workout are you in the mood for?</div></div>
+                 </div>
+                 <div class="quick-reply-container">
+                    <button class="quick-reply-btn" onclick="startTimerWorkout()">⏱️ For Time</button>
+                    <button class="quick-reply-btn" onclick="startRepsWorkout()">💪 For Reps</button>
+                    <button class="quick-reply-btn" onclick="startDistanceWorkout()">🏃 For Distance</button>
                  </div>
              </div>
              <div class="chat-input-area">
-                <input type="text" class="chat-input" placeholder="Type a message...">
-                <button class="send-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+                <input type="text" class="chat-input" placeholder="Ask something else..."><button class="send-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
             </div>
         </div>
     </main>
@@ -409,51 +189,809 @@
     <nav>
         <div class="nav-item active" onclick="showPage('home')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
         <div class="nav-item" onclick="showPage('charts')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg><span>Charts</span></div>
-        <div class="nav-item" onclick="showPage('achievements')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2zm0 2.24L10.45 7.5 4.91 8.29l4.01 3.9-1 5.82L12 15.22l5.09 2.79-1-5.82 4.01-3.9-5.54-.79L12 4.24z"/></svg><span>Goals</span></div>
-        <div class="nav-item" onclick="showPage('chat')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg><span>Coach</span></div>
+        <div class="nav-item" onclick="showPage('achievements')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Goals</span></div>
+        <div class="nav-item" onclick="showPage('chat')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><span>Coach</span></div>
     </nav>
+
+    <!-- Workout Overlay -->
+    <div id="workout-overlay">
+        <div class="workout-modal">
+            <h2 id="workout-title"></h2>
+            <div id="workout-display"></div>
+            <button id="workout-action-btn" class="btn">Finish Workout</button>
+        </div>
+    </div>
 
     <script>
         // --- WebView Restrictions ---
-        // Disable context menu (right-click) and other default long-press behaviors.
-        window.addEventListener('contextmenu', function (e) { 
-            e.preventDefault(); 
-        }, false);
+        window.addEventListener('contextmenu', e => e.preventDefault(), false);
+        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (!e.target.matches('input, textarea')) e.preventDefault(); } });
         
-        // Disable keyboard shortcuts (Ctrl+C, etc.)
-        document.addEventListener('keydown', function(e) {
-            // Check for Ctrl or Command key
-            if (e.ctrlKey || e.metaKey) {
-                // Allow select all (Ctrl+A) and copy (Ctrl+C) in text inputs
-                if (e.target.matches('input, textarea')) {
-                    if (e.key === 'a' || e.key === 'c' || e.key === 'x' || e.key === 'v') {
-                        return; // Do not prevent default
-                    }
-                }
-                e.preventDefault();
-            }
-        });
-        
-        // --- App Functionality ---
+        // --- App State & Elements ---
         const pages = document.querySelectorAll('.page');
         const navItems = document.querySelectorAll('.nav-item');
+        const overlay = document.getElementById('workout-overlay');
+        const workoutTitle = document.getElementById('workout-title');
+        const workoutDisplay = document.getElementById('workout-display');
+        const workoutBtn = document.getElementById('workout-action-btn');
 
+        let workoutInterval = null;
+        let secondsElapsed = 0;
+        let currentSet = 1;
+        const totalSets = 3;
+
+        // --- App Navigation ---
         function showPage(pageId) {
-            pages.forEach(page => page.classList.remove('active'));
-            const activePage = document.getElementById(pageId);
-            if (activePage) activePage.classList.add('active');
-
+            pages.forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId)?.classList.add('active');
             navItems.forEach(item => {
                 item.classList.remove('active');
-                if (item.getAttribute('onclick').includes(`'${pageId}'`)) {
-                    item.classList.add('active');
-                }
+                if (item.getAttribute('onclick').includes(`'${pageId}'`)) item.classList.add('active');
             });
             window.scrollTo(0, 0);
         }
 
-        document.addEventListener('DOMContentLoaded', () => showPage('home'));
-    </script>
+        // --- Charting Logic ---
+        function renderChart(data, title, unit) {
+            const chartBody = document.getElementById('chart-body');
+            document.getElementById('chart-title').textContent = title;
+            chartBody.innerHTML = '';
+            const maxVal = Math.max(...data, 1);
+            data.forEach(value => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = `${(value / maxVal) * 95}%`;
+                bar.innerHTML = `<span class="tooltip">${value.toLocaleString()} ${unit}</span>`;
+                chartBody.appendChild(bar);
+            });
+        }
+        function showChartFor(metric) {
+            const gen = (c, min, max) => Array.from({length: c}, () => Math.floor(Math.random()*(max-min+1))+min);
+            const metrics = {
+                steps: { data: gen(7, 3000, 12000), title: 'Weekly Steps', unit: 'steps' },
+                calories: { data: gen(7, 150, 500), title: 'Calories Burned', unit: 'kcal' },
+                active: { data: gen(7, 20, 90), title: 'Active Minutes', unit: 'min' },
+                bpm: { data: gen(7, 60, 85), title: 'Resting Heart Rate', unit: 'BPM' }
+            };
+            const { data, title, unit } = metrics[metric];
+            renderChart(data, title, unit);
+            showPage('charts');
+        }
 
+        // --- Workout Overlay Logic ---
+        function showWorkoutOverlay() { overlay.classList.add('visible'); }
+        function hideWorkoutOverlay() {
+            overlay.classList.remove('visible');
+            clearInterval(workoutInterval);
+            workoutInterval = null;
+            secondsElapsed = 0;
+            currentSet = 1;
+        }
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        function startTimerWorkout() {
+            workoutTitle.textContent = 'Workout: For Time';
+            workoutBtn.textContent = 'Finish Workout';
+            workoutBtn.onclick = hideWorkoutOverlay;
+            
+            showWorkoutOverlay();
+            workoutInterval = setInterval(() => {
+                secondsElapsed++;
+                workoutDisplay.innerHTML = formatTime(secondsElapsed);
+            }, 1000);
+            workoutDisplay.innerHTML = formatTime(secondsElapsed);
+        }
+
+        function startRepsWorkout() {
+            workoutTitle.textContent = 'Workout: For Reps';
+            
+            function updateRepDisplay() {
+                workoutDisplay.innerHTML = `Set ${currentSet}<span class="unit">/ ${totalSets}</span><span class="subtext">10 Reps</span>`;
+                workoutBtn.textContent = currentSet < totalSets ? 'Next Set' : 'Finish Workout';
+            }
+
+            workoutBtn.onclick = () => {
+                if (currentSet < totalSets) {
+                    currentSet++;
+                    updateRepDisplay();
+                } else {
+                    hideWorkoutOverlay();
+                }
+            };
+            updateRepDisplay();
+            showWorkoutOverlay();
+        }
+
+        function startDistanceWorkout() {
+            workoutTitle.textContent = 'Workout: For Distance';
+            workoutBtn.textContent = 'Finish Workout';
+            workoutBtn.onclick = hideWorkoutOverlay;
+
+            showWorkoutOverlay();
+            workoutInterval = setInterval(() => {
+                secondsElapsed++;
+                // Simulate distance based on an average 5 min/km pace (300 seconds/km)
+                const distance = (secondsElapsed / 300).toFixed(2);
+                workoutDisplay.innerHTML = `${distance}<span class="unit">km</span><span class="subtext">${formatTime(secondsElapsed)}</span>`;
+            }, 1000);
+            workoutDisplay.innerHTML = `0.00<span class="unit">km</span><span class="subtext">00:00</span>`;
+        }
+
+        // --- App Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('home');
+            showChartFor('steps'); // Pre-render default chart
+            showPage('home'); // Go back to home
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FitTrack</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --secondary-color: #4cd964;
+            --background-color: #f0f2f5;
+            --surface-color: #ffffff;
+            --text-color: #1c1c1e;
+            --text-secondary-color: #8a8a8e;
+            --border-color: #e5e5ea;
+        }
+
+        /* Basic Reset & Font */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overscroll-behavior-y: contain;
+            overflow-x: hidden;
+        }
+
+        /* --- WebView Restrictions --- */
+        * {
+            box-sizing: border-box;
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none; user-drag: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Main Layout */
+        main { padding: 20px 15px 100px 15px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header h1 { font-size: 28px; font-weight: 700; margin: 0; }
+        .profile-pic { width: 40px; height: 40px; background-color: var(--border-color); border-radius: 50%; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a8a8e'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e"); background-size: 24px; background-position: center; background-repeat: no-repeat; }
+
+        /* Reusable Components */
+        .card { background-color: var(--surface-color); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .btn { display: block; width: 100%; padding: 15px; border: none; background-color: var(--primary-color); color: white; border-radius: 12px; font-size: 17px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 20px; }
+        h2 { font-size: 22px; margin-top: 0; margin-bottom: 16px; }
+
+        /* Home Page */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-card { background-color: var(--surface-color); border-radius: 16px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .stat-card:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card .icon { font-size: 28px; margin-bottom: 8px; }
+        .stat-card .value { font-size: 24px; font-weight: 600; color: var(--primary-color); }
+        .stat-card .label { font-size: 14px; color: var(--text-secondary-color); }
+
+        /* Charts Page */
+        .chart-container { width: 100%; height: 250px; padding: 20px; display: flex; justify-content: space-around; align-items: flex-end; border-bottom: 1px solid var(--border-color); }
+        .chart-bar { width: 10%; background-color: var(--primary-color); border-radius: 5px 5px 0 0; position: relative; animation: barRaise 0.8s ease-out; }
+        .chart-bar .tooltip { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; opacity: 0; transition: opacity 0.2s; white-space: nowrap; pointer-events: none; }
+        .chart-bar:hover .tooltip { opacity: 1; }
+        .chart-labels { display: flex; justify-content: space-around; padding: 10px 20px 0 20px; font-size: 12px; color: var(--text-secondary-color); }
+        @keyframes barRaise { from { height: 0; } to { /* height is set inline */ } }
+
+        /* Achievements Page */
+        .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; text-align: center; }
+        .achievement { opacity: 0.5; } .achievement.unlocked { opacity: 1; }
+        .achievement-icon { width: 80px; height: 80px; border-radius: 50%; background-color: var(--border-color); margin: 0 auto 10px auto; display: flex; align-items: center; justify-content: center; }
+        .achievement.unlocked .achievement-icon { background-color: #ffd700; }
+        .achievement-icon svg { width: 40px; height: 40px; fill: var(--text-secondary-color); }
+        .achievement.unlocked .achievement-icon svg { fill: #fff; }
+        .achievement-title { font-size: 14px; font-weight: 500; }
+
+        /* Chat Page */
+        .chat-window { min-height: calc(100vh - 250px); display: flex; flex-direction: column; }
+        .chat-messages { flex-grow: 1; padding: 10px; }
+        .message { display: flex; margin-bottom: 15px; max-width: 80%; animation: fadeIn 0.3s; }
+        .message-bubble { padding: 10px 15px; border-radius: 18px; font-size: 16px; line-height: 1.4; }
+        .received { align-self: flex-start; }
+        .received .message-bubble { background-color: var(--surface-color); border-bottom-left-radius: 4px; }
+        .sent { align-self: flex-end; margin-left: auto; }
+        .sent .message-bubble { background-color: var(--primary-color); color: white; border-bottom-right-radius: 4px; }
+        .quick-reply-container { padding: 0 10px 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; }
+        .quick-reply-btn { background-color: var(--surface-color); border: 1px solid var(--primary-color); color: var(--primary-color); padding: 8px 16px; border-radius: 20px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+        .quick-reply-btn:active { background-color: #eaf5ff; }
+        .chat-input-area { display: flex; padding: 10px; background: var(--surface-color); border-top: 1px solid var(--border-color); }
+        .chat-input { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 20px; padding: 10px 15px; font-size: 16px; -webkit-user-select: text; user-select: text; }
+        .send-btn { background: none; border: none; padding: 0 10px; cursor: pointer; }
+        .send-btn svg { width: 24px; height: 24px; fill: var(--primary-color); }
+        
+        /* --- Workout Overlay --- */
+        #workout-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #workout-overlay.visible { opacity: 1; visibility: visible; }
+        .workout-modal { text-align: center; padding: 20px; }
+        #workout-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: rgba(255,255,255,0.8); }
+        #workout-display { font-size: 5rem; font-weight: 700; margin-bottom: 30px; font-variant-numeric: tabular-nums; }
+        #workout-display .unit { font-size: 1.5rem; opacity: 0.7; margin-left: 10px; }
+        #workout-display .subtext { font-size: 1.2rem; display: block; opacity: 0.7; margin-top: 10px; }
+        .workout-modal .btn { background-color: #e74c3c; margin-top: 30px; }
+
+        /* Bottom Navigation */
+        nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: space-around; border-top: 1px solid var(--border-color); padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-secondary-color); cursor: pointer; transition: color 0.2s; }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item svg { width: 24px; height: 24px; margin-bottom: 3px; }
+        .nav-item span { font-size: 11px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <main>
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="header"><h1>Dashboard</h1><div class="profile-pic"></div></div>
+            <div class="card">
+                <h2>Today's Summary</h2>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="showChartFor('steps')"><div class="icon">👟</div><div class="value">8,450</div><div class="label">Steps</div></div>
+                    <div class="stat-card" onclick="showChartFor('calories')"><div class="icon">🔥</div><div class="value">310</div><div class="label">Calories</div></div>
+                    <div class="stat-card" onclick="showChartFor('active')"><div class="icon">⚡️</div><div class="value">45</div><div class="label">Active Mins</div></div>
+                    <div class="stat-card" onclick="showChartFor('bpm')"><div class="icon">❤️</div><div class="value">72</div><div class="label">BPM</div></div>
+                </div>
+            </div>
+             <div class="card">
+                <h2>Start a Workout</h2>
+                <p style="text-align:center; color: var(--text-secondary-color);">Ready to get moving? Ask the AI Coach for a personalized session.</p>
+                <button class="btn" onclick="showPage('chat')">Ask AI Coach</button>
+            </div>
+        </div>
+
+        <!-- Charts Page -->
+        <div id="charts" class="page">
+            <div class="header"><h1>Progress</h1></div>
+            <div class="card"><h2 id="chart-title">Weekly Steps</h2><div id="chart-body" class="chart-container"></div><div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div>
+        </div>
+
+        <!-- Achievements Page -->
+        <div id="achievements" class="page">
+            <div class="header"><h1>Achievements</h1></div>
+            <div class="card">
+                <h2>Your Trophies</h2>
+                <div class="achievements-grid">
+                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 16.17l7.59-7.59L19 10l-9 9z"/></svg></div><div class="achievement-title">First Run</div></div>
+                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></div><div class="achievement-title">10k Steps</div></div>
+                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 2H9v4H7v6h2v2h2v-2h2V6h-2V2zM7 20h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg></div><div class="achievement-title">Perfect Week</div></div>
+                    <div class="achievement"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 9h4v11H4zm6 0h4v11h-4zm6 0h4v11h-4z"/></svg></div><div class="achievement-title">Mountain Top</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Page -->
+        <div id="chat" class="page">
+            <div class="header"><h1>AI Coach</h1></div>
+             <div class="chat-window">
+                 <div class="chat-messages">
+                    <div class="message received"><div class="message-bubble">Hi there! What kind of workout are you in the mood for?</div></div>
+                 </div>
+                 <div class="quick-reply-container">
+                    <button class="quick-reply-btn" onclick="startTimerWorkout()">⏱️ For Time</button>
+                    <button class="quick-reply-btn" onclick="startRepsWorkout()">💪 For Reps</button>
+                    <button class="quick-reply-btn" onclick="startDistanceWorkout()">🏃 For Distance</button>
+                 </div>
+             </div>
+             <div class="chat-input-area">
+                <input type="text" class="chat-input" placeholder="Ask something else..."><button class="send-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+            </div>
+        </div>
+    </main>
+
+    <nav>
+        <div class="nav-item active" onclick="showPage('home')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="showPage('charts')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg><span>Charts</span></div>
+        <div class="nav-item" onclick="showPage('achievements')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Goals</span></div>
+        <div class="nav-item" onclick="showPage('chat')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><span>Coach</span></div>
+    </nav>
+
+    <!-- Workout Overlay -->
+    <div id="workout-overlay">
+        <div class="workout-modal">
+            <h2 id="workout-title"></h2>
+            <div id="workout-display"></div>
+            <button id="workout-action-btn" class="btn">Finish Workout</button>
+        </div>
+    </div>
+
+    <script>
+        // --- WebView Restrictions ---
+        window.addEventListener('contextmenu', e => e.preventDefault(), false);
+        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (!e.target.matches('input, textarea')) e.preventDefault(); } });
+        
+        // --- App State & Elements ---
+        const pages = document.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item');
+        const overlay = document.getElementById('workout-overlay');
+        const workoutTitle = document.getElementById('workout-title');
+        const workoutDisplay = document.getElementById('workout-display');
+        const workoutBtn = document.getElementById('workout-action-btn');
+
+        let workoutInterval = null;
+        let secondsElapsed = 0;
+        let currentSet = 1;
+        const totalSets = 3;
+
+        // --- App Navigation ---
+        function showPage(pageId) {
+            pages.forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId)?.classList.add('active');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('onclick').includes(`'${pageId}'`)) item.classList.add('active');
+            });
+            window.scrollTo(0, 0);
+        }
+
+        // --- Charting Logic ---
+        function renderChart(data, title, unit) {
+            const chartBody = document.getElementById('chart-body');
+            document.getElementById('chart-title').textContent = title;
+            chartBody.innerHTML = '';
+            const maxVal = Math.max(...data, 1);
+            data.forEach(value => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = `${(value / maxVal) * 95}%`;
+                bar.innerHTML = `<span class="tooltip">${value.toLocaleString()} ${unit}</span>`;
+                chartBody.appendChild(bar);
+            });
+        }
+        function showChartFor(metric) {
+            const gen = (c, min, max) => Array.from({length: c}, () => Math.floor(Math.random()*(max-min+1))+min);
+            const metrics = {
+                steps: { data: gen(7, 3000, 12000), title: 'Weekly Steps', unit: 'steps' },
+                calories: { data: gen(7, 150, 500), title: 'Calories Burned', unit: 'kcal' },
+                active: { data: gen(7, 20, 90), title: 'Active Minutes', unit: 'min' },
+                bpm: { data: gen(7, 60, 85), title: 'Resting Heart Rate', unit: 'BPM' }
+            };
+            const { data, title, unit } = metrics[metric];
+            renderChart(data, title, unit);
+            showPage('charts');
+        }
+
+        // --- Workout Overlay Logic ---
+        function showWorkoutOverlay() { overlay.classList.add('visible'); }
+        function hideWorkoutOverlay() {
+            overlay.classList.remove('visible');
+            clearInterval(workoutInterval);
+            workoutInterval = null;
+            secondsElapsed = 0;
+            currentSet = 1;
+        }
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        function startTimerWorkout() {
+            workoutTitle.textContent = 'Workout: For Time';
+            workoutBtn.textContent = 'Finish Workout';
+            workoutBtn.onclick = hideWorkoutOverlay;
+            
+            showWorkoutOverlay();
+            workoutInterval = setInterval(() => {
+                secondsElapsed++;
+                workoutDisplay.innerHTML = formatTime(secondsElapsed);
+            }, 1000);
+            workoutDisplay.innerHTML = formatTime(secondsElapsed);
+        }
+
+        function startRepsWorkout() {
+            workoutTitle.textContent = 'Workout: For Reps';
+            
+            function updateRepDisplay() {
+                workoutDisplay.innerHTML = `Set ${currentSet}<span class="unit">/ ${totalSets}</span><span class="subtext">10 Reps</span>`;
+                workoutBtn.textContent = currentSet < totalSets ? 'Next Set' : 'Finish Workout';
+            }
+
+            workoutBtn.onclick = () => {
+                if (currentSet < totalSets) {
+                    currentSet++;
+                    updateRepDisplay();
+                } else {
+                    hideWorkoutOverlay();
+                }
+            };
+            updateRepDisplay();
+            showWorkoutOverlay();
+        }
+
+        function startDistanceWorkout() {
+            workoutTitle.textContent = 'Workout: For Distance';
+            workoutBtn.textContent = 'Finish Workout';
+            workoutBtn.onclick = hideWorkoutOverlay;
+
+            showWorkoutOverlay();
+            workoutInterval = setInterval(() => {
+                secondsElapsed++;
+                // Simulate distance based on an average 5 min/km pace (300 seconds/km)
+                const distance = (secondsElapsed / 300).toFixed(2);
+                workoutDisplay.innerHTML = `${distance}<span class="unit">km</span><span class="subtext">${formatTime(secondsElapsed)}</span>`;
+            }, 1000);
+            workoutDisplay.innerHTML = `0.00<span class="unit">km</span><span class="subtext">00:00</span>`;
+        }
+
+        // --- App Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('home');
+            showChartFor('steps'); // Pre-render default chart
+            showPage('home'); // Go back to home
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FitTrack</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --secondary-color: #4cd964;
+            --background-color: #f0f2f5;
+            --surface-color: #ffffff;
+            --text-color: #1c1c1e;
+            --text-secondary-color: #8a8a8e;
+            --border-color: #e5e5ea;
+        }
+
+        /* Basic Reset & Font */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overscroll-behavior-y: contain;
+            overflow-x: hidden;
+        }
+
+        /* --- WebView Restrictions --- */
+        * {
+            box-sizing: border-box;
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none; user-drag: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Main Layout */
+        main { padding: 20px 15px 100px 15px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header h1 { font-size: 28px; font-weight: 700; margin: 0; }
+        .profile-pic { width: 40px; height: 40px; background-color: var(--border-color); border-radius: 50%; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a8a8e'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e"); background-size: 24px; background-position: center; background-repeat: no-repeat; }
+
+        /* Reusable Components */
+        .card { background-color: var(--surface-color); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .btn { display: block; width: 100%; padding: 15px; border: none; background-color: var(--primary-color); color: white; border-radius: 12px; font-size: 17px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 20px; }
+        h2 { font-size: 22px; margin-top: 0; margin-bottom: 16px; }
+
+        /* Home Page */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-card { background-color: var(--surface-color); border-radius: 16px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .stat-card:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card .icon { font-size: 28px; margin-bottom: 8px; }
+        .stat-card .value { font-size: 24px; font-weight: 600; color: var(--primary-color); }
+        .stat-card .label { font-size: 14px; color: var(--text-secondary-color); }
+
+        /* Charts Page */
+        .chart-container { width: 100%; height: 250px; padding: 20px; display: flex; justify-content: space-around; align-items: flex-end; border-bottom: 1px solid var(--border-color); }
+        .chart-bar { width: 10%; background-color: var(--primary-color); border-radius: 5px 5px 0 0; position: relative; animation: barRaise 0.8s ease-out; }
+        .chart-bar .tooltip { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; opacity: 0; transition: opacity 0.2s; white-space: nowrap; pointer-events: none; }
+        .chart-bar:hover .tooltip { opacity: 1; }
+        .chart-labels { display: flex; justify-content: space-around; padding: 10px 20px 0 20px; font-size: 12px; color: var(--text-secondary-color); }
+        @keyframes barRaise { from { height: 0; } to { /* height is set inline */ } }
+
+        /* Achievements Page */
+        .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; text-align: center; }
+        .achievement { opacity: 0.5; } .achievement.unlocked { opacity: 1; }
+        .achievement-icon { width: 80px; height: 80px; border-radius: 50%; background-color: var(--border-color); margin: 0 auto 10px auto; display: flex; align-items: center; justify-content: center; }
+        .achievement.unlocked .achievement-icon { background-color: #ffd700; }
+        .achievement-icon svg { width: 40px; height: 40px; fill: var(--text-secondary-color); }
+        .achievement.unlocked .achievement-icon svg { fill: #fff; }
+        .achievement-title { font-size: 14px; font-weight: 500; }
+
+        /* Chat Page */
+        .chat-window { min-height: calc(100vh - 250px); display: flex; flex-direction: column; }
+        .chat-messages { flex-grow: 1; padding: 10px; }
+        .message { display: flex; margin-bottom: 15px; max-width: 80%; animation: fadeIn 0.3s; }
+        .message-bubble { padding: 10px 15px; border-radius: 18px; font-size: 16px; line-height: 1.4; }
+        .received { align-self: flex-start; }
+        .received .message-bubble { background-color: var(--surface-color); border-bottom-left-radius: 4px; }
+        .sent { align-self: flex-end; margin-left: auto; }
+        .sent .message-bubble { background-color: var(--primary-color); color: white; border-bottom-right-radius: 4px; }
+        .quick-reply-container { padding: 0 10px 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; }
+        .quick-reply-btn { background-color: var(--surface-color); border: 1px solid var(--primary-color); color: var(--primary-color); padding: 8px 16px; border-radius: 20px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+        .quick-reply-btn:active { background-color: #eaf5ff; }
+        .chat-input-area { display: flex; padding: 10px; background: var(--surface-color); border-top: 1px solid var(--border-color); }
+        .chat-input { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 20px; padding: 10px 15px; font-size: 16px; -webkit-user-select: text; user-select: text; }
+        .send-btn { background: none; border: none; padding: 0 10px; cursor: pointer; }
+        .send-btn svg { width: 24px; height: 24px; fill: var(--primary-color); }
+        
+        /* --- Workout Overlay --- */
+        #workout-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #workout-overlay.visible { opacity: 1; visibility: visible; }
+        .workout-modal { text-align: center; padding: 20px; }
+        #workout-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: rgba(255,255,255,0.8); }
+        #workout-display { font-size: 5rem; font-weight: 700; margin-bottom: 30px; font-variant-numeric: tabular-nums; }
+        #workout-display .unit { font-size: 1.5rem; opacity: 0.7; margin-left: 10px; }
+        #workout-display .subtext { font-size: 1.2rem; display: block; opacity: 0.7; margin-top: 10px; }
+        .workout-modal .btn { background-color: #e74c3c; margin-top: 30px; }
+
+        /* Bottom Navigation */
+        nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: space-around; border-top: 1px solid var(--border-color); padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-secondary-color); cursor: pointer; transition: color 0.2s; }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item svg { width: 24px; height: 24px; margin-bottom: 3px; }
+        .nav-item span { font-size: 11px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <main>
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="header"><h1>Dashboard</h1><div class="profile-pic"></div></div>
+            <div class="card">
+                <h2>Today's Summary</h2>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="showChartFor('steps')"><div class="icon">👟</div><div class="value">8,450</div><div class="label">Steps</div></div>
+                    <div class="stat-card" onclick="showChartFor('calories')"><div class="icon">🔥</div><div class="value">310</div><div class="label">Calories</div></div>
+                    <div class="stat-card" onclick="showChartFor('active')"><div class="icon">⚡️</div><div class="value">45</div><div class="label">Active Mins</div></div>
+                    <div class="stat-card" onclick="showChartFor('bpm')"><div class="icon">❤️</div><div class="value">72</div><div class="label">BPM</div></div>
+                </div>
+            </div>
+             <div class="card">
+                <h2>Start a Workout</h2>
+                <p style="text-align:center; color: var(--text-secondary-color);">Ready to get moving? Ask the AI Coach for a personalized session.</p>
+                <button class="btn" onclick="showPage('chat')">Ask AI Coach</button>
+            </div>
+        </div>
+
+        <!-- Charts Page -->
+        <div id="charts" class="page">
+            <div class="header"><h1>Progress</h1></div>
+            <div class="card"><h2 id="chart-title">Weekly Steps</h2><div id="chart-body" class="chart-container"></div><div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div>
+        </div>
+
+        <!-- Achievements Page -->
+        <div id="achievements" class="page">
+            <div class="header"><h1>Achievements</h1></div>
+            <div class="card">
+                <h2>Your Trophies</h2>
+                <div class="achievements-grid">
+                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 16.17l7.59-7.59L19 10l-9 9z"/></svg></div><div class="achievement-title">First Run</div></div>
+                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></div><div class="achievement-title">10k Steps</div></div>
+                    <div class="achievement unlocked"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 2H9v4H7v6h2v2h2v-2h2V6h-2V2zM7 20h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg></div><div class="achievement-title">Perfect Week</div></div>
+                    <div class="achievement"><div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 9h4v11H4zm6 0h4v11h-4zm6 0h4v11h-4z"/></svg></div><div class="achievement-title">Mountain Top</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Page -->
+        <div id="chat" class="page">
+            <div class="header"><h1>AI Coach</h1></div>
+             <div class="chat-window">
+                 <div class="chat-messages">
+                    <div class="message received"><div class="message-bubble">Hi there! What kind of workout are you in the mood for?</div></div>
+                 </div>
+                 <div class="quick-reply-container">
+                    <button class="quick-reply-btn" onclick="startTimerWorkout()">⏱️ For Time</button>
+                    <button class="quick-reply-btn" onclick="startRepsWorkout()">💪 For Reps</button>
+                    <button class="quick-reply-btn" onclick="startDistanceWorkout()">🏃 For Distance</button>
+                 </div>
+             </div>
+             <div class="chat-input-area">
+                <input type="text" class="chat-input" placeholder="Ask something else..."><button class="send-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+            </div>
+        </div>
+    </main>
+
+    <nav>
+        <div class="nav-item active" onclick="showPage('home')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></div>
+        <div class="nav-item" onclick="showPage('charts')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg><span>Charts</span></div>
+        <div class="nav-item" onclick="showPage('achievements')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Goals</span></div>
+        <div class="nav-item" onclick="showPage('chat')"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><span>Coach</span></div>
+    </nav>
+
+    <!-- Workout Overlay -->
+    <div id="workout-overlay">
+        <div class="workout-modal">
+            <h2 id="workout-title"></h2>
+            <div id="workout-display"></div>
+            <button id="workout-action-btn" class="btn">Finish Workout</button>
+        </div>
+    </div>
+
+    <script>
+        // --- WebView Restrictions ---
+        window.addEventListener('contextmenu', e => e.preventDefault(), false);
+        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (!e.target.matches('input, textarea')) e.preventDefault(); } });
+        
+        // --- App State & Elements ---
+        const pages = document.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item');
+        const overlay = document.getElementById('workout-overlay');
+        const workoutTitle = document.getElementById('workout-title');
+        const workoutDisplay = document.getElementById('workout-display');
+        const workoutBtn = document.getElementById('workout-action-btn');
+
+        let workoutInterval = null;
+        let secondsElapsed = 0;
+        let currentSet = 1;
+        const totalSets = 3;
+
+        // --- App Navigation ---
+        function showPage(pageId) {
+            pages.forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId)?.classList.add('active');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('onclick').includes(`'${pageId}'`)) item.classList.add('active');
+            });
+            window.scrollTo(0, 0);
+        }
+
+        // --- Charting Logic ---
+        function renderChart(data, title, unit) {
+            const chartBody = document.getElementById('chart-body');
+            document.getElementById('chart-title').textContent = title;
+            chartBody.innerHTML = '';
+            const maxVal = Math.max(...data, 1);
+            data.forEach(value => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = `${(value / maxVal) * 95}%`;
+                bar.innerHTML = `<span class="tooltip">${value.toLocaleString()} ${unit}</span>`;
+                chartBody.appendChild(bar);
+            });
+        }
+        function showChartFor(metric) {
+            const gen = (c, min, max) => Array.from({length: c}, () => Math.floor(Math.random()*(max-min+1))+min);
+            const metrics = {
+                steps: { data: gen(7, 3000, 12000), title: 'Weekly Steps', unit: 'steps' },
+                calories: { data: gen(7, 150, 500), title: 'Calories Burned', unit: 'kcal' },
+                active: { data: gen(7, 20, 90), title: 'Active Minutes', unit: 'min' },
+                bpm: { data: gen(7, 60, 85), title: 'Resting Heart Rate', unit: 'BPM' }
+            };
+            const { data, title, unit } = metrics[metric];
+            renderChart(data, title, unit);
+            showPage('charts');
+        }
+
+        // --- Workout Overlay Logic ---
+        function showWorkoutOverlay() { overlay.classList.add('visible'); }
+        function hideWorkoutOverlay() {
+            overlay.classList.remove('visible');
+            clearInterval(workoutInterval);
+            workoutInterval = null;
+            secondsElapsed = 0;
+            currentSet = 1;
+        }
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        function startTimerWorkout() {
+            workoutTitle.textContent = 'Workout: For Time';
+            workoutBtn.textContent = 'Finish Workout';
+            workoutBtn.onclick = hideWorkoutOverlay;
+            
+            showWorkoutOverlay();
+            workoutInterval = setInterval(() => {
+                secondsElapsed++;
+                workoutDisplay.innerHTML = formatTime(secondsElapsed);
+            }, 1000);
+            workoutDisplay.innerHTML = formatTime(secondsElapsed);
+        }
+
+        function startRepsWorkout() {
+            workoutTitle.textContent = 'Workout: For Reps';
+            
+            function updateRepDisplay() {
+                workoutDisplay.innerHTML = `Set ${currentSet}<span class="unit">/ ${totalSets}</span><span class="subtext">10 Reps</span>`;
+                workoutBtn.textContent = currentSet < totalSets ? 'Next Set' : 'Finish Workout';
+            }
+
+            workoutBtn.onclick = () => {
+                if (currentSet < totalSets) {
+                    currentSet++;
+                    updateRepDisplay();
+                } else {
+                    hideWorkoutOverlay();
+                }
+            };
+            updateRepDisplay();
+            showWorkoutOverlay();
+        }
+
+        function startDistanceWorkout() {
+            workoutTitle.textContent = 'Workout: For Distance';
+            workoutBtn.textContent = 'Finish Workout';
+            workoutBtn.onclick = hideWorkoutOverlay;
+
+            showWorkoutOverlay();
+            workoutInterval = setInterval(() => {
+                secondsElapsed++;
+                // Simulate distance based on an average 5 min/km pace (300 seconds/km)
+                const distance = (secondsElapsed / 300).toFixed(2);
+                workoutDisplay.innerHTML = `${distance}<span class="unit">km</span><span class="subtext">${formatTime(secondsElapsed)}</span>`;
+            }, 1000);
+            workoutDisplay.innerHTML = `0.00<span class="unit">km</span><span class="subtext">00:00</span>`;
+        }
+
+        // --- App Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('home');
+            showChartFor('steps'); // Pre-render default chart
+            showPage('home'); // Go back to home
+        });
+    </script>
 </body>
 </html>
