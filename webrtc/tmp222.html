@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mini WebRTC Call</title>
+</head>
+<body>
+  <h2>Мини звонок</h2>
+  <video id="local" autoplay muted></video>
+  <video id="remote" autoplay></video>
+  <button id="callBtn">Позвонить</button>
+
+<script>
+const localVideo = document.getElementById('local');
+const remoteVideo = document.getElementById('remote');
+const callBtn = document.getElementById('callBtn');
+
+let pc;
+let localStream;
+const SIGNAL_URL = 'https://cf699b4f7687ed.lhr.life/signal'; // замените на публичный URL, если через интернет
+
+async function init() {
+  // Захват камеры и микрофона
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  localVideo.srcObject = localStream;
+
+  pc = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  });
+
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.ontrack = e => remoteVideo.srcObject = e.streams[0];
+
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      fetch(SIGNAL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'candidate', data: e.candidate })
+      });
+    }
+  };
+
+  // Опрос сигналинга каждые 1 сек
+  setInterval(async () => {
+    const res = await fetch(SIGNAL_URL);
+    const data = await res.json();
+
+    if (data.offer && !pc.remoteDescription) {
+      await pc.setRemoteDescription(data.offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await fetch(SIGNAL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'answer', data: answer })
+      });
+    }
+
+    if (data.answer && !pc.remoteDescription) {
+      await pc.setRemoteDescription(data.answer);
+    }
+
+    if (data.candidates) {
+      for (const c of data.candidates) {
+        try { await pc.addIceCandidate(c); } catch(e) {}
+      }
+      await fetch('https://cf699b4f7687ed.lhr.life/clear', { method: 'POST' });
+    }
+  }, 1000);
+}
+
+callBtn.onclick = async () => {
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await fetch(SIGNAL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'offer', data: offer })
+  });
+};
+
+init();
+</script>
+</body>
+</html>
