@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerJS Video Call</title>
+    <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        #my-peer-id, #status {
+            font-weight: bold;
+            color: #007bff;
+            word-break: break-all;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button#call-button {
+            background-color: #007bff;
+        }
+        button#hangup-button {
+            background-color: #dc3545;
+        }
+        video {
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 15px;
+            background-color: black;
+        }
+        #videos {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .video-wrapper {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PeerJS Video Call</h1>
+        <p>Your Peer ID: <span id="my-peer-id"></span></p>
+        <p>Status: <span id="status">Connecting...</span></p>
+
+        <hr>
+
+        <h2>Make a Call</h2>
+        <input type="text" id="friend-peer-id" placeholder="Friend's Peer ID">
+        <button id="connect-button">Connect (Data)</button>
+        <button id="call-button">Call Friend</button>
+        <button id="hangup-button">Hang Up</button>
+
+        <hr>
+
+        <h2>Chat</h2>
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send-message-button">Send</button>
+        <div id="messages"></div>
+    </div>
+
+    <div class="container">
+        <h2>Video Streams</h2>
+        <div id="videos">
+            <div class="video-wrapper">
+                <h3>My Video</h3>
+                <video id="local-video" autoplay muted></video>
+            </div>
+            <div class="video-wrapper">
+                <h3>Friend's Video</h3>
+                <video id="remote-video" autoplay></video>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const myPeerIdSpan = document.getElementById('my-peer-id');
+        const statusSpan = document.getElementById('status');
+        const friendPeerIdInput = document.getElementById('friend-peer-id');
+        const connectButton = document.getElementById('connect-button');
+        const callButton = document.getElementById('call-button');
+        const hangupButton = document.getElementById('hangup-button');
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        const messageInput = document.getElementById('message-input');
+        const sendMessageButton = document.getElementById('send-message-button');
+        const messagesDiv = document.getElementById('messages');
+
+        let peer = null;
+        let currentCall = null;
+        let dataConnection = null;
+        let localStream = null;
+
+        // Initialize PeerJS
+        peer = new Peer({
+            host: '0.peerjs.com', // Use the default PeerServer Cloud Service [6]
+            port: 443,
+            path: '/'
+        });
+
+        peer.on('open', function(id) {
+            myPeerIdSpan.textContent = id;
+            statusSpan.textContent = 'Ready to connect or call!';
+            console.log('My peer ID is: ' + id); [3]
+        });
+
+        peer.on('error', function(err) {
+            console.error('PeerJS error:', err);
+            statusSpan.textContent = 'Error: ' + err.message;
+        });
+
+        // Handle incoming data connections
+        peer.on('connection', function(conn) {
+            dataConnection = conn;
+            statusSpan.textContent = `Connected to ${conn.peer} (Data)`;
+            console.log('Incoming data connection from:', conn.peer); [3]
+
+            dataConnection.on('data', function(data) {
+                console.log('Received data:', data); [3]
+                displayMessage('Friend: ' + data);
+            });
+
+            dataConnection.on('close', function() {
+                statusSpan.textContent = 'Data connection closed.';
+                console.log('Data connection closed.');
+            });
+        });
+
+        // Handle incoming calls
+        peer.on('call', function(call) {
+            statusSpan.textContent = `Incoming call from ${call.peer}!`;
+            console.log('Incoming call from:', call.peer); [3]
+
+            getUserMedia({ video: true, audio: true }, function(stream) {
+                localStream = stream;
+                localVideo.srcObject = stream;
+                call.answer(stream); // Answer the call with an A/V stream. [3]
+                currentCall = call;
+
+                call.on('stream', function(remoteStream) {
+                    remoteVideo.srcObject = remoteStream; // Show stream in some video/canvas element. [3]
+                    statusSpan.textContent = `Connected with ${call.peer}`;
+                });
+
+                call.on('close', function() {
+                    statusSpan.textContent = 'Call ended.';
+                    console.log('Call ended.');
+                    stopLocalStream();
+                    remoteVideo.srcObject = null;
+                });
+
+                call.on('error', function(err) {
+                    console.error('Call error:', err);
+                    statusSpan.textContent = 'Call error: ' + err.message;
+                    stopLocalStream();
+                    remoteVideo.srcObject = null;
+                });
+            }, function(err) {
+                console.error('Failed to get local stream', err);
+                statusSpan.textContent = 'Failed to get local stream: ' + err.message;
+            });
+        });
+
+        // Function to connect to a peer for data
+        connectButton.addEventListener('click', function() {
+            const friendId = friendPeerIdInput.value;
+            if (friendId) {
+                dataConnection = peer.connect(friendId);
+                dataConnection.on('open', function() {
+                    statusSpan.textContent = `Connected to ${friendId} (Data)`;
+                    console.log('Data connection established with:', friendId); [3]
+                });
+
+                dataConnection.on('data', function(data) {
+                    console.log('Received data:', data);
+                    displayMessage('Friend: ' + data);
+                });
+
+                dataConnection.on('close', function() {
+                    statusSpan.textContent = 'Data connection closed.';
+                    console.log('Data connection closed.');
+                });
+
+                dataConnection.on('error', function(err) {
+                    console.error('Data connection error:', err);
+                    statusSpan.textContent = 'Data connection error: ' + err.message;
+                });
+            } else {
+                alert('Please enter a friend\'s Peer ID.');
+            }
+        });
+
+        // Function to make a video call
+        callButton.addEventListener('click', function() {
+            const friendId = friendPeerIdInput.value;
+            if (friendId) {
+                getUserMedia({ video: true, audio: true }, function(stream) {
+                    localStream = stream;
+                    localVideo.srcObject = stream;
+                    currentCall = peer.call(friendId, stream); [3]
+                    statusSpan.textContent = `Calling ${friendId}...`;
+
+                    currentCall.on('stream', function(remoteStream) {
+                        remoteVideo.srcObject = remoteStream; // Show stream in some video/canvas element. [3]
+                        statusSpan.textContent = `Connected with ${friendId}`;
+                    });
+
+                    currentCall.on('close', function() {
+                        statusSpan.textContent = 'Call ended.';
+                        console.log('Call ended.');
+                        stopLocalStream();
+                        remoteVideo.srcObject = null;
+                    });
+
+                    currentCall.on('error', function(err) {
+                        console.error('Call error:', err);
+                        statusSpan.textContent = 'Call error: ' + err.message;
+                        stopLocalStream();
+                        remoteVideo.srcObject = null;
+                    });
+                }, function(err) {
+                    console.error('Failed to get local stream', err);
+                    statusSpan.textContent = 'Failed to get local stream: ' + err.message;
+                });
+            } else {
+                alert('Please enter a friend\'s Peer ID.');
+            }
+        });
+
+        // Function to hang up the call
+        hangupButton.addEventListener('click', function() {
+            if (currentCall) {
+                currentCall.close();
+                currentCall = null;
+            }
+            if (dataConnection) {
+                dataConnection.close();
+                dataConnection = null;
+            }
+            stopLocalStream();
+            remoteVideo.srcObject = null;
+            statusSpan.textContent = 'Disconnected.';
+        });
+
+        // Function to send a message
+        sendMessageButton.addEventListener('click', function() {
+            const message = messageInput.value;
+            if (dataConnection && dataConnection.open && message) {
+                dataConnection.send(message);
+                displayMessage('You: ' + message);
+                messageInput.value = '';
+            } else if (!dataConnection || !dataConnection.open) {
+                alert('Not connected to a friend for data. Please connect first.');
+            } else if (!message) {
+                alert('Please type a message to send.');
+            }
+        });
+
+        function displayMessage(message) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            messagesDiv.appendChild(p);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to latest message
+        }
+
+        // Helper for cross-browser getUserMedia
+        function getUserMedia(constraints, successCallback, errorCallback) {
+            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia(constraints).then(successCallback).catch(errorCallback);
+            } else if (navigator.getUserMedia) {
+                navigator.getUserMedia(constraints, successCallback, errorCallback);
+            } else {
+                errorCallback(new Error('getUserMedia not supported in this browser.'));
+            }
+        }
+
+        function stopLocalStream() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localVideo.srcObject = null;
+                localStream = null;
+            }
+        }
+    </script>
+</body>
+</html>
