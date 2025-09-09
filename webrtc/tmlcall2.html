@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebRTC Audio Call</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    input, button { margin-bottom: 10px; padding: 8px; }
+    #debug-info {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      height: 150px;
+      overflow-y: scroll;
+      background-color: #f9f9f9;
+      font-size: 0.9em;
+    }
+    #status-message {
+      font-weight: bold;
+      color: blue;
+      margin-top: 10px;
+    }
+    #shareable-link-container {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #e0ffe0;
+      border: 1px solid #aaffaa;
+      word-wrap: break-word; /* Для переноса длинных ссылок */
+    }
+    #shareable-link {
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simple Audio Call</h1>
+  <p>Ваш ID: <input id="peer-id" placeholder="Ваш ID" readonly /></p>
+  <p>ID для звонка: <input id="call-id" placeholder="ID для звонка" /></p>
+  <button id="start-call">Позвонить</button>
+  <button id="end-call" disabled>Завершить звонок</button>
+
+  <div id="shareable-link-container" style="display: none;">
+    <p>Поделитесь этой ссылкой, чтобы начать звонок:</p>
+    <a id="shareable-link" href="#" target="_blank"></a>
+  </div>
+
+  <h3>Локальное аудио (вы себя слышите):</h3>
+  <audio id="local-audio" autoplay muted></audio>
+  <h3>Удаленное аудио (собеседник):</h3>
+  <audio id="remote-audio" autoplay></audio>
+
+  <p id="status-message">Ожидание подключения...</p>
+
+  <h3>Отладочная информация:</h3>
+  <div id="debug-info"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <script>
+    const remoteAudio = document.getElementById('remote-audio');
+    const localAudio = document.getElementById('local-audio');
+    const peerIdInput = document.getElementById('peer-id');
+    const callIdInput = document.getElementById('call-id');
+    const startCallButton = document.getElementById('start-call');
+    const endCallButton = document.getElementById('end-call');
+    const debugInfoDiv = document.getElementById('debug-info');
+    const statusMessage = document.getElementById('status-message');
+    const shareableLinkContainer = document.getElementById('shareable-link-container');
+    const shareableLink = document.getElementById('shareable-link');
+
+    let currentCall = null; // Для отслеживания текущего звонка
+    let localStream = null; // Для хранения локального медиа-потока
+    let myPeerId = null; // Храним наш ID после подключения
+
+    // Функция для логирования отладочной информации
+    function logDebug(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const p = document.createElement('p');
+      p.textContent = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+      debugInfoDiv.appendChild(p);
+      debugInfoDiv.scrollTop = debugInfoDiv.scrollHeight; // Прокрутка вниз
+      console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}`);
+    }
+
+    function updateStatus(message, color = 'blue') {
+      statusMessage.textContent = message;
+      statusMessage.style.color = color;
+    }
+
+    function startCall(targetId) {
+      logDebug(`Попытка звонка на ID: ${targetId}`);
+      updateStatus(`Вызов ${targetId}...`);
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          localStream = stream;
+          localAudio.srcObject = stream; // Воспроизводим локальный поток
+          logDebug('Получен доступ к локальному микрофону.');
+
+          const call = peer.call(targetId, stream);
+          currentCall = call; // Сохраняем текущий звонок
+          endCallButton.disabled = false;
+          startCallButton.disabled = true; // Деактивируем кнопку "Звонок" во время звонка
+
+          call.on('stream', remoteStream => {
+            logDebug('Получен удаленный поток.');
+            remoteAudio.srcObject = remoteStream;
+            updateStatus(`Звонок активен с ${targetId}.`);
+          });
+
+          call.on('close', () => {
+            logDebug('Звонок завершен (удаленная сторона).');
+            updateStatus('Звонок завершен.', 'gray');
+            resetCallState();
+          });
+
+          call.on('error', err => {
+            logDebug(`Ошибка в звонке (исходящий): ${err.message}`, 'error');
+            updateStatus(`Ошибка в звонке: ${err.message}`, 'red');
+            resetCallState();
+          });
+        })
+        .catch(err => {
+          logDebug(`Ошибка доступа к микрофону для исходящего звонка: ${err.name} - ${err.message}`, 'error');
+          updateStatus(`Ошибка: нет доступа к микрофону. ${err.message}`, 'red');
+        });
+    }
+
+    logDebug('Инициализация PeerJS...');
+    const peer = new Peer();
+
+    // Обработчик ошибок PeerJS
+    peer.on('error', err => {
+      logDebug(`Ошибка PeerJS: ${err.type} - ${err.message}`, 'error');
+      updateStatus(`Ошибка PeerJS: ${err.message}`, 'red');
+      startCallButton.disabled = false; // Разблокируем кнопку, чтобы можно было попробовать снова
+    });
+
+    // Показываем свой ID после подключения к серверу PeerJS
+    peer.on('open', id => {
+      myPeerId = id;
+      peerIdInput.value = id;
+      logDebug(`Мой peer ID: ${id}`);
+      updateStatus(`Подключено к серверу PeerJS. Ваш ID: ${id}`);
+      startCallButton.disabled = false;
+
+      // Генерируем и отображаем ссылку
+      const currentUrl = window.location.origin + window.location.pathname;
+      const linkToShare = `${currentUrl}?id=${id}`;
+      shareableLink.href = linkToShare;
+      shareableLink.textContent = linkToShare;
+      shareableLinkContainer.style.display = 'block';
+
+      // Проверяем URL на наличие ID для автоматического звонка
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetIdFromUrl = urlParams.get('id');
+      if (targetIdFromUrl && targetIdFromUrl !== myPeerId) { // Убеждаемся, что не звоним сами себе
+        callIdInput.value = targetIdFromUrl;
+        logDebug(`Автоматический звонок на ID из URL: ${targetIdFromUrl}`);
+        startCall(targetIdFromUrl);
+      }
+    });
+
+    // При входящем звонке
+    peer.on('call', call => {
+      logDebug(`Получен входящий звонок от: ${call.peer}`);
+      updateStatus(`Входящий звонок от: ${call.peer}. Отвечаю...`);
+
+      // Запрашиваем доступ к микрофону
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          localStream = stream;
+          localAudio.srcObject = stream; // Воспроизводим локальный поток
+          logDebug('Получен доступ к локальному микрофону.');
+
+          call.answer(stream); // Отвечаем с микрофоном
+          currentCall = call; // Сохраняем текущий звонок
+          endCallButton.disabled = false;
+          startCallButton.disabled = true; // Деактивируем кнопку "Звонок" во время звонка
+
+          call.on('stream', remoteStream => {
+            logDebug('Получен удаленный поток.');
+            remoteAudio.srcObject = remoteStream;
+            updateStatus(`Звонок активен с ${call.peer}.`);
+          });
+
+          call.on('close', () => {
+            logDebug('Звонок завершен (удаленная сторона).');
+            updateStatus('Звонок завершен.', 'gray');
+            resetCallState();
+          });
+
+          call.on('error', err => {
+            logDebug(`Ошибка в звонке (входящий): ${err.message}`, 'error');
+            updateStatus(`Ошибка в звонке: ${err.message}`, 'red');
+            resetCallState();
+          });
+        })
+        .catch(err => {
+          logDebug(`Ошибка доступа к микрофону для входящего звонка: ${err.name} - ${err.message}`, 'error');
+          updateStatus(`Ошибка: нет доступа к микрофону. ${err.message}`, 'red');
+          // Если не смогли получить микрофон, входящий звонок не сможет состояться полноценно
+          if (currentCall) {
+              currentCall.close(); // Закрываем звонок, так как не можем ответить
+              resetCallState();
+          }
+        });
+    });
+
+    // Нажатие кнопки "Позвонить"
+    startCallButton.onclick = () => {
+      const callId = callIdInput.value;
+      if (!callId) {
+        logDebug('Пожалуйста, введите ID для звонка.', 'warning');
+        updateStatus('Пожалуйста, введите ID для звонка.', 'orange');
+        return;
+      }
+      startCall(callId);
+    };
+
+    // Нажатие кнопки "Завершить звонок"
+    endCallButton.onclick = () => {
+      if (currentCall) {
+        logDebug('Завершение текущего звонка.');
+        currentCall.close();
+        resetCallState();
+        updateStatus('Звонок завершен вручную.', 'gray');
+      }
+    };
+
+    // Функция для сброса состояния звонка
+    function resetCallState() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop()); // Останавливаем треки локального потока
+        localStream = null;
+        localAudio.srcObject = null;
+      }
+      remoteAudio.srcObject = null;
+      currentCall = null;
+      endCallButton.disabled = true;
+      startCallButton.disabled = false;
+      logDebug('Состояние звонка сброшено.');
+    }
+
+    // Инициализация кнопок
+    startCallButton.disabled = true; // Деактивируем кнопку "Звонок" до подключения к PeerJS
+    endCallButton.disabled = true;
+  </script>
+</body>
+</html>
