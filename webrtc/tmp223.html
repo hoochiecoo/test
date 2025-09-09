@@ -7,26 +7,26 @@
   <h2>Мини звонок по комнате</h2>
   <video id="local" autoplay muted></video>
   <video id="remote" autoplay></video>
-  <input id="roomInput" placeholder="Введите комнату" />
+  <input id="signalInput" placeholder="Введите Signal URL (https://...)"/>
+  <input id="roomInput" placeholder="Введите комнату"/>
   <button id="joinBtn">Войти в комнату</button>
   <button id="callBtn">Позвонить</button>
 
 <script>
 const localVideo = document.getElementById('local');
 const remoteVideo = document.getElementById('remote');
+const signalInput = document.getElementById('signalInput');
 const roomInput = document.getElementById('roomInput');
 const joinBtn = document.getElementById('joinBtn');
 const callBtn = document.getElementById('callBtn');
 
 let pc;
 let localStream;
+let SIGNAL_URL = null;
 let ROOM = null;
-let SIGNAL_URL = 'https://0642988e9ad784.lhr.life/signal';
 
-// STUN сервер Google
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-// Подключение камеры и микрофона
 async function initMedia() {
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
@@ -46,7 +46,6 @@ async function initMedia() {
     }
   };
 
-  // Периодический опрос сигналинга
   setInterval(async () => {
     const res = await fetch(`${SIGNAL_URL}?room=${ROOM}`);
     const data = await res.json();
@@ -70,21 +69,21 @@ async function initMedia() {
       for (const c of data.candidates) {
         try { await pc.addIceCandidate(c); } catch(e) {}
       }
-      // Кандидаты не стираем, чтобы поздний участник мог их получить
+      // кандидаты не стираем
     }
   }, 1000);
 }
 
-// Вход в комнату
 joinBtn.onclick = async () => {
+  SIGNAL_URL = signalInput.value.trim();
   ROOM = roomInput.value.trim();
+  if (!SIGNAL_URL) return alert('Введите Signal URL');
   if (!ROOM) return alert('Введите комнату');
   await initMedia();
 };
 
-// Создание звонка (offer)
 callBtn.onclick = async () => {
-  if (!ROOM) return alert('Сначала войдите в комнату');
+  if (!ROOM || !SIGNAL_URL) return alert('Сначала войдите в комнату');
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
