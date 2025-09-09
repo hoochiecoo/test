@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PeerJS P2P Example</title>
+    <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #peer-id-display { font-weight: bold; margin-bottom: 10px; }
+        #connect-form, #message-form, #call-form { margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        #messages, #remote-video-container { border: 1px solid #eee; min-height: 100px; padding: 10px; margin-top: 10px; overflow-y: scroll; background-color: #f9f9f9; }
+        video { width: 320px; height: 240px; background-color: black; margin: 5px; }
+        .message { margin-bottom: 5px; }
+        .local { color: blue; }
+        .remote { color: green; }
+    </style>
+</head>
+<body>
+    <h1>PeerJS P2P Example</h1>
+
+    <div id="peer-id-display">Your Peer ID: <span id="my-peer-id"></span></div>
+
+    <h2>Data Connection (Chat)</h2>
+    <div id="connect-form">
+        <label for="remote-peer-id-connect">Connect to Peer ID:</label>
+        <input type="text" id="remote-peer-id-connect" placeholder="Enter remote Peer ID">
+        <button id="connect-button">Connect</button>
+    </div>
+
+    <div id="message-form">
+        <label for="message-input">Message:</label>
+        <input type="text" id="message-input" placeholder="Type your message">
+        <button id="send-message-button">Send</button>
+    </div>
+
+    <h3>Chat Messages:</h3>
+    <div id="messages"></div>
+
+    <h2>Media Call</h2>
+    <div id="call-form">
+        <label for="remote-peer-id-call">Call Peer ID:</label>
+        <input type="text" id="remote-peer-id-call" placeholder="Enter remote Peer ID">
+        <button id="call-button">Start Call</button>
+        <button id="end-call-button" disabled>End Call</button>
+    </div>
+
+    <h3>Local Video:</h3>
+    <video id="local-video" autoplay muted></video>
+
+    <h3>Remote Video:</h3>
+    <div id="remote-video-container">
+        <video id="remote-video" autoplay></video>
+    </div>
+
+    <script>
+        // Get user media (camera and microphone)
+        const getUserMedia = navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+        let peer = null;
+        let dataConnection = null;
+        let mediaCall = null;
+        let localStream = null;
+
+        const myPeerIdSpan = document.getElementById('my-peer-id');
+        const remotePeerIdConnectInput = document.getElementById('remote-peer-id-connect');
+        const connectButton = document.getElementById('connect-button');
+        const messageInput = document.getElementById('message-input');
+        const sendMessageButton = document.getElementById('send-message-button');
+        const messagesDiv = document.getElementById('messages');
+        const remotePeerIdCallInput = document.getElementById('remote-peer-id-call');
+        const callButton = document.getElementById('call-button');
+        const endCallButton = document.getElementById('end-call-button');
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+
+        // 1. Create a peer
+        peer = new Peer();
+
+        peer.on('open', function(id) {
+            console.log('My peer ID is: ' + id);
+            myPeerIdSpan.textContent = id;
+        });
+
+        peer.on('error', function(err) {
+            console.error('PeerJS error:', err);
+        });
+
+        // 2. Data connections - Receive
+        peer.on('connection', function(conn) {
+            dataConnection = conn;
+            appendMessage('Connected to ' + conn.peer + ' (remote)', 'remote');
+
+            conn.on('data', function(data) {
+                appendMessage('Remote: ' + data, 'remote');
+            });
+
+            conn.on('close', function() {
+                appendMessage('Disconnected from ' + conn.peer, 'remote');
+                dataConnection = null;
+            });
+        });
+
+        // 3. Media calls - Answer
+        peer.on('call', function(call) {
+            mediaCall = call;
+            appendMessage('Receiving call from ' + call.peer, 'remote');
+
+            getUserMedia({ video: true, audio: true })
+                .then(function(stream) {
+                    localStream = stream;
+                    localVideo.srcObject = stream;
+                    call.answer(stream); // Answer the call with an A/V stream.
+                    call.on('stream', function(remoteStream) {
+                        appendMessage('Remote stream received from ' + call.peer, 'remote');
+                        remoteVideo.srcObject = remoteStream;
+                        callButton.disabled = true;
+                        endCallButton.disabled = false;
+                    });
+                    call.on('close', function() {
+                        appendMessage('Call ended with ' + call.peer, 'remote');
+                        resetMediaCall();
+                    });
+                    call.on('error', function(err) {
+                        console.error('Media call error:', err);
+                        appendMessage('Call error with ' + call.peer + ': ' + err, 'remote');
+                        resetMediaCall();
+                    });
+                })
+                .catch(function(err) {
+                    console.error('Failed to get local stream for answering call:', err);
+                    appendMessage('Failed to get local stream for answering call.', 'local');
+                });
+        });
+
+        // Connect button for data connection
+        connectButton.addEventListener('click', function() {
+            const remotePeerId = remotePeerIdConnectInput.value;
+            if (remotePeerId) {
+                dataConnection = peer.connect(remotePeerId);
+                appendMessage('Attempting to connect to ' + remotePeerId, 'local');
+
+                dataConnection.on('open', function() {
+                    appendMessage('Successfully connected to ' + remotePeerId + ' (local)', 'local');
+                });
+
+                dataConnection.on('data', function(data) {
+                    appendMessage('Remote: ' + data, 'remote');
+                });
+
+                dataConnection.on('close', function() {
+                    appendMessage('Disconnected from ' + remotePeerId, 'local');
+                    dataConnection = null;
+                });
+
+                dataConnection.on('error', function(err) {
+                    console.error('Data connection error:', err);
+                    appendMessage('Data connection error with ' + remotePeerId + ': ' + err, 'local');
+                    dataConnection = null;
+                });
+            } else {
+                alert('Please enter a remote Peer ID to connect.');
+            }
+        });
+
+        // Send message button for data connection
+        sendMessageButton.addEventListener('click', function() {
+            const message = messageInput.value;
+            if (dataConnection && dataConnection.open && message) {
+                dataConnection.send(message);
+                appendMessage('You: ' + message, 'local');
+                messageInput.value = '';
+            } else if (!dataConnection || !dataConnection.open) {
+                alert('Not connected to a peer. Please connect first.');
+            } else {
+                alert('Please enter a message to send.');
+            }
+        });
+
+        // Call button for media call
+        callButton.addEventListener('click', function() {
+            const remotePeerId = remotePeerIdCallInput.value;
+            if (remotePeerId) {
+                getUserMedia({ video: true, audio: true })
+                    .then(function(stream) {
+                        localStream = stream;
+                        localVideo.srcObject = stream;
+                        mediaCall = peer.call(remotePeerId, stream);
+                        appendMessage('Calling ' + remotePeerId, 'local');
+
+                        mediaCall.on('stream', function(remoteStream) {
+                            appendMessage('Remote stream received from ' + remotePeerId, 'local');
+                            remoteVideo.srcObject = remoteStream;
+                            callButton.disabled = true;
+                            endCallButton.disabled = false;
+                        });
+                        mediaCall.on('close', function() {
+                            appendMessage('Call ended with ' + remotePeerId, 'local');
+                            resetMediaCall();
+                        });
+                        mediaCall.on('error', function(err) {
+                            console.error('Media call error:', err);
+                            appendMessage('Call error with ' + remotePeerId + ': ' + err, 'local');
+                            resetMediaCall();
+                        });
+                    })
+                    .catch(function(err) {
+                        console.error('Failed to get local stream for calling:', err);
+                        appendMessage('Failed to get local stream for calling.', 'local');
+                    });
+            } else {
+                alert('Please enter a remote Peer ID to call.');
+            }
+        });
+
+        // End Call button
+        endCallButton.addEventListener('click', function() {
+            if (mediaCall) {
+                mediaCall.close();
+                appendMessage('Call ended by local user.', 'local');
+                resetMediaCall();
+            }
+        });
+
+        function appendMessage(text, type) {
+            const msgDiv = document.createElement('div');
+            msgDiv.textContent = text;
+            msgDiv.classList.add('message', type);
+            messagesDiv.appendChild(msgDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to bottom
+        }
+
+        function resetMediaCall() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            localVideo.srcObject = null;
+            remoteVideo.srcObject = null;
+            mediaCall = null;
+            callButton.disabled = false;
+            endCallButton.disabled = true;
+        }
+    </script>
+</body>
+</html>
