@@ -2,83 +2,48 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>WebRTC Voice Chat</title>
+  <title>WebRTC Audio Call</title>
 </head>
 <body>
-  <h1>WebRTC Voice Chat</h1>
+  <h1>Simple Audio Call</h1>
+  <input id="peer-id" placeholder="Your ID" />
+  <input id="call-id" placeholder="ID to call" />
+  <button id="start-call">Call</button>
+  <audio id="remote-audio" autoplay></audio>
 
-  <label for="server">Введите адрес сервера сигналинга (например ws://IP:8000/ws/room/test):</label>
-  <input type="text" id="server" size="50" value="ws://localhost:8000/ws/room/test">
-  <button id="connectBtn">Подключиться</button>
-
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
   <script>
-console.log("[INFO] Client script loaded");
+    const peer = new Peer(); // Можно указать ID: new Peer('my-id')
+    const remoteAudio = document.getElementById('remote-audio');
 
-document.getElementById("connectBtn").onclick = () => {
-    const SIGNALING_SERVER = document.getElementById("server").value;
-    console.log("[INFO] Connecting to signaling server:", SIGNALING_SERVER);
-
-    const ws = new WebSocket(SIGNALING_SERVER);
-
-    let pc = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    // Показываем свой ID после подключения к серверу PeerJS
+    peer.on('open', id => {
+      document.getElementById('peer-id').value = id;
+      console.log('My peer ID:', id);
     });
 
-    pc.ontrack = event => {
-        console.log("[INFO] Received remote track");
-        const audio = document.createElement("audio");
-        audio.srcObject = event.streams[0];
-        audio.autoplay = true;
-        document.body.appendChild(audio);
-    };
+    // При входящем звонке
+    peer.on('call', call => {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          call.answer(stream); // Отвечаем с микрофоном
+          call.on('stream', remoteStream => {
+            remoteAudio.srcObject = remoteStream;
+          });
+        });
+    });
 
-    pc.onicecandidate = ({ candidate }) => {
-        if (candidate) {
-            ws.send(JSON.stringify({ type: "candidate", candidate }));
-            console.log("[DEBUG] Sent ICE candidate");
-        }
+    // Нажатие кнопки "Call"
+    document.getElementById('start-call').onclick = () => {
+      const callId = document.getElementById('call-id').value;
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const call = peer.call(callId, stream);
+          call.on('stream', remoteStream => {
+            remoteAudio.srcObject = remoteStream;
+          });
+        });
     };
-
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-          console.log("[INFO] Microphone access granted");
-          stream.getTracks().forEach(track => pc.addTrack(track, stream));
-      })
-      .catch(e => console.error("[ERROR] getUserMedia failed:", e));
-
-    ws.onopen = async () => {
-        console.log("[INFO] WebSocket opened");
-        try {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            ws.send(JSON.stringify(pc.localDescription));
-            console.log("[DEBUG] Sent SDP offer");
-        } catch(e) { console.error("[ERROR] creating offer:", e); }
-    };
-
-    ws.onmessage = async event => {
-        console.log("[DEBUG] WebSocket message received");
-        try {
-            const msg = JSON.parse(event.data);
-            if (msg.type === "offer") {
-                console.log("[INFO] Received SDP offer");
-                await pc.setRemoteDescription(msg);
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                ws.send(JSON.stringify(pc.localDescription));
-                console.log("[DEBUG] Sent SDP answer");
-            } else if (msg.type === "answer") {
-                console.log("[INFO] Received SDP answer");
-                await pc.setRemoteDescription(msg);
-            } else if (msg.type === "candidate") {
-                console.log("[INFO] Received ICE candidate");
-                try { await pc.addIceCandidate(msg.candidate); } catch(e) { console.error(e); }
-            }
-        } catch(e) {
-            console.error("[ERROR] Processing WebSocket message:", e);
-        }
-    };
-};
   </script>
 </body>
 </html>
