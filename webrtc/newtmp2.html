@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebRTC Audio Call</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    input, button { margin-bottom: 10px; padding: 8px; }
+    #debug-info {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      height: 150px;
+      overflow-y: scroll;
+      background-color: #f9f9f9;
+      font-size: 0.9em;
+    }
+    #status-message {
+      font-weight: bold;
+      color: blue;
+      margin-top: 10px;
+    }
+    #mute-button {
+      background-color: #ffc107;
+      color: black;
+    }
+    #mute-button.muted {
+      background-color: #dc3545;
+      color: white;
+    }
+    .status-error { color: red; }
+    .status-warning { color: orange; }
+    .status-info { color: blue; }
+    .status-success { color: green; }
+  </style>
+</head>
+<body>
+  <h1>Simple Audio Call</h1>
+  <p>Ваш ID: <input id="peer-id" placeholder="Ваш ID" readonly /></p>
+  <p>ID для звонка: <input id="call-id" placeholder="ID для звонка" /></p>
+  <button id="start-call">Позвонить</button>
+  <button id="end-call" disabled>Завершить звонок</button>
+  <button id="mute-button" disabled>Выключить микрофон</button>
+
+  <h3>Локальное аудио (вы себя слышите):</h3>
+  <audio id="local-audio" autoplay muted></audio>
+  <h3>Удаленное аудио (собеседник):</h3>
+  <audio id="remote-audio" autoplay></audio>
+
+  <p id="status-message">Ожидание подключения...</p>
+
+  <h3>Отладочная информация:</h3>
+  <div id="debug-info"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <script>
+    const remoteAudio = document.getElementById('remote-audio');
+    const localAudio = document.getElementById('local-audio');
+    const peerIdInput = document.getElementById('peer-id');
+    const callIdInput = document.getElementById('call-id');
+    const startCallButton = document.getElementById('start-call');
+    const endCallButton = document.getElementById('end-call');
+    const muteButton = document.getElementById('mute-button');
+    const debugInfoDiv = document.getElementById('debug-info');
+    const statusMessage = document.getElementById('status-message');
+
+    let currentCall = null;
+    let localStream = null;
+    let isMuted = false;
+    let peer = null; // Объявляем peer здесь, чтобы можно было пересоздавать
+
+    function logDebug(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const p = document.createElement('p');
+      p.textContent = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+      debugInfoDiv.appendChild(p);
+      debugInfoDiv.scrollTop = debugInfoDiv.scrollHeight;
+      console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}`);
+    }
+
+    function updateStatus(message, type = 'info') { // Добавляем тип для стилизации
+      statusMessage.textContent = message;
+      statusMessage.className = ''; // Сброс классов
+      statusMessage.classList.add(`status-${type}`);
+    }
+
+    function initializePeer() {
+      if (peer && !peer.disconnected) {
+        peer.destroy(); // Уничтожаем предыдущий Peer, если он еще активен
+        logDebug('Предыдущий Peer экземпляр уничтожен.', 'warning');
+      }
+
+      logDebug('Инициализация нового PeerJS экземпляра...', 'info');
+      peer = new Peer({
+        debug: 3 // Включаем режим отладки PeerJS: 0=off, 1=errors, 2=warnings, 3=all
+      });
+
+      peer.on('error', err => {
+        logDebug(`Ошибка PeerJS: ${err.type} - ${err.message}`, 'error');
+        updateStatus(`Ошибка PeerJS: ${err.message}`, 'error');
+        // Попытка переподключения или сброса состояния
+        if (err.type === 'peer-unavailable' || err.type === 'server-error' || err.type === 'disconnected') {
+          logDebug('Попытка переинициализации PeerJS через 5 секунд...', 'warning');
+          setTimeout(initializePeer, 5000);
+        }
+      });
+
+      peer.on('open', id => {
+        peerIdInput.value = id;
+        logDebug(`Мой peer ID: ${id}`);
+        updateStatus(`Подключено к серверу PeerJS. Ваш ID: ${id}`, 'success');
+        startCallButton.disabled = false;
+      });
+
+      peer.on('disconnected', () => {
+        logDebug('PeerJS отключен от сервера.', 'warning');
+        updateStatus('Отключено от сервера PeerJS. Попытка переподключения...', 'warning');
+        peerIdInput.value = '';
+        startCallButton.disabled = true;
+        muteButton.disabled = true;
+        // PeerJS автоматически пытается переподключиться. Можно добавить свою логику.
+        // peer.reconnect(); // Можно вызвать вручную, но обычно это происходит автоматически
+      });
+
+      peer.on('close', () => {
+        logDebug('PeerJS соединение закрыто. Уничтожено.', 'warning');
+        updateStatus('Соединение PeerJS закрыто.', 'warning');
+        peerIdInput.value = '';
+        startCallButton.disabled = true;
+        muteButton.disabled = true;
+        // Если Peer закрылся, возможно, нужно создать новый экземпляр
+        // initializePeer(); // Возможно, не всегда нужно, зависит от причины закрытия
+      });
+
+      peer.on('call', call => {
+        logDebug(`Получен входящий звонок от: ${call.peer}`);
+        updateStatus(`Входящий звонок от: ${call.peer}. Отвечаю...`, 'info');
+
+        // Добавляем отслеживание состояния ICE-соединения
+        call.on('iceStateChanged', state => {
+          logDebug(`Состояние ICE для входящего звонка изменилось: ${state}`);
+          updateStatus(`ICE-состояние: ${state}`, 'info');
+          if (state === 'failed') {
+            logDebug('ICE-соединение не удалось для входящего звонка. Проблемы с NAT/файрволом?', 'error');
+            updateStatus('ICE-соединение не удалось.', 'error');
+            // Возможно, здесь нужно завершить звонок или предложить переподключиться
+          }
+        });
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            localStream = stream;
+            localAudio.srcObject = stream;
+            logDebug('Получен доступ к локальному микрофону.', 'success');
+
+            call.answer(stream);
+            currentCall = call;
+            endCallButton.disabled = false;
+            startCallButton.disabled = true;
+            muteButton.disabled = false;
+
+            call.on('stream', remoteStream => {
+              logDebug('Получен удаленный поток.', 'success');
+              remoteAudio.srcObject = remoteStream;
+              updateStatus(`Звонок активен с ${call.peer}.`, 'success');
+            });
+
+            call.on('close', () => {
+              logDebug('Звонок завершен (удаленная сторона).', 'info');
+              updateStatus('Звонок завершен.', 'gray');
+              resetCallState();
+            });
+
+            call.on('error', err => {
+              logDebug(`Ошибка в звонке (входящий): ${err.message}`, 'error');
+              updateStatus(`Ошибка в звонке: ${err.message}`, 'error');
+              resetCallState();
+            });
+          })
+          .catch(err => {
+            logDebug(`Ошибка доступа к микрофону для входящего звонка: ${err.name} - ${err.message}`, 'error');
+            updateStatus(`Ошибка: нет доступа к микрофону. ${err.message}`, 'error');
+          });
+      });
+    }
+
+    startCallButton.onclick = () => {
+      const callId = callIdInput.value;
+      if (!callId) {
+        logDebug('Пожалуйста, введите ID для звонка.', 'warning');
+        updateStatus('Пожалуйста, введите ID для звонка.', 'warning');
+        return;
+      }
+
+      if (!peer || peer.disconnected || peer.destroyed) {
+        logDebug('PeerJS не подключен или уничтожен. Попытка переинициализации.', 'warning');
+        updateStatus('PeerJS не готов. Попытка переподключения...', 'warning');
+        initializePeer();
+        // Можно добавить задержку или повторную попытку звонка после initializePeer
+        return;
+      }
+
+      logDebug(`Попытка звонка на ID: ${callId}`);
+      updateStatus(`Вызов ${callId}...`, 'info');
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          localStream = stream;
+          localAudio.srcObject = stream;
+          logDebug('Получен доступ к локальному микрофону.', 'success');
+
+          const call = peer.call(callId, stream);
+          currentCall = call;
+          endCallButton.disabled = false;
+          startCallButton.disabled = true;
+          muteButton.disabled = false;
+
+          // Добавляем отслеживание состояния ICE-соединения
+          call.on('iceStateChanged', state => {
+            logDebug(`Состояние ICE для исходящего звонка изменилось: ${state}`);
+            updateStatus(`ICE-состояние: ${state}`, 'info');
+            if (state === 'failed') {
+              logDebug('ICE-соединение не удалось для исходящего звонка. Проблемы с NAT/файрволом?', 'error');
+              updateStatus('ICE-соединение не удалось.', 'error');
+            }
+          });
+
+          call.on('stream', remoteStream => {
+            logDebug('Получен удаленный поток.', 'success');
+            remoteAudio.srcObject = remoteStream;
+            updateStatus(`Звонок активен с ${callId}.`, 'success');
+          });
+
+          call.on('close', () => {
+            logDebug('Звонок завершен (удаленная сторона).', 'info');
+            updateStatus('Звонок завершен.', 'gray');
+            resetCallState();
+          });
+
+          call.on('error', err => {
+            logDebug(`Ошибка в звонке (исходящий): ${err.message}`, 'error');
+            updateStatus(`Ошибка в звонке: ${err.message}`, 'error');
+            resetCallState();
+          });
+        })
+        .catch(err => {
+          logDebug(`Ошибка доступа к микрофону для исходящего звонка: ${err.name} - ${err.message}`, 'error');
+          updateStatus(`Ошибка: нет доступа к микрофону. ${err.message}`, 'error');
+        });
+    };
+
+    endCallButton.onclick = ()
