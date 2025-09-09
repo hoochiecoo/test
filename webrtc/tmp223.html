@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mini WebRTC Room Call</title>
+</head>
+<body>
+  <h2>Мини звонок по комнате</h2>
+  <video id="local" autoplay muted></video>
+  <video id="remote" autoplay></video>
+  <input id="roomInput" placeholder="Введите комнату" />
+  <button id="joinBtn">Войти в комнату</button>
+  <button id="callBtn">Позвонить</button>
+
+<script>
+const localVideo = document.getElementById('local');
+const remoteVideo = document.getElementById('remote');
+const roomInput = document.getElementById('roomInput');
+const joinBtn = document.getElementById('joinBtn');
+const callBtn = document.getElementById('callBtn');
+
+let pc;
+let localStream;
+let ROOM = null;
+let SIGNAL_URL = 'ttps://0642988e9ad784.lhr.life/signal';
+
+// STUN сервер Google
+const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+// Подключение камеры и микрофона
+async function initMedia() {
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  localVideo.srcObject = localStream;
+
+  pc = new RTCPeerConnection(config);
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.ontrack = e => remoteVideo.srcObject = e.streams[0];
+
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      fetch(SIGNAL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room: ROOM, type: 'candidate', data: e.candidate })
+      });
+    }
+  };
+
+  // Периодический опрос сигналинга
+  setInterval(async () => {
+    const res = await fetch(`${SIGNAL_URL}?room=${ROOM}`);
+    const data = await res.json();
+
+    if (data.offer && !pc.remoteDescription) {
+      await pc.setRemoteDescription(data.offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await fetch(SIGNAL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room: ROOM, type: 'answer', data: answer })
+      });
+    }
+
+    if (data.answer && !pc.remoteDescription) {
+      await pc.setRemoteDescription(data.answer);
+    }
+
+    if (data.candidates) {
+      for (const c of data.candidates) {
+        try { await pc.addIceCandidate(c); } catch(e) {}
+      }
+      // Кандидаты не стираем, чтобы поздний участник мог их получить
+    }
+  }, 1000);
+}
+
+// Вход в комнату
+joinBtn.onclick = async () => {
+  ROOM = roomInput.value.trim();
+  if (!ROOM) return alert('Введите комнату');
+  await initMedia();
+};
+
+// Создание звонка (offer)
+callBtn.onclick = async () => {
+  if (!ROOM) return alert('Сначала войдите в комнату');
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  await fetch(SIGNAL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room: ROOM, type: 'offer', data: offer })
+  });
+};
+</script>
+</body>
+</html>
