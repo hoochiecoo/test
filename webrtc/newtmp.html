@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebRTC Voice Chat</title>
+</head>
+<body>
+  <h1>WebRTC Voice Chat</h1>
+
+  <label for="server">Введите адрес сервера сигналинга (например ws://IP:8000/ws/room/test):</label>
+  <input type="text" id="server" size="50" value="ws://localhost:8000/ws/room/test">
+  <button id="connectBtn">Подключиться</button>
+
+  <script>
+console.log("[INFO] Client script loaded");
+
+document.getElementById("connectBtn").onclick = () => {
+    const SIGNALING_SERVER = document.getElementById("server").value;
+    console.log("[INFO] Connecting to signaling server:", SIGNALING_SERVER);
+
+    const ws = new WebSocket(SIGNALING_SERVER);
+
+    let pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    });
+
+    pc.ontrack = event => {
+        console.log("[INFO] Received remote track");
+        const audio = document.createElement("audio");
+        audio.srcObject = event.streams[0];
+        audio.autoplay = true;
+        document.body.appendChild(audio);
+    };
+
+    pc.onicecandidate = ({ candidate }) => {
+        if (candidate) {
+            ws.send(JSON.stringify({ type: "candidate", candidate }));
+            console.log("[DEBUG] Sent ICE candidate");
+        }
+    };
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+          console.log("[INFO] Microphone access granted");
+          stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      })
+      .catch(e => console.error("[ERROR] getUserMedia failed:", e));
+
+    ws.onopen = async () => {
+        console.log("[INFO] WebSocket opened");
+        try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            ws.send(JSON.stringify(pc.localDescription));
+            console.log("[DEBUG] Sent SDP offer");
+        } catch(e) { console.error("[ERROR] creating offer:", e); }
+    };
+
+    ws.onmessage = async event => {
+        console.log("[DEBUG] WebSocket message received");
+        try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "offer") {
+                console.log("[INFO] Received SDP offer");
+                await pc.setRemoteDescription(msg);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                ws.send(JSON.stringify(pc.localDescription));
+                console.log("[DEBUG] Sent SDP answer");
+            } else if (msg.type === "answer") {
+                console.log("[INFO] Received SDP answer");
+                await pc.setRemoteDescription(msg);
+            } else if (msg.type === "candidate") {
+                console.log("[INFO] Received ICE candidate");
+                try { await pc.addIceCandidate(msg.candidate); } catch(e) { console.error(e); }
+            }
+        } catch(e) {
+            console.error("[ERROR] Processing WebSocket message:", e);
+        }
+    };
+};
+  </script>
+</body>
+</html>
