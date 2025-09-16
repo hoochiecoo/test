@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OTP Auth Demo</title>
+</head>
+<body>
+  <h2>Генерация OTP</h2>
+  <input id="user" placeholder="Введите логин">
+  <button onclick="generate()">Сгенерировать</button>
+  <p id="otp"></p>
+
+  <h2>Проверка OTP</h2>
+  <input id="code" placeholder="Введите код">
+  <button onclick="verify()">Проверить</button>
+  <p id="result"></p>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbw6dxFtAxsjb22Zy5v00W77-A0UlvysRf0KnufO1Az5CQHd4hrKrlOql9sxM4GAjnc6/exec";
+
+async function generate() {
+  const user = document.getElementById("user").value;
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "generate", user })
+  });
+  const data = await res.json();
+  document.getElementById("otp").innerText = "Ваш код: " + data.otp;
+}
+
+async function verify() {
+  const user = document.getElementById("user").value;
+  const code = document.getElementById("code").value;
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "verify", user, code })
+  });
+  const data = await res.json();
+  document.getElementById("result").innerText = "Результат: " + data.status;
+}
+</script>
+
+</body>
+</html>
