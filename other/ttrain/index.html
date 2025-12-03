@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+    
+    <title>Тренер App</title>
+    
+    <!-- Подключаем стили Quasar и шрифты (иконок) -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/quasar@2.14.0/dist/quasar.prod.css" rel="stylesheet" type="text/css">
+    
+    <!-- Ссылка на манифест PWA -->
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <!-- Контейнер для Vue приложения -->
+    <div id="q-app">
+        <!-- Основной лэйаут приложения (Header, Footer, Content) -->
+        <q-layout view="lHh Lpr lFf" class="bg-grey-2">
+            
+            <!-- Шапка приложения -->
+            <q-header elevated class="bg-primary text-white">
+                <q-toolbar>
+                    <q-toolbar-title>
+                        Мои ученики
+                    </q-toolbar-title>
+                    <q-btn flat round dense icon="refresh" @click="loadData"></q-btn>
+                </q-toolbar>
+            </q-header>
+
+            <!-- Основной контент страницы -->
+            <q-page-container>
+                <q-page class="q-pa-md">
+                    
+                    <!-- Если список пуст -->
+                    <div v-if="students.length === 0" class="text-center q-mt-xl text-grey-6">
+                        <q-icon name="fitness_center" size="100px"></q-icon>
+                        <p class="text-h6">Учеников пока нет</p>
+                        <p>Нажми + чтобы добавить</p>
+                    </div>
+
+                    <!-- Список учеников (готовые блоки q-list) -->
+                    <q-list bordered separator class="bg-white rounded-borders shadow-1" v-else>
+                        <q-slide-item v-for="(student, index) in students" :key="student.id" @right="onDelete(index)" right-color="red">
+                            
+                            <template v-slot:right>
+                                <q-icon name="delete"></q-icon>
+                            </template>
+
+                            <q-item>
+                                <q-item-section avatar>
+                                    <q-avatar color="primary" text-color="white">
+                                        {{ student.name.charAt(0).toUpperCase() }}
+                                    </q-avatar>
+                                </q-item-section>
+
+                                <q-item-section>
+                                    <q-item-label class="text-weight-bold">{{ student.name }}</q-item-label>
+                                    <q-item-label caption>{{ student.program }}</q-item-label>
+                                </q-item-section>
+
+                                <q-item-section side>
+                                    <q-chip 
+                                        clickable 
+                                        @click="togglePayment(index)"
+                                        :color="student.isPaid ? 'green' : 'red'" 
+                                        text-color="white" 
+                                        size="sm">
+                                        {{ student.isPaid ? 'Оплачено' : 'Долг' }}
+                                    </q-chip>
+                                </q-item-section>
+                            </q-item>
+                        </q-slide-item>
+                    </q-list>
+
+                    <!-- Плавающая кнопка добавления (FAB) -->
+                    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+                        <q-btn fab icon="add" color="primary" @click="dialog = true"></q-btn>
+                    </q-page-sticky>
+
+                </q-page>
+            </q-page-container>
+
+            <!-- Модальное окно добавления (Dialog) -->
+            <q-dialog v-model="dialog">
+                <q-card style="min-width: 350px">
+                    <q-card-section>
+                        <div class="text-h6">Новый ученик</div>
+                    </q-card-section>
+
+                    <q-card-section class="q-pt-none">
+                        <q-input dense v-model="newStudent.name" label="Имя Фамилия" autofocus @keyup.enter="addStudent"></q-input>
+                        <q-input dense v-model="newStudent.program" label="Программа (напр. Набор массы)" class="q-mt-sm"></q-input>
+                        <q-toggle v-model="newStudent.isPaid" label="Абонемент оплачен" class="q-mt-sm"></q-toggle>
+                    </q-card-section>
+
+                    <q-card-actions align="right" class="text-primary">
+                        <q-btn flat label="Отмена" v-close-popup></q-btn>
+                        <q-btn flat label="Добавить" @click="addStudent" v-close-popup></q-btn>
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
+
+        </q-layout>
+    </div>
+
+    <!-- Подключаем Vue и Quasar скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quasar@2.14.0/dist/quasar.umd.prod.js"></script>
+    <!-- Подключаем нашу логику -->
+    <script src="app.js"></script>
+</body>
+</html>
