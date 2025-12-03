@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка Контрактов Приложения</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2 { color: #0056b3; }
+        .result-item { background-color: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .result-item.passed { border-left: 5px solid #28a745; }
+        .result-item.failed { border-left: 5px solid #dc3545; background-color: #fff0f0; }
+        .result-item h3 { margin-top: 0; display: flex; justify-content: space-between; }
+        .result-item ul { list-style: none; padding-left: 0; }
+        .result-item ul li { margin-bottom: 5px; padding: 5px; background: rgba(0,0,0,0.03); border-radius: 4px; }
+        .error-msg { color: #dc3545; font-weight: bold; }
+        .warn-msg { color: #ffc107; font-weight: bold; }
+        .button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+        .button:hover { background-color: #0056b3; }
+        .button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #loading { display: none; margin-top: 10px; color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Автоматическая Проверка Контрактов</h1>
+    <button id="run-checks-btn" class="button">Запустить проверку</button>
+    <div id="loading">Загрузка и анализ файлов...</div>
+    <div id="results" style="margin-top: 20px;"></div>
+
+    <script>
+        // --- Глобальный Канонический Контракт ---
+        const GLOBAL_CONTRACT = {
+            // Список известных доменов
+            knownDomains: [
+                "domain-profiles",
+                "domain-training",
+                "domain-analysis",
+                "domain-competitions",
+                "domain-admin",
+                "domain-communication"
+            ],
+            // Список допустимых ключей LocalStorage
+            localStorageKeys: [
+                "bowlingApp_students",
+                "bowlingApp_groups",
+                "bowlingApp_trainings",
+                "bowlingApp_itps",
+                "bowlingApp_games",
+                "bowlingApp_tournaments",
+                "bowlingApp_authState",
+                "bowlingApp_settings",
+                "bowlingApp_notifications"
+            ],
+            // Список известных внешних сервисов
+            knownExternalServices: ["AuthService", "NotificationService", "DataUtilityService"]
+        };
+
+        const DOMAIN_FILES = [
+            'index.html',
+            'profiles.html',
+            'profile_detail.html',
+            'group_detail.html',
+            'schedule.html',
+            'training_plan.html',
+            'game_entry.html',
+            'analytics.html',
+            'competitions.html',
+            'competition_detail.html',
+            'settings.html'
+        ];
+
+        const resultsDiv = document.getElementById('results');
+        const runChecksBtn = document.getElementById('run-checks-btn');
+        const loadingDiv = document.getElementById('loading');
+
+        runChecksBtn.addEventListener('click', checkContracts);
+
+        // Функция для удаления комментариев из JSON-строки
+        function sanitizeJson(jsonString) {
+            // Удаляем однострочные комментарии // ...
+            let clean = jsonString.replace(/\/\/.*$/gm, "");
+            // Удаляем многострочные комментарии /* ... */
+            clean = clean.replace(/\/\*[\s\S]*?\*\//g, "");
+            return clean;
+        }
+
+        async function checkContracts() {
+            resultsDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            runChecksBtn.disabled = true;
+
+            const allChecksPassed = [];
+
+            for (const filename of DOMAIN_FILES) {
+                let status = 'passed';
+                let messages = [];
+
+                try {
+                    const response = await fetch(filename);
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    
+                    const htmlText = await response.text();
+                    
+                    // Ищем блок скрипта с id="domain-contract"
+                    const contractScriptMatch = htmlText.match(/<script type="application\/json"\s+id="domain-contract">([\s\S]*?)<\/script>/);
+
+                    if (!contractScriptMatch) {
+                        throw new Error('Тег <script type="application/json" id="domain-contract"> не найден.');
+                    }
+
+                    // --- ИСПРАВЛЕНИЕ: Очистка JSON от комментариев ---
+                    const rawJson = contractScriptMatch[1];
+                    const cleanJson = sanitizeJson(rawJson);
+                    
+                    let domainContract;
+                    try {
+                        domainContract = JSON.parse(cleanJson);
+                    } catch (parseError) {
+                        // Попытка показать место ошибки
+                        console.error("JSON Error in " + filename, parseError);
+                        throw new Error(`Ошибка синтаксиса JSON: ${parseError.message}. Убедитесь, что нет лишних запятых в конце списков.`);
+                    }
+
+                    // --- Валидация ---
+
+                    // 1. Проверка имени домена
+                    if (!domainContract.domainName) {
+                        messages.push({type: 'error', text: 'Отсутствует поле "domainName".'});
+                        status = 'failed';
+                    } else if (!GLOBAL_CONTRACT.knownDomains.includes(domainContract.domainName)) {
+                        messages.push({type: 'error', text: `Неизвестный домен: "${domainContract.domainName}".`});
+                        status = 'failed';
+                    }
+
+                    // 2. Проверка ключей чтения (usesLocalStorageKeys)
+                    if (domainContract.usesLocalStorageKeys) {
+                        domainContract.usesLocalStorageKeys.forEach(key => {
+                            if (!GLOBAL_CONTRACT.localStorageKeys.includes(key)) {
+                                messages.push({type: 'error', text: `Неизвестный ключ чтения: "${key}".`});
+                                status = 'failed';
+                            }
+                        });
+                    }
+
+                    // 3. Проверка ключей записи (writesToLocalStorageKeys)
+                    if (domainContract.writesToLocalStorageKeys) {
+                        domainContract.writesToLocalStorageKeys.forEach(key => {
+                            if (!GLOBAL_CONTRACT.localStorageKeys.includes(key)) {
+                                messages.push({type: 'error', text: `Неизвестный ключ записи: "${key}".`});
+                                status = 'failed';
+                            }
+                        });
+                    }
+
+                    // 4. Проверка сервисов
+                    if (domainContract.usesExternalServices) {
+                        domainContract.usesExternalServices.forEach(srv => {
+                            if (!GLOBAL_CONTRACT.knownExternalServices.includes(srv)) {
+                                messages.push({type: 'error', text: `Неизвестный сервис: "${srv}".`});
+                                status = 'failed';
+                            }
+                        });
+                    }
+
+                    // 5. Проверка зависимостей
+                    if (domainContract.dependsOnDomainsData) {
+                        domainContract.dependsOnDomainsData.forEach(dom => {
+                            if (!GLOBAL_CONTRACT.knownDomains.includes(dom)) {
+                                messages.push({type: 'error', text: `Зависимость от неизвестного домена: "${dom}".`});
+                                status = 'failed';
+                            }
+                        });
+                    }
+
+                } catch (error) {
+                    status = 'failed';
+                    messages.push({type: 'error', text: error.message});
+                }
+
+                if (status === 'failed') allChecksPassed.push(false);
+                renderResult(filename, status, messages);
+            }
+
+            loadingDiv.style.display = 'none';
+            runChecksBtn.disabled = false;
+
+            const header = document.createElement('h2');
+            header.textContent = allChecksPassed.length === 0 
+                ? 'Все проверки пройдены успешно! ✅' 
+                : 'Найдены ошибки в контрактах ❌';
+            resultsDiv.prepend(header);
+        }
+
+        function renderResult(filename, status, messages) {
+            const div = document.createElement('div');
+            div.className = `result-item ${status}`;
+            
+            const icon = status === 'passed' ? '✅' : '❌';
+            
+            let html = `<h3><span>${icon} ${filename}</span></h3>`;
+            
+            if (messages.length > 0) {
+                html += '<ul>';
+                messages.forEach(msg => {
+                    const cls = msg.type === 'error' ? 'error-msg' : 'warn-msg';
+                    html += `<li class="${cls}">${msg.text}</li>`;
+                });
+                html += '</ul>';
+            } else if (status === 'passed') {
+                html += '<div style="color: green; font-size: 0.9em;">Синтаксис JSON корректен. Домен валиден.</div>';
+            }
+
+            div.innerHTML = html;
+            resultsDiv.appendChild(div);
+        }
+    </script>
+</body>
+</html>
