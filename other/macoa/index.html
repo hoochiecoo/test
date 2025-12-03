@@ -20,7 +20,7 @@
             <q-header elevated class="bg-primary text-white">
                 <q-toolbar>
                     <q-toolbar-title>Теннис Лига</q-toolbar-title>
-                    <q-btn flat dense icon="download" label="Установить" @click="showInstallPrompt" v-if="installPrompt"></q-btn>
+                    <div class="text-subtitle2" v-if="installPrompt" @click="showInstallPrompt">Установить</div>
                 </q-toolbar>
                 <q-tabs v-model="tab" align="justify" narrow-indicator>
                     <q-tab name="students" label="Ученики"></q-tab>
@@ -36,7 +36,7 @@
                     <q-tab-panel name="students" class="q-pa-none bg-transparent">
                         <q-list bordered separator class="bg-white rounded-borders shadow-1">
                             <q-item v-if="students.length === 0" class="q-pa-lg text-center text-grey">
-                                <q-item-section>Нет учеников. Нажмите на + внизу справа, чтобы добавить!</q-item-section>
+                                <q-item-section>Нет учеников. Добавьте первого!</q-item-section>
                             </q-item>
 
                             <q-item clickable v-ripple v-for="(student, index) in students" :key="student.id" @click="openStudentDetails(student)">
@@ -56,8 +56,8 @@
                             </q-item>
                         </q-list>
                         
-                        <!-- FAB для добавления ученика (видима только на вкладке "Ученики") -->
-                        <q-page-sticky position="bottom-right" :offset="[18, 18]">
+                        <!-- FAB для добавления ученика (видима только на вкладке учеников) -->
+                        <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="tab === 'students'">
                             <q-btn fab icon="person_add" color="primary" @click="dialogStudent = true"></q-btn>
                         </q-page-sticky>
                     </q-tab-panel>
@@ -66,7 +66,7 @@
                     <q-tab-panel name="matches" class="q-pa-none bg-transparent">
                          <div v-if="matches.length === 0" class="text-center q-mt-xl text-grey-6">
                             <q-icon name="sports_tennis" size="80px"></q-icon>
-                            <p>Матчей еще не было. Нажмите на мяч внизу справа, чтобы добавить!</p>
+                            <p>Матчей еще не было</p>
                         </div>
                         
                         <q-card v-for="match in sortedMatches" :key="match.id" class="q-mb-sm flat bordered">
@@ -95,9 +95,9 @@
                             </q-card-section>
                         </q-card>
 
-                        <!-- FAB для добавления матча (видима только на вкладке "Матчи") -->
-                        <q-page-sticky position="bottom-right" :offset="[18, 18]">
-                            <q-btn fab icon="sports_tennis" color="secondary" @click="openMatchDialog"></q-btn>
+                        <!-- FAB для добавления матча (видима только на вкладке матчей) -->
+                        <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="tab === 'matches'">
+                            <q-btn fab icon="scoreboard" color="secondary" @click="openMatchDialog"></q-btn>
                         </q-page-sticky>
                     </q-tab-panel>
 
@@ -127,7 +127,7 @@
                 <q-card style="min-width: 300px">
                     <q-card-section><div class="text-h6">Добавить ученика</div></q-card-section>
                     <q-card-section>
-                        <q-input dense v-model="newStudentName" label="Имя Фамилия" autofocus @keyup.enter="addStudent"></q-input>
+                        <q-input dense v-model="newStudentName" label="Имя Фамилия" autofocus></q-input>
                     </q-card-section>
                     <q-card-actions align="right">
                         <q-btn flat label="Отмена" v-close-popup></q-btn>
@@ -232,17 +232,15 @@
 
         const app = createApp({
             setup() {
-                const tab = ref('students'); // По умолчанию открывается вкладка "Ученики"
+                const tab = ref('students');
                 const students = ref([]);
                 const matches = ref([]);
                 
-                // Dialogs
                 const dialogStudent = ref(false);
                 const dialogDetails = ref(false);
                 const dialogMatch = ref(false);
                 const installPrompt = ref(null);
 
-                // Forms / Temp state
                 const newStudentName = ref('');
                 const selectedStudent = ref(null);
                 const matchForm = reactive({
@@ -251,28 +249,22 @@
                     sets: [{p1:null, p2:null}, {p1:null, p2:null}, {p1:null, p2:null}]
                 });
 
-                // --- DATA LOADING ---
                 const loadData = () => {
                     const s = localStorage.getItem('tennis_students');
                     const m = localStorage.getItem('tennis_matches');
                     if (s) students.value = JSON.parse(s);
                     if (m) matches.value = JSON.parse(m);
-                    recalcAllElo(); // Всегда пересчитываем ELO при загрузке
                 };
                 const saveData = () => {
                     localStorage.setItem('tennis_students', JSON.stringify(students.value));
                     localStorage.setItem('tennis_matches', JSON.stringify(matches.value));
                 };
 
-                // --- STUDENTS LOGIC ---
                 const addStudent = () => {
-                    if(!newStudentName.value.trim()) {
-                         alert("Имя ученика не может быть пустым.");
-                         return;
-                    }
+                    if(!newStudentName.value) return;
                     students.value.push({
                         id: Date.now(),
-                        name: newStudentName.value.trim(),
+                        name: newStudentName.value,
                         elo: 1000,
                         achievements: [],
                         matchesPlayed: 0
@@ -289,20 +281,15 @@
                 const deleteStudent = (id) => {
                     if(confirm('Удалить ученика и его историю?')) {
                         students.value = students.value.filter(s => s.id !== id);
-                        // Также удаляем матчи, где участвовал этот ученик
-                        matches.value = matches.value.filter(m => m.p1 !== id && m.p2 !== id);
                         dialogDetails.value = false;
                         recalcAllElo(); // Пересчитываем ELO после удаления
                     }
                 };
 
-                // --- ACHIEVEMENT LOGIC ---
                 const updateAchievements = (student) => {
-                    // Просто пересчитываем ELO, чтобы бонус применился
-                    recalcAllElo();
+                    recalcAllElo(); // При изменении ачивок, пересчитываем ELO всех
                 };
 
-                // --- MATCH LOGIC ---
                 const studentOptions = computed(() => students.value.map(s => ({label: s.name, value: s.id})));
                 
                 const openMatchDialog = () => {
@@ -313,7 +300,8 @@
 
                 const saveMatch = () => {
                     const { p1, p2, sets } = matchForm;
-                    if (!p1 || !p2 || p1 === p2) return alert("Выберите двух разных игроков.");
+                    if (!p1 || !p2) return alert("Выберите двух игроков");
+                    if (p1 === p2) return alert("Игроки должны быть разными");
 
                     let p1Sets = 0, p2Sets = 0;
                     let scoreStrParts = [];
@@ -321,12 +309,12 @@
                     sets.forEach(s => {
                         if (s.p1 !== null && s.p2 !== null) {
                             if (s.p1 > s.p2) p1Sets++;
-                            if (s.p2 > s.p1) p2Sets++;
+                            else if (s.p2 > s.p1) p2Sets++;
                             scoreStrParts.push(`${s.p1}-${s.p2}`);
                         }
                     });
 
-                    if (p1Sets === p2Sets || (p1Sets === 0 && p2Sets === 0)) return alert("Счет не может быть ничейным или пустым.");
+                    if (p1Sets === p2Sets) return alert("Матч должен иметь победителя по сетам!");
                     
                     const winnerId = p1Sets > p2Sets ? p1 : p2;
                     const loserId = p1Sets > p2Sets ? p2 : p1;
@@ -337,38 +325,32 @@
                         winnerId,
                         score: scoreStrParts.join(', '),
                         date: Date.now(),
-                        p1Change: 0, // будут заполнены при recalc
-                        p2Change: 0
+                        p1Sets, p2Sets // Добавлено для возможного использования в логике ачивок
                     });
 
                     recalcAllElo();
                     dialogMatch.value = false;
                 };
 
-                // --- ELO CORE SYSTEM ---
                 const recalcAllElo = () => {
-                    // Создаем временную копию студентов для расчетов, чтобы не изменять оригинал напрямую
-                    // и не вызывать лишние реактивные обновления во время цикла.
-                    const tempStudents = students.value.map(s => ({
-                        ...s,
-                        elo: 1000, // Сбрасываем ELO к базовому
-                        matchesPlayed: 0
-                    }));
                     const tempMap = {};
-                    tempStudents.forEach(s => tempMap[s.id] = s);
+                    students.value.forEach(s => {
+                        s.elo = 1000;
+                        s.matchesPlayed = 0;
+                        tempMap[s.id] = s;
+                    });
 
-                    // Проходимся по всем матчам хронологически
                     const sortedMatches = [...matches.value].sort((a,b) => a.date - b.date);
                     
                     sortedMatches.forEach(m => {
                         const s1 = tempMap[m.p1];
                         const s2 = tempMap[m.p2];
-                        if (!s1 || !s2) return; // Если ученик удален, пропускаем этот матч
+                        if (!s1 || !s2) return;
 
                         s1.matchesPlayed++;
                         s2.matchesPlayed++;
 
-                        const K = 30; // Коэффициент динамики ELO
+                        const K = 30;
                         const Ea = 1 / (1 + Math.pow(10, (s2.elo - s1.elo) / 400));
                         const Eb = 1 / (1 + Math.pow(10, (s1.elo - s2.elo) / 400));
 
@@ -381,12 +363,11 @@
                         s1.elo += changeA;
                         s2.elo += changeB;
                         
-                        m.p1Change = changeA; // Обновляем дельту в оригинальном матче
+                        m.p1Change = changeA;
                         m.p2Change = changeB;
                     });
 
-                    // Добавляем бонусы за достижения к пересчитанному ELO
-                    tempStudents.forEach(s => {
+                    students.value.forEach(s => {
                         let bonus = 0;
                         s.achievements.forEach(achId => {
                             const found = ACHIEVEMENTS.find(a => a.id === achId);
@@ -394,21 +375,11 @@
                         });
                         s.elo += bonus;
                     });
-                    
-                    // Обновляем оригинальный реактивный массив students
-                    students.value.forEach(s => {
-                        const updatedS = tempMap[s.id];
-                        if(updatedS) {
-                            s.elo = updatedS.elo;
-                            s.matchesPlayed = updatedS.matchesPlayed;
-                        }
-                    });
 
-                    matches.value = sortedMatches; // Обновляем матчи с дельтами
+                    matches.value = sortedMatches;
                     saveData();
                 };
 
-                // Helpers
                 const getStudentName = (id) => {
                     const s = students.value.find(x => x.id === id);
                     return s ? s.name : 'Удален';
@@ -422,13 +393,14 @@
                     return [...matches.value].sort((a,b) => b.date - a.date);
                 });
 
-                // PWA Install
                 onMounted(() => {
                     loadData();
                     window.addEventListener('beforeinstallprompt', (e) => {
                         e.preventDefault();
                         installPrompt.value = e;
                     });
+                    // Запускаем пересчет при старте, чтобы все ELO были актуальными
+                    recalcAllElo();
                 });
                 const showInstallPrompt = () => { if(installPrompt.value) installPrompt.value.prompt(); };
 
