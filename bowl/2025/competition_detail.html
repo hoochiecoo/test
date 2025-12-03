@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Детали Турнира</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 900px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="date"], select { width: calc(100% - 20px); padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .participant-selection { margin-top: 10px; border: 1px solid #eee; padding: 10px; max-height: 200px; overflow-y: auto; }
+        .participant-selection label { display: block; margin-bottom: 5px; font-weight: normal; }
+        .actions { text-align: right; margin-top: 20px; }
+        .button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; margin-left: 10px; }
+        .button.cancel { background-color: #6c757d; }
+        .button:hover { background-color: #0056b3; }
+        .button.cancel:hover { background-color: #5a6268; }
+        .tournament-results table { margin-top: 20px; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-competitions",
+            "description": "Страница для создания/редактирования турнира и ввода его результатов.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_tournaments",
+                "bowlingApp_students" // Для выбора участников и отображения имен
+            ],
+            "writesToLocalStorageKeys": [
+                "bowlingApp_tournaments" // Сохранение/обновление турнира и его результатов
+            ],
+            "expectsUrlParameters": {
+                "tournamentId": { "type": "string", "required": false, "description": "ID турнира для загрузки данных. Если отсутствует, режим создания нового." }
+            },
+            "generatesUrlParameters": {
+                "competitions_html": {} // Возврат к списку турниров
+            },
+            "usesExternalServices": ["NotificationService"],
+            "dependsOnDomainsData": ["domain-profiles"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const tournamentId = params.get('tournamentId');
+            let currentTournament = null;
+
+            const form = document.getElementById('tournament-form');
+            const tournamentNameInput = document.getElementById('tournamentName');
+            const tournamentDateInput = document.getElementById('tournamentDate');
+            const tournamentTypeSelect = document.getElementById('tournamentType');
+            const tournamentFormatSelect = document.getElementById('tournamentFormat');
+            const participantSelectionDiv = document.getElementById('participant-selection');
+            const tournamentResultsDiv = document.getElementById('tournament-results');
+
+            const allStudents = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+
+            function renderParticipantCheckboxes(selectedParticipantIds = []) {
+                participantSelectionDiv.innerHTML = '';
+                if (allStudents.length === 0) {
+                    participantSelectionDiv.innerHTML = '<p>Нет доступных учеников для участия в турнире.</p>';
+                    return;
+                }
+                allStudents.forEach(student => {
+                    const div = document.createElement('div');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `participant-${student.id}`;
+                    checkbox.value = student.id;
+                    if (selectedParticipantIds.includes(student.id)) {
+                        checkbox.checked = true;
+                    }
+                    const label = document.createElement('label');
+                    label.htmlFor = `participant-${student.id}`;
+                    label.textContent = student.name;
+                    div.appendChild(checkbox);
+                    div.appendChild(label);
+                    participantSelectionDiv.appendChild(div);
+                });
+            }
+
+            function renderTournamentResults(tournament) {
+                tournamentResultsDiv.innerHTML = '';
+                if (!tournament || !tournament.participantIds || tournament.participantIds.length === 0) {
+                    tournamentResultsDiv.innerHTML = '<p>Нет участников для отображения результатов.</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Участник</th>
+                            <th>Очки</th>
+                            <th>Место</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
+                const participantsWithScores = tournament.participantIds.map(pId => {
+                    const student = allStudents.find(s => s.id === pId);
+                    return {
+                        id: pId,
+                        name: student ? student.name : 'Неизвестный',
+                        score: tournament.results ? (tournament.results[pId] || 0) : 0
+                    };
+                }).sort((a, b) => b.score - a.score); // Сортировка по убыванию очков
+
+                participantsWithScores.forEach((p, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${p.name}</td>
+                        <td><input type="number" value="${p.score}" data-participant-id="${p.id}" onchange="updateTournamentScore('${tournament.id}', this.dataset.participantId, this.value)"></td>
+                        <td>${index + 1}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                tournamentResultsDiv.appendChild(table);
+            }
+
+            if (tournamentId) {
+                const tournaments = JSON.parse(localStorage.getItem('bowlingApp_tournaments') || '[]');
+                currentTournament = tournaments.find(t => t.id === tournamentId);
+
+                if (currentTournament) {
+                    document.querySelector('h2').textContent = `Управлять турниром: ${currentTournament.name}`;
+                    tournamentNameInput.value = currentTournament.name;
+                    tournamentDateInput.value = currentTournament.date;
+                    tournamentTypeSelect.value = currentTournament.type;
+                    tournamentFormatSelect.value = currentTournament.format;
+                    renderParticipantCheckboxes(currentTournament.participantIds || []);
+                    renderTournamentResults(currentTournament);
+                } else {
+                    alert('Турнир не найден!');
+                    window.location.href = 'competitions.html';
+                }
+            } else {
+                document.querySelector('h2').textContent = 'Создать новый турнир';
+                renderParticipantCheckboxes();
+            }
+
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const tournaments = JSON.parse(localStorage.getItem('bowlingApp_tournaments') || '[]');
+                const selectedParticipantIds = Array.from(participantSelectionDiv.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+                const newTournamentData = {
+                    name: tournamentNameInput.value,
+                    date: tournamentDateInput.value,
+                    type: tournamentTypeSelect.value,
+                    format: tournamentFormatSelect.value,
+                    participantIds: selectedParticipantIds
+                };
+
+                if (tournamentId && currentTournament) {
+                    // Редактирование существующего
+                    const index = tournaments.findIndex(t => t.id === tournamentId);
+                    if (index !== -1) {
+                        // Сохраняем существующие результаты при редактировании турнира
+                        tournaments[index] = { ...currentTournament, ...newTournamentData, id: tournamentId, results: currentTournament.results || {} };
+                    }
+                } else {
+                    // Добавление нового
+                    newTournamentData.id = generateId();
+                    newTournamentData.results = {}; // Инициализируем пустые результаты
+                    tournaments.push(newTournamentData);
+                }
+
+                localStorage.setItem('bowlingApp_tournaments', JSON.stringify(tournaments));
+                alert('Турнир сохранен!');
+                window.location.href = 'competitions.html';
+            };
+
+            document.getElementById('cancel-btn').onclick = () => {
+                window.location.href = 'competitions.html';
+            };
+        });
+
+        function updateTournamentScore(tournamentId, participantId, score) {
+            const tournaments = JSON.parse(localStorage.getItem('bowlingApp_tournaments') || '[]');
+            const tournamentIndex = tournaments.findIndex(t => t.id === tournamentId);
+
+            if (tournamentIndex !== -1) {
+                if (!tournaments[tournamentIndex].results) {
+                    tournaments[tournamentIndex].results = {};
+                }
+                tournaments[tournamentIndex].results[participantId] = parseInt(score) || 0;
+                localStorage.setItem('bowlingApp_tournaments', JSON.stringify(tournaments));
+                // Перерендерить результаты, чтобы обновить места
+                // Note: requires re-finding the currentTournament object after saving
+                const updatedTournament = tournaments[tournamentIndex];
+                const allStudents = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+                const tournamentResultsDiv = document.getElementById('tournament-results');
+                tournamentResultsDiv.innerHTML = ''; // Clear to re-render
+                renderTournamentResults(updatedTournament); // Re-render results
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Создать новый турнир</h2>
+        <form id="tournament-form">
+            <div class="form-group">
+                <label for="tournamentName">Название турнира:</label>
+                <input type="text" id="tournamentName" required>
+            </div>
+            <div class="form-group">
+                <label for="tournamentDate">Дата проведения:</label>
+                <input type="date" id="tournamentDate" required>
+            </div>
+            <div class="form-group">
+                <label for="tournamentType">Тип турнира:</label>
+                <select id="tournamentType" required>
+                    <option value="individual">Индивидуальный</option>
+                    <option value="pair">Парный</option>
+                    <option value="team">Командный</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tournamentFormat">Формат турнира:</label>
+                <select id="tournamentFormat" required>
+                    <option value="olympic">Олимпийская система (на выбывание)</option>
+                    <option value="round_robin">Круговая система</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Участники:</label>
+                <div id="participant-selection" class="participant-selection">
+                    <!-- Список учеников с чекбоксами загружается JS -->
+                </div>
+            </div>
+            <div class="actions">
+                <button type="button" id="cancel-btn" class="button cancel">Отмена</button>
+                <button type="submit" class="button">Сохранить турнир</button>
+            </div>
+        </form>
+
+        <div id="tournament-results" class="tournament-results">
+            <h3>Результаты и Рейтинг</h3>
+            <!-- Результаты турнира загружаются JS -->
+        </div>
+    </div>
+</body>
+</html>

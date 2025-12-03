@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Турниры</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 900px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .button { background-color: #28a745; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .button:hover { background-color: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .edit-btn, .delete-btn { background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px; }
+        .delete-btn { background-color: #dc3545; }
+        .edit-btn:hover { background-color: #0056b3; }
+        .delete-btn:hover { background-color: #c82333; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-competitions",
+            "description": "Страница для просмотра списка турниров и создания новых.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_tournaments",
+                "bowlingApp_students" // Для отображения имен участников
+            ],
+            "writesToLocalStorageKeys": [],
+            "expectsUrlParameters": {},
+            "generatesUrlParameters": {
+                "competition_detail.html": { "tournamentId": { "type": "string", "description": "ID турнира для управления" } }
+            },
+            "usesExternalServices": ["NotificationService"],
+            "dependsOnDomainsData": ["domain-profiles"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTournaments();
+        });
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function loadTournaments() {
+            const tournaments = JSON.parse(localStorage.getItem('bowlingApp_tournaments') || '[]');
+            const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+            const tournamentListDiv = document.getElementById('tournament-list');
+            tournamentListDiv.innerHTML = '';
+
+            if (tournaments.length === 0) {
+                tournamentListDiv.innerHTML = '<p>Пока нет зарегистрированных турниров.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Дата</th>
+                        <th>Участников</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            const tbody = table.querySelector('tbody');
+
+            tournaments.forEach(tournament => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${tournament.name}</td>
+                    <td>${tournament.date}</td>
+                    <td>${tournament.participantIds ? tournament.participantIds.length : 0}</td>
+                    <td>
+                        <a href="competition_detail.html?tournamentId=${tournament.id}" class="edit-btn">Управлять</a>
+                        <button class="delete-btn" data-id="${tournament.id}">Удалить</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            tournamentListDiv.appendChild(table);
+            addDeleteTournamentListeners();
+        }
+
+        function addDeleteTournamentListeners() {
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.onclick = (e) => {
+                    if (!confirm('Вы уверены, что хотите удалить этот турнир?')) return;
+                    const idToDelete = e.target.dataset.id;
+                    let tournaments = JSON.parse(localStorage.getItem('bowlingApp_tournaments') || '[]');
+                    tournaments = tournaments.filter(t => t.id !== idToDelete);
+                    localStorage.setItem('bowlingApp_tournaments', JSON.stringify(tournaments));
+                    loadTournaments();
+                };
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="section-header">
+            <h2>Турниры</h2>
+            <a href="competition_detail.html" class="button">Создать турнир</a>
+        </div>
+        <div id="tournament-list">
+            <!-- Список турниров загружается JS -->
+        </div>
+    </div>
+</body>
+</html>

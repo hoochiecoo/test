@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Расписание</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 900px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .button { background-color: #28a745; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .button:hover { background-color: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .actions-col { width: 150px; }
+        .attendance-checkbox { transform: scale(1.2); margin-right: 5px; }
+        .add-training-form { border: 1px solid #ddd; padding: 15px; margin-top: 20px; border-radius: 5px; background-color: #f9f9f9; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input[type="date"], .form-group input[type="time"], .form-group select {
+            width: calc(100% - 20px); padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+        }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-training",
+            "description": "Страница для управления расписанием тренировок и отметкой посещаемости.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_trainings",
+                "bowlingApp_students",
+                "bowlingApp_groups"
+            ],
+            "writesToLocalStorageKeys": [
+                "bowlingApp_trainings" // Добавление, изменение, отметка посещаемости
+            ],
+            "expectsUrlParameters": {},
+            "generatesUrlParameters": {
+                "training_plan.html": { "studentId": { "type": "string", "description": "ID ученика для создания/редактирования ИТП" } }
+            },
+            "usesExternalServices": ["NotificationService"],
+            "dependsOnDomainsData": ["domain-profiles"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTrainings();
+            populateSelects();
+
+            document.getElementById('add-training-form').onsubmit = addTraining;
+        });
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function populateSelects() {
+            const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+            const groups = JSON.parse(localStorage.getItem('bowlingApp_groups') || '[]');
+            const studentSelect = document.getElementById('trainingStudents');
+            const groupSelect = document.getElementById('trainingGroup');
+
+            studentSelect.innerHTML = '<option value="">Выберите учеников</option>';
+            groupSelect.innerHTML = '<option value="">Выберите группу</option>';
+
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = student.name;
+                studentSelect.appendChild(option);
+            });
+
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                groupSelect.appendChild(option);
+            });
+        }
+
+        function loadTrainings() {
+            const trainings = JSON.parse(localStorage.getItem('bowlingApp_trainings') || '[]')
+                                .sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+            const trainingListDiv = document.getElementById('training-list');
+            trainingListDiv.innerHTML = '';
+
+            if (trainings.length === 0) {
+                trainingListDiv.innerHTML = '<p>Пока нет запланированных тренировок.</p>';
+                return;
+            }
+
+            const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+            const groups = JSON.parse(localStorage.getItem('bowlingApp_groups') || '[]');
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Дорожка</th>
+                        <th>Участники / Группа</th>
+                        <th>Тема</th>
+                        <th>Посещаемость</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            const tbody = table.querySelector('tbody');
+
+            trainings.forEach(training => {
+                const tr = document.createElement('tr');
+                const participantsText = training.groupId
+                    ? groups.find(g => g.id === training.groupId)?.name || 'Неизвестная группа'
+                    : (training.studentIds || []).map(sId => students.find(s => s.id === sId)?.name || 'Неизвестный ученик').join(', ');
+
+                const attendanceHtml = (training.studentIds || []).map(sId => {
+                    const studentName = students.find(s => s.id === sId)?.name || sId;
+                    const isPresent = training.attendance && training.attendance[sId];
+                    return `
+                        <label>
+                            <input type="checkbox" class="attendance-checkbox" data-training-id="${training.id}" data-student-id="${sId}" ${isPresent ? 'checked' : ''}>
+                            ${studentName}
+                        </label><br>
+                    `;
+                }).join('');
+
+                tr.innerHTML = `
+                    <td>${training.date}</td>
+                    <td>${training.time}</td>
+                    <td>${training.lane || '-'}</td>
+                    <td>${participantsText}</td>
+                    <td>${training.topic || '-'}</td>
+                    <td>${attendanceHtml}</td>
+                    <td class="actions-col">
+                        <button class="button delete-btn" data-id="${training.id}">Удалить</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            trainingListDiv.appendChild(table);
+            addAttendanceListeners();
+            addDeleteTrainingListeners();
+        }
+
+        function addTraining(e) {
+            e.preventDefault();
+            const date = document.getElementById('trainingDate').value;
+            const time = document.getElementById('trainingTime').value;
+            const lane = document.getElementById('trainingLane').value;
+            const studentIds = Array.from(document.getElementById('trainingStudents').selectedOptions).map(opt => opt.value);
+            const groupId = document.getElementById('trainingGroup').value;
+            const topic = document.getElementById('trainingTopic').value;
+
+            if (!date || !time || (!studentIds.length && !groupId)) {
+                alert('Пожалуйста, заполните дату, время и выберите учеников или группу.');
+                return;
+            }
+
+            const newTraining = {
+                id: generateId(),
+                date,
+                time,
+                lane,
+                studentIds: studentIds.length ? studentIds : [],
+                groupId: groupId || null,
+                topic,
+                attendance: {}
+            };
+
+            const trainings = JSON.parse(localStorage.getItem('bowlingApp_trainings') || '[]');
+            trainings.push(newTraining);
+            localStorage.setItem('bowlingApp_trainings', JSON.stringify(trainings));
+            alert('Тренировка добавлена!');
+            document.getElementById('add-training-form').reset();
+            loadTrainings();
+        }
+
+        function addAttendanceListeners() {
+            document.querySelectorAll('.attendance-checkbox').forEach(checkbox => {
+                checkbox.onchange = (e) => {
+                    const trainingId = e.target.dataset.trainingId;
+                    const studentId = e.target.dataset.studentId;
+                    const isChecked = e.target.checked;
+
+                    const trainings = JSON.parse(localStorage.getItem('bowlingApp_trainings') || '[]');
+                    const trainingIndex = trainings.findIndex(t => t.id === trainingId);
+
+                    if (trainingIndex !== -1) {
+                        if (!trainings[trainingIndex].attendance) {
+                            trainings[trainingIndex].attendance = {};
+                        }
+                        trainings[trainingIndex].attendance[studentId] = isChecked;
+                        localStorage.setItem('bowlingApp_trainings', JSON.stringify(trainings));
+                        // alert('Посещаемость обновлена!'); // Для обратной связи, можно убрать
+                    }
+                };
+            });
+        }
+
+        function addDeleteTrainingListeners() {
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.onclick = (e) => {
+                    if (!confirm('Вы уверены, что хотите удалить эту тренировку?')) return;
+                    const idToDelete = e.target.dataset.id;
+                    let trainings = JSON.parse(localStorage.getItem('bowlingApp_trainings') || '[]');
+                    trainings = trainings.filter(t => t.id !== idToDelete);
+                    localStorage.setItem('bowlingApp_trainings', JSON.stringify(trainings));
+                    loadTrainings();
+                };
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="section-header">
+            <h2>Расписание Тренировок</h2>
+        </div>
+        <div id="training-list">
+            <!-- Расписание загружается JS -->
+        </div>
+
+        <div class="add-training-form">
+            <h3>Добавить новую тренировку</h3>
+            <form id="add-training-form">
+                <div class="form-group">
+                    <label for="trainingDate">Дата:</label>
+                    <input type="date" id="trainingDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="trainingTime">Время:</label>
+                    <input type="time" id="trainingTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="trainingLane">Дорожка (опционально):</label>
+                    <input type="text" id="trainingLane">
+                </div>
+                <div class="form-group">
+                    <label for="trainingGroup">Группа:</label>
+                    <select id="trainingGroup">
+                        <option value="">Не выбрана</option>
+                        <!-- Группы загружаются JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trainingStudents">Индивидуальные ученики (выберите несколько с Ctrl/Cmd):</label>
+                    <select id="trainingStudents" multiple size="3">
+                        <!-- Ученики загружаются JS -->
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="trainingTopic">Тема/фокус тренировки (опционально):</label>
+                    <input type="text" id="trainingTopic">
+                </div>
+                <button type="submit" class="button">Добавить тренировку</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

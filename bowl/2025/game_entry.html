@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Ввод Игры</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 800px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input[type="date"] {
+            width: calc(100% - 20px); padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+        }
+        .frames-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr) 0.5fr; /* 5 фреймов и столбец для счета */
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .frame-input-group { border: 1px solid #eee; padding: 10px; border-radius: 4px; }
+        .frame-input-group label { font-weight: normal; font-size: 0.9em; }
+        .frame-input-group input { width: calc(100% - 20px); padding: 5px; border: 1px solid #ccc; border-radius: 3px; }
+        .frame-score { font-weight: bold; text-align: center; margin-top: 5px; }
+        .total-score { font-size: 1.5em; font-weight: bold; text-align: right; margin-top: 20px; color: #0056b3; }
+        .actions { text-align: right; margin-top: 20px; }
+        .button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .button:hover { background-color: #218838; }
+        .back-button { background-color: #6c757d; margin-right: 10px;}
+        .back-button:hover { background-color: #5a6268; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-analysis",
+            "description": "Интерфейс для быстрого ввода результатов игры по фреймам для одного ученика.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_students", // Для выбора игрока
+                "bowlingApp_games",    // Для загрузки существующих игр (если понадобится редактирование)
+                "bowlingApp_authState" // Для идентификации тренера
+            ],
+            "writesToLocalStorageKeys": [
+                "bowlingApp_games",    // Записывает результаты новой игры
+                "bowlingApp_students"  // Обновляет средний счет ученика
+            ],
+            "expectsUrlParameters": {}, // Не ожидает параметров при открытии
+            "generatesUrlParameters": {
+                "analytics_html": {} // Возможно, ссылка на аналитику после сохранения
+            },
+            "usesExternalServices": ["AuthService", "NotificationService"],
+            "dependsOnDomainsData": ["domain-profiles"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudentsToSelect();
+            renderFrameInputs();
+            document.getElementById('game-form').onsubmit = saveGame;
+            document.getElementById('back-to-dashboard').onclick = () => window.location.href = 'index.html';
+        });
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function loadStudentsToSelect() {
+            const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+            const studentSelect = document.getElementById('studentSelect');
+            studentSelect.innerHTML = '<option value="">Выберите ученика</option>';
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = student.name;
+                studentSelect.appendChild(option);
+            });
+        }
+
+        function renderFrameInputs() {
+            const framesGrid = document.getElementById('frames-input');
+            framesGrid.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const frameGroup = document.createElement('div');
+                frameGroup.className = 'frame-input-group';
+                frameGroup.innerHTML = `
+                    <label>Фрейм ${i}</label>
+                    <input type="number" data-frame="${i}" data-roll="1" min="0" max="10" oninput="calculateScore()">
+                    <input type="number" data-frame="${i}" data-roll="2" min="0" max="10" oninput="calculateScore()">
+                    <span class="frame-score" id="frame-score-${i}">0</span>
+                `;
+                framesGrid.appendChild(frameGroup);
+
+                // Дополнительный input для 3-го броска в 10-м фрейме при страйке/спэре
+                if (i === 10) {
+                    const roll3Input = document.createElement('input');
+                    roll3Input.type = 'number';
+                    roll3Input.dataset.frame = '10';
+                    roll3Input.dataset.roll = '3';
+                    roll3Input.min = '0';
+                    roll3Input.max = '10';
+                    roll3Input.oninput = calculateScore;
+                    roll3Input.style.display = 'none'; // Изначально скрыт
+                    roll3Input.placeholder = '3-й бросок';
+                    frameGroup.appendChild(roll3Input);
+                }
+            }
+        }
+
+        function calculateScore() {
+            const inputs = document.querySelectorAll('#frames-input input[type="number"]');
+            const frames = [];
+            for (let i = 0; i < 10; i++) {
+                frames[i] = { rolls: [], score: 0, total: 0 };
+            }
+
+            let currentRollIndex = 0;
+            inputs.forEach(input => {
+                const frameNum = parseInt(input.dataset.frame) - 1; // 0-9
+                const rollNum = parseInt(input.dataset.roll);
+                const value = input.value === '' ? null : parseInt(input.value);
+
+                if (value !== null) {
+                    frames[frameNum].rolls.push(value);
+                }
+
+                // Управление видимостью 3-го броска в 10-м фрейме
+                if (frameNum === 9 && rollNum === 2) {
+                    const roll1 = frames[9].rolls[0] || 0;
+                    const roll2 = frames[9].rolls[1] || 0;
+                    const roll3Input = document.querySelector(`input[data-frame="10"][data-roll="3"]`);
+                    if (roll3Input) {
+                        if (roll1 + roll2 >= 10) { // Strike or Spare in 10th frame
+                            roll3Input.style.display = 'inline-block';
+                        } else {
+                            roll3Input.style.display = 'none';
+                            roll3Input.value = ''; // Сбрасываем значение, если скрыт
+                        }
+                    }
+                }
+            });
+
+            let totalGameScore = 0;
+            for (let i = 0; i < 10; i++) {
+                const rolls = frames[i].rolls;
+                let frameScore = 0;
+
+                if (i < 9) { // Frames 1-9
+                    if (rolls[0] === 10) { // Strike
+                        frameScore = 10;
+                        const nextFrameRoll1 = frames[i + 1]?.rolls[0] || 0;
+                        const nextFrameRoll2 = frames[i + 1]?.rolls[1] || 0;
+
+                        if (nextFrameRoll1 === 10 && i + 2 < 10) { // Double strike
+                            frameScore += 10 + (frames[i + 2]?.rolls[0] || 0);
+                        } else if (nextFrameRoll1 === 10 && i + 2 === 10) { // Strike in 9th, strike in 10th
+                            frameScore += 10 + (frames[i + 1]?.rolls[1] || 0);
+                        }
+                        else {
+                            frameScore += nextFrameRoll1 + nextFrameRoll2;
+                        }
+
+                    } else if (rolls[0] + rolls[1] === 10) { // Spare
+                        frameScore = 10 + (frames[i + 1]?.rolls[0] || 0);
+                    } else { // Open frame
+                        frameScore = (rolls[0] || 0) + (rolls[1] || 0);
+                    }
+                } else { // 10th frame
+                    frameScore = (rolls[0] || 0) + (rolls[1] || 0) + (rolls[2] || 0);
+                }
+
+                frames[i].score = frameScore;
+                totalGameScore += frameScore;
+                document.getElementById(`frame-score-${i + 1}`).textContent = frameScore;
+            }
+            document.getElementById('total-score').textContent = `Итоговый счет: ${totalGameScore}`;
+        }
+
+
+        function saveGame(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('studentSelect').value;
+            const gameDate = document.getElementById('gameDate').value;
+
+            if (!studentId || !gameDate) {
+                alert('Пожалуйста, выберите ученика и дату игры.');
+                return;
+            }
+
+            const inputs = document.querySelectorAll('#frames-input input[type="number"]');
+            const gameFrames = [];
+            let totalScore = 0;
+
+            const tempFrames = [];
+            for (let i = 0; i < 10; i++) {
+                tempFrames[i] = { rolls: [], score: 0 };
+            }
+
+            // Collect rolls
+            inputs.forEach(input => {
+                const frameNum = parseInt(input.dataset.frame) - 1;
+                const rollNum = parseInt(input.dataset.roll);
+                const value = input.value === '' ? 0 : parseInt(input.value); // Treat empty as 0 for calculation, or null if preferred
+
+                if (tempFrames[frameNum] && value !== null) {
+                    tempFrames[frameNum].rolls.push(value);
+                }
+            });
+
+            // Calculate actual score using standard rules for saving
+            let runningScore = 0;
+            for (let i = 0; i < 10; i++) {
+                const currentRolls = tempFrames[i].rolls;
+                let roll1 = currentRolls[0] || 0;
+                let roll2 = currentRolls[1] || 0;
+                let roll3 = currentRolls[2] || 0; // Only for 10th frame
+
+                let frameScore = roll1 + roll2;
+
+                if (i < 9) {
+                    if (roll1 === 10) { // Strike
+                        frameScore += (tempFrames[i+1]?.rolls[0] || 0) + (tempFrames[i+1]?.rolls[1] || 0);
+                        if ((tempFrames[i+1]?.rolls[0] || 0) === 10 && i+2 < 10) { // Double strike
+                            frameScore += (tempFrames[i+2]?.rolls[0] || 0);
+                        } else if ((tempFrames[i+1]?.rolls[0] || 0) === 10 && i+2 === 10) { // 9th strike, 10th strike
+                            frameScore += (tempFrames[i+1]?.rolls[1] || 0);
+                        }
+                    } else if (roll1 + roll2 === 10) { // Spare
+                        frameScore += (tempFrames[i+1]?.rolls[0] || 0);
+                    }
+                } else { // 10th frame
+                    frameScore += roll3;
+                }
+                runningScore += frameScore;
+                gameFrames.push({ frame: i + 1, rolls: currentRolls, score: frameScore });
+            }
+            totalScore = runningScore;
+
+            const newGame = {
+                id: generateId(),
+                studentId: studentId,
+                date: gameDate,
+                score: totalScore,
+                details: gameFrames
+            };
+
+            const games = JSON.parse(localStorage.getItem('bowlingApp_games') || '[]');
+            games.push(newGame);
+            localStorage.setItem('bowlingApp_games', JSON.stringify(games));
+
+            // Обновляем средний счет ученика
+            updateStudentAverageScore(studentId);
+
+            alert('Игра сохранена! Итоговый счет: ' + totalScore);
+            window.location.href = 'analytics.html'; // Перенаправляем на страницу аналитики
+        }
+
+        function updateStudentAverageScore(studentId) {
+            const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+            const studentIndex = students.findIndex(s => s.id === studentId);
+
+            if (studentIndex !== -1) {
+                const allGames = JSON.parse(localStorage.getItem('bowlingApp_games') || '[]');
+                const studentGames = allGames.filter(game => game.studentId === studentId);
+                
+                if (studentGames.length > 0) {
+                    const totalScores = studentGames.reduce((sum, game) => sum + game.score, 0);
+                    students[studentIndex].avgScore = Math.round(totalScores / studentGames.length);
+                } else {
+                    students[studentIndex].avgScore = 0;
+                }
+                localStorage.setItem('bowlingApp_students', JSON.stringify(students));
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Ввод результатов игры</h2>
+        <form id="game-form">
+            <div class="form-group">
+                <label for="studentSelect">Ученик:</label>
+                <select id="studentSelect" required>
+                    <!-- Ученики загружаются JS -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="gameDate">Дата игры:</label>
+                <input type="date" id="gameDate" required value="<?php echo date('Y-m-d'); ?>">
+                <script>
+                    // Установка текущей даты по умолчанию
+                    document.getElementById('gameDate').valueAsDate = new Date();
+                </script>
+            </div>
+
+            <div class="frames-grid" id="frames-input">
+                <!-- Поля ввода фреймов генерируются JS -->
+            </div>
+
+            <div class="total-score" id="total-score">Итоговый счет: 0</div>
+
+            <div class="actions">
+                <button type="button" id="back-to-dashboard" class="button back-button">К дашборду</button>
+                <button type="submit" class="button">Сохранить игру</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

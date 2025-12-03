@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Профиль Ученика</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 600px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], select, textarea {
+            width: calc(100% - 20px);
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea { resize: vertical; min-height: 60px; }
+        .actions { text-align: right; margin-top: 20px; }
+        .button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; margin-left: 10px; }
+        .button.cancel { background-color: #6c757d; }
+        .button:hover { background-color: #0056b3; }
+        .button.cancel:hover { background-color: #5a6268; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-profiles",
+            "description": "Страница для создания или редактирования профиля ученика.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_students",
+                "bowlingApp_groups", // Для отображения групп при выборе (если в форме есть)
+                "bowlingApp_authState" // Для проверки авторизации тренера
+            ],
+            "writesToLocalStorageKeys": [
+                "bowlingApp_students" // Сохранение/обновление профиля ученика
+            ],
+            "expectsUrlParameters": {
+                "studentId": { "type": "string", "required": false, "description": "ID ученика для загрузки данных. Если отсутствует, режим создания нового." }
+            },
+            "generatesUrlParameters": {
+                "profiles_html": {} // Возврат на список профилей
+            },
+            "usesExternalServices": ["AuthService", "NotificationService"],
+            "dependsOnDomainsData": ["domain-profiles"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const studentId = params.get('studentId');
+            let currentStudent = null;
+
+            const form = document.getElementById('student-form');
+            const studentNameInput = document.getElementById('studentName');
+            const studentAgeInput = document.getElementById('studentAge');
+            const studentGenderSelect = document.getElementById('studentGender');
+            const studentHandSelect = document.getElementById('studentHand');
+            const studentBallTypeInput = document.getElementById('studentBallType');
+            const studentBallWeightInput = document.getElementById('studentBallWeight');
+            const studentPlayStyleInput = document.getElementById('studentPlayStyle');
+            const studentGoalsInput = document.getElementById('studentGoals');
+
+            if (studentId) {
+                const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+                currentStudent = students.find(s => s.id === studentId);
+
+                if (currentStudent) {
+                    document.querySelector('h2').textContent = `Редактировать профиль: ${currentStudent.name}`;
+                    studentNameInput.value = currentStudent.name;
+                    studentAgeInput.value = currentStudent.age;
+                    studentGenderSelect.value = currentStudent.gender;
+                    studentHandSelect.value = currentStudent.hand;
+                    studentBallTypeInput.value = currentStudent.ballType || '';
+                    studentBallWeightInput.value = currentStudent.ballWeight || '';
+                    studentPlayStyleInput.value = currentStudent.playStyle || '';
+                    studentGoalsInput.value = (currentStudent.goals || []).join('\n');
+                } else {
+                    alert('Ученик не найден!');
+                    window.location.href = 'profiles.html';
+                }
+            } else {
+                document.querySelector('h2').textContent = 'Добавить нового ученика';
+            }
+
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+
+                const newStudentData = {
+                    name: studentNameInput.value,
+                    age: parseInt(studentAgeInput.value),
+                    gender: studentGenderSelect.value,
+                    hand: studentHandSelect.value,
+                    ballType: studentBallTypeInput.value,
+                    ballWeight: parseFloat(studentBallWeightInput.value),
+                    playStyle: studentPlayStyleInput.value,
+                    goals: studentGoalsInput.value.split('\n').map(g => g.trim()).filter(g => g !== ''),
+                    avgScore: currentStudent ? currentStudent.avgScore : 0 // Сохраняем средний счет, если редактируем
+                };
+
+                if (studentId && currentStudent) {
+                    // Редактирование существующего
+                    const index = students.findIndex(s => s.id === studentId);
+                    if (index !== -1) {
+                        students[index] = { ...currentStudent, ...newStudentData, id: studentId };
+                    }
+                } else {
+                    // Добавление нового
+                    newStudentData.id = Date.now().toString(); // Простой ID
+                    students.push(newStudentData);
+                }
+
+                localStorage.setItem('bowlingApp_students', JSON.stringify(students));
+                alert('Профиль ученика сохранен!');
+                window.location.href = 'profiles.html'; // Возврат на список
+            };
+
+            document.getElementById('cancel-btn').onclick = () => {
+                window.location.href = 'profiles.html';
+            };
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Добавить нового ученика</h2>
+        <form id="student-form">
+            <div class="form-group">
+                <label for="studentName">Имя:</label>
+                <input type="text" id="studentName" required>
+            </div>
+            <div class="form-group">
+                <label for="studentAge">Возраст:</label>
+                <input type="number" id="studentAge" required min="5">
+            </div>
+            <div class="form-group">
+                <label for="studentGender">Пол:</label>
+                <select id="studentGender" required>
+                    <option value="">Выберите</option>
+                    <option value="male">Мужской</option>
+                    <option value="female">Женский</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="studentHand">Предпочитаемая рука:</label>
+                <select id="studentHand" required>
+                    <option value="">Выберите</option>
+                    <option value="right">Правая</option>
+                    <option value="left">Левая</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="studentBallType">Тип шара (например, Хук, Стрейт):</label>
+                <input type="text" id="studentBallType">
+            </div>
+            <div class="form-group">
+                <label for="studentBallWeight">Вес основного шара (фунты):</label>
+                <input type="number" id="studentBallWeight" step="0.5" min="6" max="16">
+            </div>
+            <div class="form-group">
+                <label for="studentPlayStyle">Стиль игры (например, Атакующий, Защитный):</label>
+                <input type="text" id="studentPlayStyle">
+            </div>
+            <div class="form-group">
+                <label for="studentGoals">Цели ученика (каждая с новой строки):</label>
+                <textarea id="studentGoals"></textarea>
+            </div>
+            <div class="actions">
+                <button type="button" id="cancel-btn" class="button cancel">Отмена</button>
+                <button type="submit" class="button">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

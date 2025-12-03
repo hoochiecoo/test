@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Настройки</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 600px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select {
+            width: calc(100% - 20px); padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+        }
+        .actions { text-align: right; margin-top: 20px; }
+        .button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; margin-left: 10px; }
+        .button.danger { background-color: #dc3545; }
+        .button:hover { background-color: #0056b3; }
+        .button.danger:hover { background-color: #c82333; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-admin",
+            "description": "Страница для управления глобальными настройками приложения и выполнения административных действий.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_settings",
+                "bowlingApp_authState" // Для проверки роли администратора, если есть
+            ],
+            "writesToLocalStorageKeys": [
+                "bowlingApp_settings",
+                "bowlingApp_students", // Для очистки
+                "bowlingApp_groups",   // Для очистки
+                "bowlingApp_trainings", // Для очистки
+                "bowlingApp_itps",     // Для очистки
+                "bowlingApp_games",    // Для очистки
+                "bowlingApp_tournaments", // Для очистки
+                "bowlingApp_notifications" // Для очистки
+            ],
+            "expectsUrlParameters": {},
+            "generatesUrlParameters": {},
+            "usesExternalServices": ["AuthService", "NotificationService"],
+            "dependsOnDomainsData": []
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            document.getElementById('settings-form').onsubmit = saveSettings;
+            document.getElementById('clear-data-btn').onclick = clearAllData;
+        });
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('bowlingApp_settings') || '{}');
+            document.getElementById('themeSelect').value = settings.theme || 'light';
+            document.getElementById('notificationsToggle').checked = settings.notifications !== false;
+        }
+
+        function saveSettings(e) {
+            e.preventDefault();
+            const newSettings = {
+                theme: document.getElementById('themeSelect').value,
+                notifications: document.getElementById('notificationsToggle').checked
+            };
+            localStorage.setItem('bowlingApp_settings', JSON.stringify(newSettings));
+            alert('Настройки сохранены!');
+            // Применение темы, если это реализовано
+            // document.body.className = newSettings.theme;
+        }
+
+        function clearAllData() {
+            if (confirm('Вы уверены? Все данные приложения будут безвозвратно удалены!')) {
+                localStorage.clear();
+                alert('Все данные приложения удалены!');
+                window.location.href = 'index.html'; // Перезагрузить приложение
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Настройки Приложения</h2>
+        <form id="settings-form">
+            <div class="form-group">
+                <label for="themeSelect">Тема оформления:</label>
+                <select id="themeSelect">
+                    <option value="light">Светлая</option>
+                    <option value="dark">Темная</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="notificationsToggle">
+                    <input type="checkbox" id="notificationsToggle">
+                    Включить уведомления
+                </label>
+            </div>
+            <div class="actions">
+                <button type="submit" class="button">Сохранить настройки</button>
+            </div>
+        </form>
+
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            <h3>Административные действия</h3>
+            <button type="button" id="clear-data-btn" class="button danger">Очистить все данные</button>
+            <p style="font-size: 0.9em; color: #888;">Это действие безвозвратно удалит все сохраненные данные.</p>
+        </div>
+    </div>
+</body>
+</html>

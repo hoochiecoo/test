@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Индивидуальный План</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 800px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; margin-bottom: 20px; }
+        .plan-header { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .plan-header span { font-weight: bold; }
+        .task-list { list-style: none; padding: 0; }
+        .task-item { background-color: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; }
+        .task-item.completed { text-decoration: line-through; color: #888; background-color: #e6ffe6; }
+        .task-checkbox { margin-right: 10px; transform: scale(1.2); }
+        .task-details { flex-grow: 1; }
+        .task-comments { font-size: 0.9em; color: #555; margin-top: 5px; }
+        .add-task-form { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: calc(100% - 20px); padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; margin-left: 10px; }
+        .button.back { background-color: #6c757d; }
+        .button:hover { background-color: #0056b3; }
+        .button.back:hover { background-color: #5a6268; }
+        .delete-task-btn { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .delete-task-btn:hover { background-color: #c82333; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-training",
+            "description": "Страница для создания и отслеживания индивидуальных тренировочных планов для ученика.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_itps",
+                "bowlingApp_students"
+            ],
+            "writesToLocalStorageKeys": [
+                "bowlingApp_itps" // Добавление, изменение, отметка выполнения
+            ],
+            "expectsUrlParameters": {
+                "studentId": { "type": "string", "required": true, "description": "ID ученика, для которого отображается ИТП" }
+            },
+            "generatesUrlParameters": {
+                "schedule_html": {} // Возврат к расписанию
+            },
+            "usesExternalServices": ["NotificationService"],
+            "dependsOnDomainsData": ["domain-profiles"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const studentId = params.get('studentId');
+            if (!studentId) {
+                alert('Не указан ID ученика для ИТП.');
+                window.location.href = 'schedule.html';
+                return;
+            }
+
+            const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+            const student = students.find(s => s.id === studentId);
+            if (!student) {
+                alert('Ученик не найден.');
+                window.location.href = 'schedule.html';
+                return;
+            }
+
+            document.getElementById('student-name').textContent = student.name;
+
+            loadITP(studentId);
+            document.getElementById('add-task-form').onsubmit = (e) => addTask(e, studentId);
+            document.getElementById('back-btn').onclick = () => window.location.href = 'schedule.html';
+        });
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function loadITP(studentId) {
+            const itps = JSON.parse(localStorage.getItem('bowlingApp_itps') || '[]');
+            let studentITP = itps.find(p => p.studentId === studentId);
+
+            if (!studentITP) {
+                studentITP = { id: generateId(), studentId: studentId, plan: [] };
+                itps.push(studentITP);
+                localStorage.setItem('bowlingApp_itps', JSON.stringify(itps));
+            }
+
+            renderTasks(studentITP.plan);
+        }
+
+        function renderTasks(tasks) {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<p>Пока нет заданий в плане.</p>';
+                return;
+            }
+
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item ${task.done ? 'completed' : ''}`;
+                li.innerHTML = `
+                    <input type="checkbox" class="task-checkbox" data-task-id="${task.id}" ${task.done ? 'checked' : ''}>
+                    <div class="task-details">
+                        <strong>${task.name}</strong>
+                        ${task.description ? `<p>${task.description}</p>` : ''}
+                        ${task.comments ? `<p class="task-comments">Комментарий: ${task.comments}</p>` : ''}
+                    </div>
+                    <button class="delete-task-btn" data-task-id="${task.id}">Удалить</button>
+                `;
+                taskList.appendChild(li);
+            });
+
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.onchange = (e) => toggleTaskCompletion(e.target.dataset.taskId, studentId, e.target.checked);
+            });
+            document.querySelectorAll('.delete-task-btn').forEach(button => {
+                button.onclick = (e) => deleteTask(e.target.dataset.taskId, studentId);
+            });
+        }
+
+        function addTask(e, studentId) {
+            e.preventDefault();
+            const taskName = document.getElementById('taskName').value;
+            const taskDescription = document.getElementById('taskDescription').value;
+
+            if (!taskName) {
+                alert('Название задания обязательно.');
+                return;
+            }
+
+            const itps = JSON.parse(localStorage.getItem('bowlingApp_itps') || '[]');
+            const studentITP = itps.find(p => p.studentId === studentId);
+
+            if (studentITP) {
+                studentITP.plan.push({
+                    id: generateId(),
+                    name: taskName,
+                    description: taskDescription,
+                    done: false,
+                    comments: ''
+                });
+                localStorage.setItem('bowlingApp_itps', JSON.stringify(itps));
+                renderTasks(studentITP.plan);
+                document.getElementById('add-task-form').reset();
+            }
+        }
+
+        function toggleTaskCompletion(taskId, studentId, isDone) {
+            const itps = JSON.parse(localStorage.getItem('bowlingApp_itps') || '[]');
+            const studentITP = itps.find(p => p.studentId === studentId);
+
+            if (studentITP) {
+                const task = studentITP.plan.find(t => t.id === taskId);
+                if (task) {
+                    task.done = isDone;
+                    localStorage.setItem('bowlingApp_itps', JSON.stringify(itps));
+                    renderTasks(studentITP.plan);
+                }
+            }
+        }
+
+        function deleteTask(taskId, studentId) {
+             if (!confirm('Вы уверены, что хотите удалить это задание?')) return;
+
+            const itps = JSON.parse(localStorage.getItem('bowlingApp_itps') || '[]');
+            const studentITP = itps.find(p => p.studentId === studentId);
+
+            if (studentITP) {
+                studentITP.plan = studentITP.plan.filter(t => t.id !== taskId);
+                localStorage.setItem('bowlingApp_itps', JSON.stringify(itps));
+                renderTasks(studentITP.plan);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Индивидуальный Тренировочный План для <span id="student-name"></span></h2>
+        
+        <div class="plan-header">
+            <button type="button" id="back-btn" class="button back">К расписанию</button>
+        </div>
+
+        <ul id="task-list" class="task-list">
+            <!-- Задания загружаются JS -->
+        </ul>
+
+        <div class="add-task-form">
+            <h3>Добавить новое задание</h3>
+            <form id="add-task-form">
+                <div class="form-group">
+                    <label for="taskName">Название задания:</label>
+                    <input type="text" id="taskName" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Описание:</label>
+                    <textarea id="taskDescription"></textarea>
+                </div>
+                <button type="submit" class="button">Добавить задание</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

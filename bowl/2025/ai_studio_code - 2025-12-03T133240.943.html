@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Ученики и Группы</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 900px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .button { background-color: #28a745; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .button:hover { background-color: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .edit-btn, .delete-btn { background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px; }
+        .delete-btn { background-color: #dc3545; }
+        .edit-btn:hover { background-color: #0056b3; }
+        .delete-btn:hover { background-color: #c82333; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-profiles",
+            "description": "Страница для просмотра списков учеников и групп, а также для навигации к их деталям.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_students",
+                "bowlingApp_groups"
+            ],
+            "writesToLocalStorageKeys": [],
+            "expectsUrlParameters": {},
+            "generatesUrlParameters": {
+                "profile_detail_html": { "studentId": { "type": "string", "description": "ID ученика для редактирования" } },
+                "group_detail_html": { "groupId": { "type": "string", "description": "ID группы для редактирования" } }
+            },
+            "usesExternalServices": [],
+            "dependsOnDomainsData": []
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudents();
+            loadGroups();
+        });
+
+        function loadStudents() {
+            const students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+            const studentListDiv = document.getElementById('student-list');
+            studentListDiv.innerHTML = ''; // Очистить предыдущий список
+
+            if (students.length === 0) {
+                studentListDiv.innerHTML = '<p>Пока нет зарегистрированных учеников.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Имя</th>
+                        <th>Средний счет</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            const tbody = table.querySelector('tbody');
+
+            students.forEach(student => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${student.name}</td>
+                    <td>${student.avgScore || '-'}</td>
+                    <td>
+                        <a href="profile_detail.html?studentId=${student.id}" class="edit-btn">Редактировать</a>
+                        <button class="delete-btn" data-id="${student.id}" data-type="student">Удалить</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            studentListDiv.appendChild(table);
+            addDeleteListeners();
+        }
+
+        function loadGroups() {
+            const groups = JSON.parse(localStorage.getItem('bowlingApp_groups') || '[]');
+            const groupListDiv = document.getElementById('group-list');
+            groupListDiv.innerHTML = ''; // Очистить предыдущий список
+
+            if (groups.length === 0) {
+                groupListDiv.innerHTML = '<p>Пока нет зарегистрированных групп.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Название группы</th>
+                        <th>Учеников</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            const tbody = table.querySelector('tbody');
+
+            groups.forEach(group => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${group.name}</td>
+                    <td>${group.studentIds ? group.studentIds.length : 0}</td>
+                    <td>
+                        <a href="group_detail.html?groupId=${group.id}" class="edit-btn">Редактировать</a>
+                        <button class="delete-btn" data-id="${group.id}" data-type="group">Удалить</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            groupListDiv.appendChild(table);
+            addDeleteListeners();
+        }
+
+        function addDeleteListeners() {
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.onclick = (e) => {
+                    if (!confirm('Вы уверены, что хотите удалить?')) return;
+
+                    const id = e.target.dataset.id;
+                    const type = e.target.dataset.type;
+
+                    if (type === 'student') {
+                        let students = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+                        students = students.filter(s => s.id !== id);
+                        localStorage.setItem('bowlingApp_students', JSON.stringify(students));
+                        loadStudents();
+                        // Также удалить ученика из всех групп
+                        let groups = JSON.parse(localStorage.getItem('bowlingApp_groups') || '[]');
+                        groups.forEach(group => {
+                            if (group.studentIds) {
+                                group.studentIds = group.studentIds.filter(sId => sId !== id);
+                            }
+                        });
+                        localStorage.setItem('bowlingApp_groups', JSON.stringify(groups));
+                        loadGroups();
+                    } else if (type === 'group') {
+                        let groups = JSON.parse(localStorage.getItem('bowlingApp_groups') || '[]');
+                        groups = groups.filter(g => g.id !== id);
+                        localStorage.setItem('bowlingApp_groups', JSON.stringify(groups));
+                        loadGroups();
+                        // Удалить группу из всех тренировок
+                        let trainings = JSON.parse(localStorage.getItem('bowlingApp_trainings') || '[]');
+                        trainings = trainings.filter(t => t.groupId !== id);
+                        localStorage.setItem('bowlingApp_trainings', JSON.stringify(trainings));
+                    }
+                };
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="section-header">
+            <h2>Ученики</h2>
+            <a href="profile_detail.html" class="button">Добавить ученика</a>
+        </div>
+        <div id="student-list">
+            <!-- Список учеников загружается JS -->
+        </div>
+
+        <div class="section-header">
+            <h2>Группы</h2>
+            <a href="group_detail.html" class="button">Добавить группу</a>
+        </div>
+        <div id="group-list">
+            <!-- Список групп загружается JS -->
+        </div>
+    </div>
+</body>
+</html>

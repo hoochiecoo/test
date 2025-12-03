@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Главная</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .header { background-color: #0056b3; color: white; padding: 15px 20px; text-align: center; }
+        .nav { background-color: #004080; padding: 10px 0; text-align: center; }
+        .nav a { color: white; text-decoration: none; padding: 8px 15px; margin: 0 5px; display: inline-block; }
+        .nav a:hover { background-color: #002b55; }
+        .main-content { padding: 20px; max-width: 900px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-admin",
+            "description": "Главная страница и панель навигации.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_authState",
+                "bowlingApp_trainings",
+                "bowlingApp_notifications"
+            ],
+            "writesToLocalStorageKeys": [],
+            "expectsUrlParameters": {},
+            "generatesUrlParameters": {
+                "profiles_html": {},
+                "schedule_html": {},
+                "game_entry_html": {},
+                "analytics_html": {},
+                "competitions_html": {},
+                "settings_html": {}
+            },
+            "usesExternalServices": ["AuthService", "NotificationService"],
+            "dependsOnDomainsData": ["domain-training", "domain-communication"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authState = JSON.parse(localStorage.getItem('bowlingApp_authState') || '{}');
+            if (!authState.userId) {
+                // Предполагаемая логика перенаправления на логин, если бы он был
+                // alert('Пожалуйста, авторизуйтесь!');
+                // window.location.href = 'login.html'; // Если есть страница логина
+            }
+
+            const username = authState.userId ? `Привет, ${authState.userId}!` : 'Привет!';
+            document.getElementById('welcome-message').textContent = username;
+
+            // Загрузка и отображение краткой сводки
+            const trainings = JSON.parse(localStorage.getItem('bowlingApp_trainings') || '[]');
+            const upcomingTrainings = trainings.filter(t => new Date(t.date) >= new Date()).slice(0, 3);
+            const trainingList = document.getElementById('upcoming-trainings');
+            if (upcomingTrainings.length > 0) {
+                upcomingTrainings.forEach(t => {
+                    const li = document.createElement('li');
+                    li.textContent = `${t.date} в ${t.time} (${t.groupId ? 'Группа: ' + t.groupId : 'Ученики: ' + t.studentIds.join(', ')})`;
+                    trainingList.appendChild(li);
+                });
+            } else {
+                trainingList.innerHTML = '<li>Ближайших тренировок нет.</li>';
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>Боулинг Прогресс</h1>
+    </div>
+    <div class="nav">
+        <a href="index.html">Главная</a>
+        <a href="profiles.html">Ученики & Группы</a>
+        <a href="schedule.html">Расписание</a>
+        <a href="game_entry.html">Ввод Игр</a>
+        <a href="analytics.html">Анализ</a>
+        <a href="competitions.html">Турниры</a>
+        <a href="settings.html">Настройки</a>
+    </div>
+    <div class="main-content">
+        <h2 id="welcome-message">Привет!</h2>
+        <h3>Ближайшие тренировки</h3>
+        <ul id="upcoming-trainings">
+            <!-- Динамически загружается JS -->
+        </ul>
+        <!-- Дополнительная информация или виджеты -->
+    </div>
+</body>
+</html>

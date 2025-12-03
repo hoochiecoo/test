@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Боулинг Прогресс - Детали Группы</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { padding: 20px; max-width: 600px; margin: 20px auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .student-checkbox-group { margin-top: 10px; border: 1px solid #eee; padding: 10px; max-height: 200px; overflow-y: auto; }
+        .student-checkbox-group label { display: block; margin-bottom: 5px; font-weight: normal; }
+        .actions { text-align: right; margin-top: 20px; }
+        .button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; margin-left: 10px; }
+        .button.cancel { background-color: #6c757d; }
+        .button:hover { background-color: #0056b3; }
+        .button.cancel:hover { background-color: #5a6268; }
+    </style>
+    <script type="application/json" id="domain-contract">
+        {
+            "domainName": "domain-profiles",
+            "description": "Страница для создания или редактирования группы учеников.",
+            "usesLocalStorageKeys": [
+                "bowlingApp_groups",
+                "bowlingApp_students" // Для выбора учеников в группу
+            ],
+            "writesToLocalStorageKeys": [
+                "bowlingApp_groups"
+            ],
+            "expectsUrlParameters": {
+                "groupId": { "type": "string", "required": false, "description": "ID группы для загрузки данных. Если отсутствует, режим создания новой." }
+            },
+            "generatesUrlParameters": {
+                "profiles_html": {} // Возврат на список профилей
+            },
+            "usesExternalServices": ["NotificationService"],
+            "dependsOnDomainsData": ["domain-profiles"]
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const groupId = params.get('groupId');
+            let currentGroup = null;
+
+            const form = document.getElementById('group-form');
+            const groupNameInput = document.getElementById('groupName');
+            const studentSelectionDiv = document.getElementById('student-selection');
+
+            const allStudents = JSON.parse(localStorage.getItem('bowlingApp_students') || '[]');
+
+            function renderStudentCheckboxes(selectedStudentIds = []) {
+                studentSelectionDiv.innerHTML = '';
+                if (allStudents.length === 0) {
+                    studentSelectionDiv.innerHTML = '<p>Нет доступных учеников для добавления в группу.</p>';
+                    return;
+                }
+                allStudents.forEach(student => {
+                    const div = document.createElement('div');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `student-${student.id}`;
+                    checkbox.value = student.id;
+                    if (selectedStudentIds.includes(student.id)) {
+                        checkbox.checked = true;
+                    }
+                    const label = document.createElement('label');
+                    label.htmlFor = `student-${student.id}`;
+                    label.textContent = student.name;
+                    div.appendChild(checkbox);
+                    div.appendChild(label);
+                    studentSelectionDiv.appendChild(div);
+                });
+            }
+
+            if (groupId) {
+                const groups = JSON.parse(localStorage.getItem('bowlingApp_groups') || '[]');
+                currentGroup = groups.find(g => g.id === groupId);
+
+                if (currentGroup) {
+                    document.querySelector('h2').textContent = `Редактировать группу: ${currentGroup.name}`;
+                    groupNameInput.value = currentGroup.name;
+                    renderStudentCheckboxes(currentGroup.studentIds || []);
+                } else {
+                    alert('Группа не найдена!');
+                    window.location.href = 'profiles.html';
+                }
+            } else {
+                document.querySelector('h2').textContent = 'Создать новую группу';
+                renderStudentCheckboxes();
+            }
+
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const groups = JSON.parse(localStorage.getItem('bowlingApp_groups') || '[]');
+                const selectedStudentIds = Array.from(studentSelectionDiv.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+                const newGroupData = {
+                    name: groupNameInput.value,
+                    studentIds: selectedStudentIds
+                };
+
+                if (groupId && currentGroup) {
+                    // Редактирование существующей
+                    const index = groups.findIndex(g => g.id === groupId);
+                    if (index !== -1) {
+                        groups[index] = { ...currentGroup, ...newGroupData, id: groupId };
+                    }
+                } else {
+                    // Добавление новой
+                    newGroupData.id = Date.now().toString(); // Простой ID
+                    groups.push(newGroupData);
+                }
+
+                localStorage.setItem('bowlingApp_groups', JSON.stringify(groups));
+                alert('Группа сохранена!');
+                window.location.href = 'profiles.html'; // Возврат на список
+            };
+
+            document.getElementById('cancel-btn').onclick = () => {
+                window.location.href = 'profiles.html';
+            };
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Создать новую группу</h2>
+        <form id="group-form">
+            <div class="form-group">
+                <label for="groupName">Название группы:</label>
+                <input type="text" id="groupName" required>
+            </div>
+            <div class="form-group">
+                <label>Ученики в группе:</label>
+                <div id="student-selection" class="student-checkbox-group">
+                    <!-- Список учеников с чекбоксами загружается JS -->
+                </div>
+            </div>
+            <div class="actions">
+                <button type="button" id="cancel-btn" class="button cancel">Отмена</button>
+                <button type="submit" class="button">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
