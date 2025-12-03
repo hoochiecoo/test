@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+    <meta name="theme-color" content="#1976D2">
+    <title>Тренер Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/quasar@2.14.0/dist/quasar.prod.css" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .elo-change-green { color: green; font-weight: bold; }
+        .elo-change-red { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="q-app">
+        <q-layout view="lHh Lpr lFf" class="bg-grey-2">
+            <q-header elevated class="bg-primary text-white">
+                <q-toolbar>
+                    <q-toolbar-title>Теннис Лига</q-toolbar-title>
+                    <div class="text-subtitle2" v-if="installPrompt" @click="showInstallPrompt">Установить</div>
+                </q-toolbar>
+                <q-tabs v-model="tab" align="justify" narrow-indicator>
+                    <q-tab name="students" label="Ученики"></q-tab>
+                    <q-tab name="matches" label="Матчи"></q-tab>
+                    <q-tab name="rating" label="Топ ELO"></q-tab>
+                </q-tabs>
+            </q-header>
+
+            <q-page-container>
+                <q-page class="q-pa-sm">
+                    
+                    <!-- TAB 1: СПИСОК УЧЕНИКОВ -->
+                    <q-tab-panel name="students" class="q-pa-none bg-transparent">
+                        <q-list bordered separator class="bg-white rounded-borders shadow-1">
+                            <q-item v-if="students.length === 0" class="q-pa-lg text-center text-grey">
+                                <q-item-section>Нет учеников. Добавьте первого!</q-item-section>
+                            </q-item>
+
+                            <q-item clickable v-ripple v-for="(student, index) in students" :key="student.id" @click="openStudentDetails(student)">
+                                <q-item-section avatar>
+                                    <q-avatar color="primary" text-color="white">{{ student.name.charAt(0) }}</q-avatar>
+                                </q-item-section>
+                                <q-item-section>
+                                    <q-item-label class="text-weight-bold">{{ student.name }}</q-item-label>
+                                    <q-item-label caption>ELO: {{ student.elo }} | Матчей: {{ student.matchesPlayed }}</q-item-label>
+                                </q-item-section>
+                                <q-item-section side>
+                                    <div class="row items-center">
+                                        <q-icon name="emoji_events" color="orange" v-if="student.achievements.length > 0"></q-icon>
+                                        <span class="q-ml-xs">{{ student.achievements.length }}</span>
+                                    </div>
+                                </q-item-section>
+                            </q-item>
+                        </q-list>
+                        
+                        <!-- FAB для добавления ученика -->
+                        <q-page-sticky position="bottom-right" :offset="[18, 18]">
+                            <q-btn fab icon="person_add" color="primary" @click="dialogStudent = true"></q-btn>
+                        </q-page-sticky>
+                    </q-tab-panel>
+
+                    <!-- TAB 2: МАТЧИ -->
+                    <q-tab-panel name="matches" class="q-pa-none bg-transparent">
+                         <div v-if="matches.length === 0" class="text-center q-mt-xl text-grey-6">
+                            <q-icon name="sports_tennis" size="80px"></q-icon>
+                            <p>Матчей еще не было</p>
+                        </div>
+                        
+                        <q-card v-for="match in sortedMatches" :key="match.id" class="q-mb-sm flat bordered">
+                            <q-card-section>
+                                <div class="row items-center justify-between no-wrap">
+                                    <div class="col text-center">
+                                        <div class="text-weight-bold">{{ getStudentName(match.p1) }}</div>
+                                        <div :class="match.p1Change >= 0 ? 'elo-change-green' : 'elo-change-red'" style="font-size: 0.8em">
+                                            {{ match.p1Change > 0 ? '+' : ''}}{{ match.p1Change }}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto text-h5 text-primary text-weight-bolder q-px-sm">VS</div>
+                                    <div class="col text-center">
+                                        <div class="text-weight-bold">{{ getStudentName(match.p2) }}</div>
+                                        <div :class="match.p2Change >= 0 ? 'elo-change-green' : 'elo-change-red'" style="font-size: 0.8em">
+                                            {{ match.p2Change > 0 ? '+' : ''}}{{ match.p2Change }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center q-mt-sm text-grey-8 bg-grey-2 rounded-borders q-py-xs">
+                                    {{ match.score }}
+                                </div>
+                                <div class="text-center q-mt-xs caption text-grey-6" style="font-size: 10px">
+                                    {{ new Date(match.date).toLocaleDateString() }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+
+                        <!-- FAB для матча -->
+                        <q-page-sticky position="bottom-right" :offset="[18, 18]">
+                            <q-btn fab icon="scoreboard" color="secondary" @click="openMatchDialog"></q-btn>
+                        </q-page-sticky>
+                    </q-tab-panel>
+
+                    <!-- TAB 3: РЕЙТИНГ -->
+                    <q-tab-panel name="rating" class="q-pa-none bg-transparent">
+                        <q-list separator class="bg-white">
+                            <q-item v-for="(student, index) in sortedByElo" :key="student.id">
+                                <q-item-section avatar>
+                                    <q-badge :color="index < 3 ? 'orange' : 'grey'" circle>{{ index + 1 }}</q-badge>
+                                </q-item-section>
+                                <q-item-section>
+                                    <q-item-label class="text-weight-bold">{{ student.name }}</q-item-label>
+                                </q-item-section>
+                                <q-item-section side>
+                                    <q-badge color="primary" outline label="ELO" />
+                                    <span class="text-h6 q-ml-sm">{{ student.elo }}</span>
+                                </q-item-section>
+                            </q-item>
+                        </q-list>
+                    </q-tab-panel>
+
+                </q-page>
+            </q-page-container>
+
+            <!-- ДИАЛОГ: НОВЫЙ УЧЕНИК -->
+            <q-dialog v-model="dialogStudent">
+                <q-card style="min-width: 300px">
+                    <q-card-section><div class="text-h6">Добавить ученика</div></q-card-section>
+                    <q-card-section>
+                        <q-input dense v-model="newStudentName" label="Имя Фамилия" autofocus></q-input>
+                    </q-card-section>
+                    <q-card-actions align="right">
+                        <q-btn flat label="Отмена" v-close-popup></q-btn>
+                        <q-btn flat label="Создать" color="primary" @click="addStudent" v-close-popup></q-btn>
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
+
+            <!-- ДИАЛОГ: ДЕТАЛИ УЧЕНИКА И ДОСТИЖЕНИЯ -->
+            <q-dialog v-model="dialogDetails" v-if="selectedStudent">
+                <q-card style="min-width: 350px; max-height: 80vh" class="scroll">
+                    <q-card-section class="bg-primary text-white">
+                        <div class="text-h6">{{ selectedStudent.name }}</div>
+                        <div class="text-subtitle2">ELO: {{ selectedStudent.elo }}</div>
+                    </q-card-section>
+
+                    <q-card-section>
+                        <div class="text-weight-bold q-mb-sm">Достижения (дает бонус к ELO)</div>
+                        <q-list bordered dense>
+                            <q-item tag="label" v-for="ach in achievementList" :key="ach.id" v-ripple>
+                                <q-item-section side>
+                                    <q-checkbox v-model="selectedStudent.achievements" :val="ach.id" @update:model-value="updateAchievements(selectedStudent)" />
+                                </q-item-section>
+                                <q-item-section>
+                                    <q-item-label>{{ ach.title }}</q-item-label>
+                                    <q-item-label caption>+{{ ach.bonus }} ELO</q-item-label>
+                                </q-item-section>
+                                <q-item-section side>
+                                    <q-icon :name="ach.icon" color="orange"></q-icon>
+                                </q-item-section>
+                            </q-item>
+                        </q-list>
+                        
+                        <div class="q-mt-md">
+                            <q-btn color="red" flat label="Удалить ученика" class="full-width" @click="deleteStudent(selectedStudent.id)"></q-btn>
+                        </div>
+                    </q-card-section>
+                    
+                    <q-card-actions align="right">
+                        <q-btn flat label="Закрыть" v-close-popup></q-btn>
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
+
+            <!-- ДИАЛОГ: НОВЫЙ МАТЧ -->
+            <q-dialog v-model="dialogMatch">
+                <q-card style="min-width: 350px">
+                    <q-card-section><div class="text-h6">Запись матча</div></q-card-section>
+                    
+                    <q-card-section class="q-gutter-y-sm">
+                        <!-- Выбор игроков -->
+                        <div class="row q-col-gutter-sm">
+                            <div class="col-6">
+                                <q-select dense options-dense v-model="matchForm.p1" :options="studentOptions" label="Игрок 1" emit-value map-options></q-select>
+                            </div>
+                            <div class="col-6">
+                                <q-select dense options-dense v-model="matchForm.p2" :options="studentOptions" label="Игрок 2" emit-value map-options></q-select>
+                            </div>
+                        </div>
+
+                        <!-- Счет по сетам -->
+                        <div class="text-caption text-grey q-mt-sm">Счет (геймы):</div>
+                        <div v-for="i in 3" :key="i" class="row items-center q-col-gutter-md q-mb-xs">
+                            <div class="col-2 text-bold text-center">Сет {{i}}</div>
+                            <div class="col-5">
+                                <q-input dense type="number" outlined v-model.number="matchForm.sets[i-1].p1" placeholder="0"></q-input>
+                            </div>
+                            <div class="col-5">
+                                <q-input dense type="number" outlined v-model.number="matchForm.sets[i-1].p2" placeholder="0"></q-input>
+                            </div>
+                        </div>
+                    </q-card-section>
+
+                    <q-card-actions align="right">
+                        <q-btn flat label="Отмена" v-close-popup></q-btn>
+                        <q-btn color="primary" label="Завершить матч" @click="saveMatch"></q-btn>
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
+
+        </q-layout>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quasar@2.14.0/dist/quasar.umd.prod.js"></script>
+
+    <script>
+        const { createApp, ref, reactive, computed, onMounted } = Vue;
+
+        // СПИСОК 10 ДОСТИЖЕНИЙ
+        const ACHIEVEMENTS = [
+            { id: 1, title: "Первая победа", bonus: 10, icon: "star" },
+            { id: 2, title: "Хет-трик (3 победы подряд)", bonus: 20, icon: "whatshot" },
+            { id: 3, title: "Марафонец (3 сета)", bonus: 15, icon: "timer" },
+            { id: 4, title: "Баранка (выигрыш 6-0)", bonus: 25, icon: "block" },
+            { id: 5, title: "Камбэк (проиграл 1й, выиграл матч)", bonus: 30, icon: "replay" },
+            { id: 6, title: "Топ-3 Рейтинга", bonus: 40, icon: "emoji_events" },
+            { id: 7, title: "Ветеран (10 матчей)", bonus: 15, icon: "military_tech" },
+            { id: 8, title: "Профи (ELO 1200+)", bonus: 50, icon: "psychology" },
+            { id: 9, title: "Гроза авторитетов (победа над топом)", bonus: 35, icon: "bolt" },
+            { id: 10, title: "Любимчик тренера", bonus: 5, icon: "favorite" }
+        ];
+
+        const app = createApp({
+            setup() {
+                const tab = ref('students');
+                const students = ref([]);
+                const matches = ref([]);
+                
+                // Dialogs
+                const dialogStudent = ref(false);
+                const dialogDetails = ref(false);
+                const dialogMatch = ref(false);
+                const installPrompt = ref(null);
+
+                // Forms / Temp state
+                const newStudentName = ref('');
+                const selectedStudent = ref(null);
+                const matchForm = reactive({
+                    p1: null,
+                    p2: null,
+                    sets: [{p1:null, p2:null}, {p1:null, p2:null}, {p1:null, p2:null}]
+                });
+
+                // --- DATA LOADING ---
+                const loadData = () => {
+                    const s = localStorage.getItem('tennis_students');
+                    const m = localStorage.getItem('tennis_matches');
+                    if (s) students.value = JSON.parse(s);
+                    if (m) matches.value = JSON.parse(m);
+                };
+                const saveData = () => {
+                    localStorage.setItem('tennis_students', JSON.stringify(students.value));
+                    localStorage.setItem('tennis_matches', JSON.stringify(matches.value));
+                };
+
+                // --- STUDENTS LOGIC ---
+                const addStudent = () => {
+                    if(!newStudentName.value) return;
+                    students.value.push({
+                        id: Date.now(),
+                        name: newStudentName.value,
+                        elo: 1000,
+                        achievements: [],
+                        matchesPlayed: 0
+                    });
+                    newStudentName.value = '';
+                    saveData();
+                };
+
+                const openStudentDetails = (s) => {
+                    selectedStudent.value = s;
+                    dialogDetails.value = true;
+                };
+
+                const deleteStudent = (id) => {
+                    if(confirm('Удалить ученика и его историю?')) {
+                        students.value = students.value.filter(s => s.id !== id);
+                        dialogDetails.value = false;
+                        saveData();
+                    }
+                };
+
+                // --- ACHIEVEMENT LOGIC ---
+                // Проверяем, изменились ли достижения, и корректируем ELO
+                const updateAchievements = (student) => {
+                    // Пересчитываем ELO "чистое" (можно усложнить, но сделаем проще: пересчет базы + бонусы)
+                    // Для простоты в этом примере: бонус добавляется/убавляется сразу к текущему ELO
+                    // В идеале нужно хранить baseElo отдельно. Но упростим:
+                    // При открытии диалога мы знаем текущие ачивки. При клике - добавляем/отнимаем бонус.
+                    // Реализуем "ленивый" пересчет при каждом открытии - нет, лучше реактивно.
+                    
+                    // Самый надежный способ: Recalculate ELO from base (1000) + match history + current achievements
+                    // Но это сложно для маленького скрипта.
+                    // Сделаем так: При изменении чекбокса мы просто находим разницу и применяем её.
+                    
+                    recalcAllElo(); // Самый надежный метод - полный пересчет всей истории
+                };
+
+                // --- MATCH LOGIC ---
+                const studentOptions = computed(() => students.value.map(s => ({label: s.name, value: s.id})));
+                
+                const openMatchDialog = () => {
+                    matchForm.p1 = null; matchForm.p2 = null;
+                    matchForm.sets = [{p1:null, p2:null}, {p1:null, p2:null}, {p1:null, p2:null}];
+                    dialogMatch.value = true;
+                };
+
+                const saveMatch = () => {
+                    const { p1, p2, sets } = matchForm;
+                    if (!p1 || !p2 || p1 === p2) return alert("Выберите двух разных игроков");
+
+                    // Определяем победителя по сетам
+                    let p1Sets = 0, p2Sets = 0;
+                    let scoreStrParts = [];
+
+                    sets.forEach(s => {
+                        if (s.p1 !== null && s.p2 !== null) {
+                            if (s.p1 > s.p2) p1Sets++;
+                            if (s.p2 > s.p1) p2Sets++;
+                            scoreStrParts.push(`${s.p1}-${s.p2}`);
+                        }
+                    });
+
+                    if (p1Sets === p2Sets) return alert("Ничья невозможна, доиграйте матч!");
+                    
+                    const winnerId = p1Sets > p2Sets ? p1 : p2;
+                    const loserId = p1Sets > p2Sets ? p2 : p1;
+
+                    // Добавляем матч
+                    matches.value.push({
+                        id: Date.now(),
+                        p1, p2,
+                        winnerId,
+                        score: scoreStrParts.join(', '),
+                        date: Date.now(),
+                        processed: false // Флаг для пересчета ELO
+                    });
+
+                    recalcAllElo(); // Пересчитываем рейтинги
+                    dialogMatch.value = false;
+                };
+
+                // --- ELO CORE SYSTEM ---
+                const recalcAllElo = () => {
+                    // Сбрасываем всех к 1000
+                    const tempMap = {};
+                    students.value.forEach(s => {
+                        s.elo = 1000;
+                        s.matchesPlayed = 0;
+                        tempMap[s.id] = s;
+                    });
+
+                    // Проходимся по всем матчам хронологически
+                    const sortedMatches = [...matches.value].sort((a,b) => a.date - b.date);
+                    
+                    sortedMatches.forEach(m => {
+                        const s1 = tempMap[m.p1];
+                        const s2 = tempMap[m.p2];
+                        if (!s1 || !s2) return; // Если ученик удален
+
+                        s1.matchesPlayed++;
+                        s2.matchesPlayed++;
+
+                        // ELO Calc
+                        const K = 30; // Коэффициент динамики
+                        const Ea = 1 / (1 + Math.pow(10, (s2.elo - s1.elo) / 400));
+                        const Eb = 1 / (1 + Math.pow(10, (s1.elo - s2.elo) / 400));
+
+                        const actualA = m.winnerId === s1.id ? 1 : 0;
+                        const actualB = m.winnerId === s2.id ? 1 : 0;
+
+                        const changeA = Math.round(K * (actualA - Ea));
+                        const changeB = Math.round(K * (actualB - Eb));
+
+                        s1.elo += changeA;
+                        s2.elo += changeB;
+                        
+                        // Сохраняем дельту в матч для отображения
+                        m.p1Change = changeA;
+                        m.p2Change = changeB;
+                    });
+
+                    // Добавляем бонусы за достижения
+                    students.value.forEach(s => {
+                        let bonus = 0;
+                        s.achievements.forEach(achId => {
+                            const found = ACHIEVEMENTS.find(a => a.id === achId);
+                            if (found) bonus += found.bonus;
+                        });
+                        s.elo += bonus;
+                    });
+
+                    matches.value = sortedMatches; // Обновляем матчи с дельтами
+                    saveData();
+                };
+
+                // Helpers
+                const getStudentName = (id) => {
+                    const s = students.value.find(x => x.id === id);
+                    return s ? s.name : 'Удален';
+                };
+
+                const sortedByElo = computed(() => {
+                    return [...students.value].sort((a,b) => b.elo - a.elo);
+                });
+
+                const sortedMatches = computed(() => {
+                    return [...matches.value].sort((a,b) => b.date - a.date);
+                });
+
+                // PWA Install
+                onMounted(() => {
+                    loadData();
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        installPrompt.value = e;
+                    });
+                });
+                const showInstallPrompt = () => { if(installPrompt.value) installPrompt.value.prompt(); };
+
+                return {
+                    tab, students, matches, sortedByElo, sortedMatches,
+                    dialogStudent, dialogDetails, dialogMatch,
+                    newStudentName, selectedStudent, matchForm, studentOptions, achievementList: ACHIEVEMENTS,
+                    addStudent, openStudentDetails, deleteStudent, updateAchievements,
+                    openMatchDialog, saveMatch, getStudentName,
+                    installPrompt, showInstallPrompt
+                };
+            }
+        });
+        app.use(Quasar);
+        app.mount('#q-app');
+        
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+    </script>
+</body>
+</html>
