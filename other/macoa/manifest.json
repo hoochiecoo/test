@@ -1,0 +1,21 @@
+{
+  "name": "Tennis League Pro",
+  "short_name": "TennisPro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976D2",
+  "description": "Тренерский помощник и рейтинг",
+  "icons": [
+    {
+      "src": "https://cdn.quasar.dev/logo-v2/192/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn.quasar.dev/logo-v2/512/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
