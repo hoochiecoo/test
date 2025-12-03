@@ -30,97 +30,98 @@
             </q-header>
 
             <q-page-container>
-                <q-page class="q-pa-sm">
-                    
-                    <!-- TAB 1: СПИСОК УЧЕНИКОВ -->
-                    <q-tab-panel name="students" class="q-pa-none bg-transparent">
-                        <q-list bordered separator class="bg-white rounded-borders shadow-1">
-                            <q-item v-if="students.length === 0" class="q-pa-lg text-center text-grey">
-                                <q-item-section>Нет учеников. Добавьте первого!</q-item-section>
-                            </q-item>
-
-                            <q-item clickable v-ripple v-for="(student, index) in students" :key="student.id" @click="openStudentDetails(student)">
-                                <q-item-section avatar>
-                                    <q-avatar color="primary" text-color="white">{{ student.name.charAt(0) }}</q-avatar>
-                                </q-item-section>
-                                <q-item-section>
-                                    <q-item-label class="text-weight-bold">{{ student.name }}</q-item-label>
-                                    <q-item-label caption>ELO: {{ student.elo }} | Матчей: {{ student.matchesPlayed }}</q-item-label>
-                                </q-item-section>
-                                <q-item-section side>
-                                    <div class="row items-center">
-                                        <q-icon name="emoji_events" color="orange" v-if="student.achievements.length > 0"></q-icon>
-                                        <span class="q-ml-xs">{{ student.achievements.length }}</span>
-                                    </div>
-                                </q-item-section>
-                            </q-item>
-                        </q-list>
+                <!-- ИСПРАВЛЕНИЕ: q-page теперь содержит q-tab-panels -->
+                <q-page padding>
+                    <!-- Вот ключевое изменение: обертка для панелей -->
+                    <q-tab-panels v-model="tab" animated class="bg-transparent">
                         
-                        <!-- FAB для добавления ученика (видима только на вкладке учеников) -->
-                        <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="tab === 'students'">
-                            <q-btn fab icon="person_add" color="primary" @click="dialogStudent = true"></q-btn>
-                        </q-page-sticky>
-                    </q-tab-panel>
+                        <!-- ПАНЕЛЬ 1: УЧЕНИКИ -->
+                        <q-tab-panel name="students" class="q-pa-none">
+                            <q-list bordered separator class="bg-white rounded-borders shadow-1">
+                                <q-item v-if="students.length === 0" class="q-pa-lg text-center text-grey">
+                                    <q-item-section>Нет учеников. Добавьте первого!</q-item-section>
+                                </q-item>
+                                <q-item clickable v-ripple v-for="(student, index) in students" :key="student.id" @click="openStudentDetails(student)">
+                                    <q-item-section avatar>
+                                        <q-avatar color="primary" text-color="white">{{ student.name.charAt(0) }}</q-avatar>
+                                    </q-item-section>
+                                    <q-item-section>
+                                        <q-item-label class="text-weight-bold">{{ student.name }}</q-item-label>
+                                        <q-item-label caption>ELO: {{ student.elo }} | Матчей: {{ student.matchesPlayed }}</q-item-label>
+                                    </q-item-section>
+                                    <q-item-section side>
+                                        <div class="row items-center">
+                                            <q-icon name="emoji_events" color="orange" v-if="student.achievements.length > 0"></q-icon>
+                                            <span class="q-ml-xs">{{ student.achievements.length }}</span>
+                                        </div>
+                                    </q-item-section>
+                                </q-item>
+                            </q-list>
+                        </q-tab-panel>
 
-                    <!-- TAB 2: МАТЧИ -->
-                    <q-tab-panel name="matches" class="q-pa-none bg-transparent">
-                         <div v-if="matches.length === 0" class="text-center q-mt-xl text-grey-6">
-                            <q-icon name="sports_tennis" size="80px"></q-icon>
-                            <p>Матчей еще не было</p>
-                        </div>
-                        
-                        <q-card v-for="match in sortedMatches" :key="match.id" class="q-mb-sm flat bordered">
-                            <q-card-section>
-                                <div class="row items-center justify-between no-wrap">
-                                    <div class="col text-center">
-                                        <div class="text-weight-bold">{{ getStudentName(match.p1) }}</div>
-                                        <div :class="match.p1Change >= 0 ? 'elo-change-green' : 'elo-change-red'" style="font-size: 0.8em">
-                                            {{ match.p1Change > 0 ? '+' : ''}}{{ match.p1Change }}
+                        <!-- ПАНЕЛЬ 2: МАТЧИ -->
+                        <q-tab-panel name="matches" class="q-pa-none">
+                             <div v-if="matches.length === 0" class="text-center q-mt-xl text-grey-6">
+                                <q-icon name="sports_tennis" size="80px"></q-icon>
+                                <p>Матчей еще не было</p>
+                            </div>
+                            <q-card v-for="match in sortedMatches" :key="match.id" class="q-mb-sm flat bordered">
+                                <q-card-section>
+                                    <div class="row items-center justify-between no-wrap">
+                                        <div class="col text-center">
+                                            <div class="text-weight-bold">{{ getStudentName(match.p1) }}</div>
+                                            <div :class="match.p1Change >= 0 ? 'elo-change-green' : 'elo-change-red'" style="font-size: 0.8em">
+                                                {{ match.p1Change > 0 ? '+' : ''}}{{ match.p1Change }}
+                                            </div>
+                                        </div>
+                                        <div class="col-auto text-h5 text-primary text-weight-bolder q-px-sm">VS</div>
+                                        <div class="col text-center">
+                                            <div class="text-weight-bold">{{ getStudentName(match.p2) }}</div>
+                                            <div :class="match.p2Change >= 0 ? 'elo-change-green' : 'elo-change-red'" style="font-size: 0.8em">
+                                                {{ match.p2Change > 0 ? '+' : ''}}{{ match.p2Change }}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-auto text-h5 text-primary text-weight-bolder q-px-sm">VS</div>
-                                    <div class="col text-center">
-                                        <div class="text-weight-bold">{{ getStudentName(match.p2) }}</div>
-                                        <div :class="match.p2Change >= 0 ? 'elo-change-green' : 'elo-change-red'" style="font-size: 0.8em">
-                                            {{ match.p2Change > 0 ? '+' : ''}}{{ match.p2Change }}
-                                        </div>
+                                    <div class="text-center q-mt-sm text-grey-8 bg-grey-2 rounded-borders q-py-xs">
+                                        {{ match.score }}
                                     </div>
-                                </div>
-                                <div class="text-center q-mt-sm text-grey-8 bg-grey-2 rounded-borders q-py-xs">
-                                    {{ match.score }}
-                                </div>
-                                <div class="text-center q-mt-xs caption text-grey-6" style="font-size: 10px">
-                                    {{ new Date(match.date).toLocaleDateString() }}
-                                </div>
-                            </q-card-section>
-                        </q-card>
+                                    <div class="text-center q-mt-xs caption text-grey-6" style="font-size: 10px">
+                                        {{ new Date(match.date).toLocaleDateString() }}
+                                    </div>
+                                </q-card-section>
+                            </q-card>
+                        </q-tab-panel>
 
-                        <!-- FAB для добавления матча (видима только на вкладке матчей) -->
-                        <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="tab === 'matches'">
-                            <q-btn fab icon="scoreboard" color="secondary" @click="openMatchDialog"></q-btn>
-                        </q-page-sticky>
-                    </q-tab-panel>
-
-                    <!-- TAB 3: РЕЙТИНГ -->
-                    <q-tab-panel name="rating" class="q-pa-none bg-transparent">
-                        <q-list separator class="bg-white">
-                            <q-item v-for="(student, index) in sortedByElo" :key="student.id">
-                                <q-item-section avatar>
-                                    <q-badge :color="index < 3 ? 'orange' : 'grey'" circle>{{ index + 1 }}</q-badge>
-                                </q-item-section>
-                                <q-item-section>
-                                    <q-item-label class="text-weight-bold">{{ student.name }}</q-item-label>
-                                </q-item-section>
-                                <q-item-section side>
-                                    <q-badge color="primary" outline label="ELO" />
-                                    <span class="text-h6 q-ml-sm">{{ student.elo }}</span>
-                                </q-item-section>
-                            </q-item>
-                        </q-list>
-                    </q-tab-panel>
-
+                        <!-- ПАНЕЛЬ 3: РЕЙТИНГ -->
+                        <q-tab-panel name="rating" class="q-pa-none">
+                            <q-list separator class="bg-white">
+                                <q-item v-for="(student, index) in sortedByElo" :key="student.id">
+                                    <q-item-section avatar>
+                                        <q-badge :color="index < 3 ? 'orange' : 'grey'" circle>{{ index + 1 }}</q-badge>
+                                    </q-item-section>
+                                    <q-item-section>
+                                        <q-item-label class="text-weight-bold">{{ student.name }}</q-item-label>
+                                    </q-item-section>
+                                    <q-item-section side>
+                                        <q-badge color="primary" outline label="ELO" />
+                                        <span class="text-h6 q-ml-sm">{{ student.elo }}</span>
+                                    </q-item-section>
+                                </q-item>
+                            </q-list>
+                        </q-tab-panel>
+                    </q-tab-panels>
                 </q-page>
             </q-page-container>
+            
+            <!-- FAB для добавления ученика (видима только на вкладке учеников) -->
+            <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="tab === 'students'">
+                <q-btn fab icon="person_add" color="primary" @click="dialogStudent = true"></q-btn>
+            </q-page-sticky>
+
+            <!-- FAB для добавления матча (видима только на вкладке матчей) -->
+            <q-page-sticky position="bottom-right" :offset="[18, 18]" v-if="tab === 'matches'">
+                <q-btn fab icon="scoreboard" color="secondary" @click="openMatchDialog"></q-btn>
+            </q-page-sticky>
 
             <!-- ДИАЛОГ: НОВЫЙ УЧЕНИК -->
             <q-dialog v-model="dialogStudent">
@@ -143,7 +144,6 @@
                         <div class="text-h6">{{ selectedStudent.name }}</div>
                         <div class="text-subtitle2">ELO: {{ selectedStudent.elo }}</div>
                     </q-card-section>
-
                     <q-card-section>
                         <div class="text-weight-bold q-mb-sm">Достижения (дает бонус к ELO)</div>
                         <q-list bordered dense>
@@ -160,12 +160,10 @@
                                 </q-item-section>
                             </q-item>
                         </q-list>
-                        
                         <div class="q-mt-md">
                             <q-btn color="red" flat label="Удалить ученика" class="full-width" @click="deleteStudent(selectedStudent.id)"></q-btn>
                         </div>
                     </q-card-section>
-                    
                     <q-card-actions align="right">
                         <q-btn flat label="Закрыть" v-close-popup></q-btn>
                     </q-card-actions>
@@ -176,9 +174,7 @@
             <q-dialog v-model="dialogMatch">
                 <q-card style="min-width: 350px">
                     <q-card-section><div class="text-h6">Запись матча</div></q-card-section>
-                    
                     <q-card-section class="q-gutter-y-sm">
-                        <!-- Выбор игроков -->
                         <div class="row q-col-gutter-sm">
                             <div class="col-6">
                                 <q-select dense options-dense v-model="matchForm.p1" :options="studentOptions" label="Игрок 1" emit-value map-options></q-select>
@@ -187,8 +183,6 @@
                                 <q-select dense options-dense v-model="matchForm.p2" :options="studentOptions" label="Игрок 2" emit-value map-options></q-select>
                             </div>
                         </div>
-
-                        <!-- Счет по сетам -->
                         <div class="text-caption text-grey q-mt-sm">Счет (геймы):</div>
                         <div v-for="i in 3" :key="i" class="row items-center q-col-gutter-md q-mb-xs">
                             <div class="col-2 text-bold text-center">Сет {{i}}</div>
@@ -200,7 +194,6 @@
                             </div>
                         </div>
                     </q-card-section>
-
                     <q-card-actions align="right">
                         <q-btn flat label="Отмена" v-close-popup></q-btn>
                         <q-btn color="primary" label="Завершить матч" @click="saveMatch"></q-btn>
@@ -213,7 +206,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quasar@2.14.0/dist/quasar.umd.prod.js"></script>
-
     <script>
         const { createApp, ref, reactive, computed, onMounted } = Vue;
 
@@ -282,12 +274,12 @@
                     if(confirm('Удалить ученика и его историю?')) {
                         students.value = students.value.filter(s => s.id !== id);
                         dialogDetails.value = false;
-                        recalcAllElo(); // Пересчитываем ELO после удаления
+                        recalcAllElo();
                     }
                 };
 
                 const updateAchievements = (student) => {
-                    recalcAllElo(); // При изменении ачивок, пересчитываем ELO всех
+                    recalcAllElo();
                 };
 
                 const studentOptions = computed(() => students.value.map(s => ({label: s.name, value: s.id})));
@@ -307,7 +299,7 @@
                     let scoreStrParts = [];
 
                     sets.forEach(s => {
-                        if (s.p1 !== null && s.p2 !== null) {
+                        if (s.p1 !== null && s.p2 !== null && String(s.p1).trim() !== '' && String(s.p2).trim() !== '') {
                             if (s.p1 > s.p2) p1Sets++;
                             else if (s.p2 > s.p1) p2Sets++;
                             scoreStrParts.push(`${s.p1}-${s.p2}`);
@@ -317,15 +309,12 @@
                     if (p1Sets === p2Sets) return alert("Матч должен иметь победителя по сетам!");
                     
                     const winnerId = p1Sets > p2Sets ? p1 : p2;
-                    const loserId = p1Sets > p2Sets ? p2 : p1;
 
                     matches.value.push({
                         id: Date.now(),
-                        p1, p2,
-                        winnerId,
+                        p1, p2, winnerId,
                         score: scoreStrParts.join(', '),
-                        date: Date.now(),
-                        p1Sets, p2Sets // Добавлено для возможного использования в логике ачивок
+                        date: Date.now()
                     });
 
                     recalcAllElo();
@@ -352,19 +341,13 @@
 
                         const K = 30;
                         const Ea = 1 / (1 + Math.pow(10, (s2.elo - s1.elo) / 400));
-                        const Eb = 1 / (1 + Math.pow(10, (s1.elo - s2.elo) / 400));
-
                         const actualA = m.winnerId === s1.id ? 1 : 0;
-                        const actualB = m.winnerId === s2.id ? 1 : 0;
-
                         const changeA = Math.round(K * (actualA - Ea));
-                        const changeB = Math.round(K * (actualB - Eb));
-
                         s1.elo += changeA;
-                        s2.elo += changeB;
+                        s2.elo -= changeA;
                         
                         m.p1Change = changeA;
-                        m.p2Change = changeB;
+                        m.p2Change = -changeA;
                     });
 
                     students.value.forEach(s => {
@@ -385,13 +368,8 @@
                     return s ? s.name : 'Удален';
                 };
 
-                const sortedByElo = computed(() => {
-                    return [...students.value].sort((a,b) => b.elo - a.elo);
-                });
-
-                const sortedMatches = computed(() => {
-                    return [...matches.value].sort((a,b) => b.date - a.date);
-                });
+                const sortedByElo = computed(() => [...students.value].sort((a,b) => b.elo - a.elo));
+                const sortedMatches = computed(() => [...matches.value].sort((a,b) => b.date - a.date));
 
                 onMounted(() => {
                     loadData();
@@ -399,7 +377,6 @@
                         e.preventDefault();
                         installPrompt.value = e;
                     });
-                    // Запускаем пересчет при старте, чтобы все ELO были актуальными
                     recalcAllElo();
                 });
                 const showInstallPrompt = () => { if(installPrompt.value) installPrompt.value.prompt(); };
