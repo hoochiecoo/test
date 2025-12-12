@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#202124">
+    <title>Offline Translator</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            background-color: #202124;
+            color: #ffffff;
+            font-family: Roboto, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #202124;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #3c4043;
+            font-size: 20px;
+        }
+        .lang-picker {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background-color: #202124;
+            color: #8ab4f8;
+            font-weight: bold;
+            border-bottom: 1px solid #3c4043;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .input-area, .output-area {
+            flex: 1;
+            padding: 20px;
+            font-size: 22px;
+            border: none;
+            background: transparent;
+            color: white;
+            resize: none;
+            outline: none;
+        }
+        .output-area {
+            background-color: #303134;
+            color: #8ab4f8; /* Цвет перевода как на фото */
+            border-top: 1px solid #3c4043;
+        }
+        .status {
+            font-size: 12px;
+            color: #9aa0a6;
+            text-align: center;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>Google Translate (PWA Demo)</header>
+    
+    <div class="lang-picker">
+        <span>DETECT LANGUAGE</span>
+        <span>⇄</span>
+        <span>ENGLISH</span>
+    </div>
+
+    <div class="container">
+        <!-- Поле ввода -->
+        <textarea id="source" class="input-area" placeholder="Tap to enter text"></textarea>
+        
+        <!-- Поле вывода -->
+        <div id="result" class="output-area"></div>
+    </div>
+    
+    <div class="status" id="pwa-status">Offline Ready</div>
+
+    <script>
+        // 1. Простая база данных для ОФЛАЙН перевода (Демонстрация)
+        const dictionary = {
+            "es hat getropf jetzt": "It's dripping now",
+            "hallo": "Hello",
+            "wie geht es dir": "How are you",
+            "danke": "Thank you"
+        };
+
+        const input = document.getElementById('source');
+        const output = document.getElementById('result');
+
+        // Логика перевода
+        input.addEventListener('input', (e) => {
+            const text = e.target.value.toLowerCase().trim();
+            if (text === "") {
+                output.innerText = "";
+                return;
+            }
+            // Ищем в словаре или возвращаем заглушку
+            output.innerText = dictionary[text] || "Translation not found in offline DB";
+        });
+
+        // 2. Регистрация Service Worker (для работы без интернета)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('Service Worker Registered'))
+                .catch(err => console.log('SW Error:', err));
+        }
+    </script>
+</body>
+</html>
