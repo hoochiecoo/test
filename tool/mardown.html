@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown + Mermaid Previewer</title>
+    
+    <!-- GitHub Markdown CSS for nice styling -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #editor-pane, #preview-pane {
+            width: 50%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #editor-pane {
+            border-right: 1px solid #ddd;
+            background-color: #f6f8fa;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            padding: 20px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 14px;
+            background-color: #f6f8fa;
+            outline: none;
+            color: #24292e;
+        }
+
+        #preview-pane {
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #ffffff;
+        }
+
+        .header {
+            padding: 10px 20px;
+            background: #24292e;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Error styling for mermaid */
+        .error-icon { display: none; } 
+    </style>
+</head>
+<body>
+
+    <!-- Left Side: Editor -->
+    <div id="editor-pane">
+        <div class="header">Markdown Input</div>
+        <textarea id="markdown-input" placeholder="Type Markdown here..."></textarea>
+    </div>
+
+    <!-- Right Side: Preview -->
+    <div id="preview-pane" class="markdown-body">
+        <!-- Content will be injected here -->
+    </div>
+
+    <!-- Load Libraries from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+
+    <script>
+        // 1. Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default'
+        });
+
+        const input = document.getElementById('markdown-input');
+        const preview = document.getElementById('preview-pane');
+
+        // 2. Default Content
+        const defaultText = 
+`# Markdown & Diagrams Previewer
+
+You can write standard **Markdown** and render [Mermaid](https://mermaid.js.org) diagrams.
+
+## Flowchart Example
+\`\`\`mermaid
+graph TD;
+    A[Start] --> B{Is it working?};
+    B -- Yes --> C[Great!];
+    B -- No --> D[Check Console];
+    C --> E[Done];
+    D --> E;
+\`\`\`
+
+## Sequence Diagram Example
+\`\`\`mermaid
+sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>Bob: Hello Bob, how are you?
+    Bob-->>Alice: I am good thanks!
+\`\`\`
+
+## Standard Code
+\`\`\`javascript
+console.log("This is just normal code, not a diagram");
+\`\`\`
+`;
+
+        input.value = defaultText;
+
+        // 3. Configure Marked to handle Mermaid code blocks
+        // We override the default renderer for code blocks
+        const renderer = new marked.Renderer();
+        const originalCodeRenderer = renderer.code.bind(renderer);
+
+        renderer.code = (code, language) => {
+            if (language === 'mermaid') {
+                // Return a div with class 'mermaid' for mermaid.js to find later
+                return `<div class="mermaid">${code}</div>`;
+            }
+            // Otherwise use default code handling
+            return originalCodeRenderer(code, language);
+        };
+
+        marked.setOptions({ renderer: renderer });
+
+        // 4. Update Function
+        const render = async () => {
+            // Convert Markdown to HTML
+            try {
+                preview.innerHTML = marked.parse(input.value);
+                
+                // Find all mermaid divs and render them
+                // We use mermaid.run to process elements dynamically inserted
+                await mermaid.run({
+                    querySelector: '.mermaid'
+                });
+            } catch (error) {
+                console.error("Rendering error:", error);
+            }
+        };
+
+        // 5. Debounce function to prevent rendering on every single keystroke
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // 6. Event Listeners
+        // Render initially
+        render();
+
+        // Render when typing stops for 300ms
+        input.addEventListener('input', debounce(render, 300));
+
+    </script>
+</body>
+</html>
