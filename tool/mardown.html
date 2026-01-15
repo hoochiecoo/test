@@ -1,175 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown + Mermaid Previewer</title>
+    <title>GitHub Markdown Preview + Mermaid</title>
     
-    <!-- GitHub Markdown CSS for nice styling -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+    <!-- Стили GitHub (светлая тема) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown-light.min.css">
     
     <style>
         body {
             margin: 0;
-            padding: 0;
             display: flex;
             height: 100vh;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: #fff;
             overflow: hidden;
         }
 
-        #editor-pane, #preview-pane {
+        /* Левая панель (Редактор) */
+        #editor-pane {
             width: 50%;
-            height: 100%;
-            box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            border-right: 1px solid #d0d7de;
+            background-color: #f6f8fa;
         }
 
-        #editor-pane {
-            border-right: 1px solid #ddd;
-            background-color: #f6f8fa;
+        .pane-header {
+            padding: 8px 16px;
+            background: #24292f;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
         }
 
         textarea {
-            width: 100%;
-            height: 100%;
+            flex: 1;
+            padding: 20px;
             border: none;
             resize: none;
-            padding: 20px;
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            outline: none;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             font-size: 14px;
             background-color: #f6f8fa;
-            outline: none;
-            color: #24292e;
+            color: #1f2328;
         }
 
+        /* Правая панель (Превью) */
         #preview-pane {
-            padding: 20px;
+            width: 50%;
+            height: 100%;
             overflow-y: auto;
-            background-color: #ffffff;
+            padding: 32px;
+            box-sizing: border-box;
+            background-color: white;
         }
 
-        .header {
-            padding: 10px 20px;
-            background: #24292e;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
+        /* Стиль для контейнера диаграммы, чтобы она была по центру */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
+            background-color: white;
         }
-
-        /* Error styling for mermaid */
-        .error-icon { display: none; } 
     </style>
 </head>
 <body>
 
-    <!-- Left Side: Editor -->
+    <!-- Ввод -->
     <div id="editor-pane">
-        <div class="header">Markdown Input</div>
-        <textarea id="markdown-input" placeholder="Type Markdown here..."></textarea>
+        <div class="pane-header">Markdown Editor</div>
+        <textarea id="markdown-input"></textarea>
     </div>
 
-    <!-- Right Side: Preview -->
-    <div id="preview-pane" class="markdown-body">
-        <!-- Content will be injected here -->
-    </div>
+    <!-- Вывод -->
+    <div id="preview-pane" class="markdown-body"></div>
 
-    <!-- Load Libraries from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <!-- Подключаем библиотеки как модули -->
+    <script type="module">
+        // Импортируем конкретные версии библиотек
+        import { marked } from "https://cdn.jsdelivr.net/npm/marked@12.0.0/lib/marked.esm.js";
+        import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.esm.min.mjs";
 
-    <script>
-        // 1. Initialize Mermaid
-        mermaid.initialize({ 
-            startOnLoad: false,
-            theme: 'default'
+        // 1. Инициализация Mermaid
+        mermaid.initialize({
+            startOnLoad: false, // Мы будем вызывать рендер вручную
+            theme: 'default',
+            securityLevel: 'loose'
         });
 
         const input = document.getElementById('markdown-input');
         const preview = document.getElementById('preview-pane');
 
-        // 2. Default Content
+        // 2. Настраиваем Custom Renderer для Marked
+        const renderer = new marked.Renderer();
+        
+        // Сохраняем оригинальный метод для обычного кода
+        const originalCodeRenderer = renderer.code.bind(renderer);
+
+        renderer.code = (code, language) => {
+            // Если блок кода помечен как mermaid
+            if (language === 'mermaid') {
+                return `<div class="mermaid">${code}</div>`;
+            }
+            // Для всех остальных языков используем стандартный рендер
+            return originalCodeRenderer(code, language);
+        };
+
+        // Применяем рендерер
+        marked.use({ renderer });
+
+        // 3. Основная функция рендера
+        const renderContent = async () => {
+            const text = input.value;
+            
+            try {
+                // ВАЖНО: используем await, так как marked.parse может возвращать Promise
+                const html = await marked.parse(text); 
+                preview.innerHTML = html;
+
+                // После вставки HTML ищем блоки .mermaid и рендерим их
+                await mermaid.run({
+                    querySelector: '.mermaid'
+                });
+
+            } catch (error) {
+                console.error("Ошибка рендера:", error);
+            }
+        };
+
+        // 4. Debounce (задержка ввода, чтобы не мигало)
+        let timeoutId;
+        input.addEventListener('input', () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(renderContent, 300);
+        });
+
+        // 5. Дефолтный контент при загрузке
         const defaultText = 
-`# Markdown & Diagrams Previewer
+`# Markdown + Mermaid Preview
 
-You can write standard **Markdown** and render [Mermaid](https://mermaid.js.org) diagrams.
+Пример работы диаграмм как на GitHub.
 
-## Flowchart Example
+## 1. Блок-схема (Flowchart)
 \`\`\`mermaid
 graph TD;
-    A[Start] --> B{Is it working?};
-    B -- Yes --> C[Great!];
-    B -- No --> D[Check Console];
-    C --> E[Done];
+    A[Start] --> B{Ошибка исчезла?};
+    B -- Да --> C[Отлично!];
+    B -- Нет --> D[Проверить консоль];
+    C --> E[Готово];
     D --> E;
 \`\`\`
 
-## Sequence Diagram Example
+## 2. Диаграмма последовательности
 \`\`\`mermaid
 sequenceDiagram
     participant Alice
     participant Bob
-    Alice->>Bob: Hello Bob, how are you?
-    Bob-->>Alice: I am good thanks!
+    Alice->>Bob: Привет!
+    Bob-->>Alice: Привет, диаграммы работают!
 \`\`\`
 
-## Standard Code
+## 3. Обычный код JS
 \`\`\`javascript
-console.log("This is just normal code, not a diagram");
+const test = "Это не превратится в диаграмму";
+console.log(test);
 \`\`\`
 `;
 
         input.value = defaultText;
-
-        // 3. Configure Marked to handle Mermaid code blocks
-        // We override the default renderer for code blocks
-        const renderer = new marked.Renderer();
-        const originalCodeRenderer = renderer.code.bind(renderer);
-
-        renderer.code = (code, language) => {
-            if (language === 'mermaid') {
-                // Return a div with class 'mermaid' for mermaid.js to find later
-                return `<div class="mermaid">${code}</div>`;
-            }
-            // Otherwise use default code handling
-            return originalCodeRenderer(code, language);
-        };
-
-        marked.setOptions({ renderer: renderer });
-
-        // 4. Update Function
-        const render = async () => {
-            // Convert Markdown to HTML
-            try {
-                preview.innerHTML = marked.parse(input.value);
-                
-                // Find all mermaid divs and render them
-                // We use mermaid.run to process elements dynamically inserted
-                await mermaid.run({
-                    querySelector: '.mermaid'
-                });
-            } catch (error) {
-                console.error("Rendering error:", error);
-            }
-        };
-
-        // 5. Debounce function to prevent rendering on every single keystroke
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        // 6. Event Listeners
-        // Render initially
-        render();
-
-        // Render when typing stops for 300ms
-        input.addEventListener('input', debounce(render, 300));
-
+        
+        // Первый запуск
+        renderContent();
     </script>
 </body>
 </html>
