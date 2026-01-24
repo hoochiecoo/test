@@ -2,51 +2,44 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>MP4 → MP3 конвертер</title>
-  <style>
-    body { font-family: Arial; text-align: center; padding: 50px; }
-    input, button { margin: 10px; padding: 10px; font-size: 16px; }
-    a { display: block; margin-top: 20px; font-weight: bold; }
-  </style>
+  <title>MP4 → MP3 локально</title>
 </head>
 <body>
-  <h1>Конвертер MP4 → MP3 (локально)</h1>
+  <h1>Конвертер MP4 → MP3</h1>
   <input type="file" id="fileInput" accept="video/mp4">
   <button id="convertBtn">Конвертировать</button>
-  <div id="status"></div>
-  <a id="downloadLink" href="#" style="display:none;">Скачать MP3</a>
+  <a id="downloadLink" style="display:none;">Скачать MP3</a>
 
-  <script type="module">
-    import { createFFmpeg, fetchFile } from './ffmpeg.mjs'; // Локальный JS
-
-    const ffmpeg = createFFmpeg({ log: true });
+  <script src="ffmpeg-asm.js"></script>
+  <script>
     const fileInput = document.getElementById('fileInput');
     const convertBtn = document.getElementById('convertBtn');
-    const status = document.getElementById('status');
     const downloadLink = document.getElementById('downloadLink');
 
-    convertBtn.addEventListener('click', async () => {
+    convertBtn.addEventListener('click', () => {
       const file = fileInput.files[0];
-      if (!file) { alert('Выберите MP4 файл!'); return; }
+      if (!file) return alert('Выберите MP4 файл');
 
-      status.textContent = 'Загрузка ffmpeg.wasm...';
-      if (!ffmpeg.isLoaded()) await ffmpeg.load();
+      const reader = new FileReader();
+      reader.onload = function() {
+        const result = new Uint8Array(reader.result);
 
-      status.textContent = 'Конвертация в MP3...';
-      ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(file));
+        // создаём виртуальную файловую систему
+        Module.FS_createDataFile('/', 'input.mp4', result, true, true);
 
-      await ffmpeg.run('-i', 'input.mp4', '-q:a', '0', '-map', 'a', 'output.mp3');
+        // конвертируем
+        Module.callMain(['-i', 'input.mp4', '-q:a', '0', '-map', 'a', 'output.mp3']);
 
-      const data = ffmpeg.FS('readFile', 'output.mp3');
-      const mp3Blob = new Blob([data.buffer], { type: 'audio/mp3' });
-      const url = URL.createObjectURL(mp3Blob);
+        // читаем результат
+        const mp3Data = Module.FS_readFile('output.mp3');
+        const blob = new Blob([mp3Data], { type: 'audio/mp3' });
+        const url = URL.createObjectURL(blob);
 
-      downloadLink.href = url;
-      downloadLink.download = file.name.replace(/\.[^/.]+$/, '') + '.mp3';
-      downloadLink.style.display = 'block';
-      downloadLink.textContent = 'Скачать MP3';
-
-      status.textContent = 'Готово!';
+        downloadLink.href = url;
+        downloadLink.download = 'output.mp3';
+        downloadLink.style.display = 'block';
+      };
+      reader.readAsArrayBuffer(file);
     });
   </script>
 </body>
