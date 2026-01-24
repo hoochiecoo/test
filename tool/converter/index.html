@@ -10,7 +10,17 @@
   <button id="convertBtn">Конвертировать</button>
   <a id="downloadLink" style="display:none;">Скачать MP3</a>
 
+  <!-- Создаём Module перед ffmpeg-asm.js -->
+  <script>
+    var Module = {
+      print: (text) => console.log(text),
+      printErr: (text) => console.error(text),
+      noInitialRun: true
+    };
+  </script>
+
   <script src="ffmpeg-asm.js"></script>
+
   <script>
     const fileInput = document.getElementById('fileInput');
     const convertBtn = document.getElementById('convertBtn');
