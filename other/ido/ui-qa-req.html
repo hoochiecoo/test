@@ -1,0 +1,479 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI/QA Requirements - Паттерны надежности</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        header a {
+            text-decoration: none;
+            color: #667eea;
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+        h1 {
+            color: #667eea;
+            flex: 1;
+        }
+        .intro {
+            background: #f0f4ff;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 40px;
+            border-radius: 4px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .group {
+            margin-bottom: 45px;
+        }
+        .group-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        .pattern {
+            background: #f0f4ff;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+            border-radius: 4px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .pattern:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        .pattern-title {
+            color: #764ba2;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        .pattern-title .icon {
+            margin-right: 10px;
+            font-size: 1.3em;
+        }
+        .pattern-desc {
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        .pattern-details {
+            background: white;
+            padding: 12px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        .detail-item {
+            color: #666;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.5;
+        }
+        .detail-item:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .detail-item:last-child {
+            margin-bottom: 0;
+        }
+        .benefit {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 3px;
+            color: #2e7d32;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="main.html">← Назад</a>
+            <h1>🛡️ UI/QA Requirements</h1>
+        </header>
+
+        <div class="intro">
+            <strong>Фокус: минимизация ошибок пользователя, предотвращение неверного ввода и снижение когнитивной нагрузки.</strong> Это не про стиль — это про функциональную надежность, которая предотвращает потерю данных, финансовые ошибки и пользовательское разочарование.
+        </div>
+
+        <!-- ГРУППА 1: ВАЛИДАЦИЯ И КОНТРОЛЬ ВВОДА -->
+        <div class="group">
+            <div class="group-header">✅ Группа 1: Валидация и контроль ввода</div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🔒</span>Блокировка кнопки (Disable until valid)
+                </div>
+                <div class="pattern-desc">Кнопка отправки остается неактивной, пока все обязательные поля не заполнены корректно.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Визуальная индикация: серая кнопка, не реагирует на наведение</div>
+                    <div class="detail-item">Включает реал-тайм проверку всех required полей</div>
+                    <div class="detail-item">Срабатывает при: пустое поле, неверный формат, данные вне диапазона</div>
+                    <div class="detail-item">Дополнение: tooltip при наведении объясняет, что не хватает ("Заполните Email")</div>
+                </div>
+                <div class="benefit">✅ Предотвращает отправку битых данных и лишние срабатывания валидации</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🎭</span>Маски ввода (Poka-Yoke)
+                </div>
+                <div class="pattern-desc">Автоматическое форматирование данных в процессе набора. Система физически не дает ввести буквы там, где нужны цифры.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Номер карты: 4444 4444 4444 4444 (пробелы автоматически)</div>
+                    <div class="detail-item">Телефон: +7 (999) 123-45-67 (скобки и дефисы автоматически)</div>
+                    <div class="detail-item">Дата: ДД.ММ.ГГГГ (слэши добавляются после ввода цифр)</div>
+                    <div class="detail-item">Отклонение символов: при попытке ввести букву в цифровое поле — звуковой/визуальный feedback</div>
+                    <div class="detail-item">СНИЛС, ИНН, паспорт — специальные маски для России</div>
+                </div>
+                <div class="benefit">✅ Исключает опечатки и форматирует данные правильно с первого раза</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">⚡</span>Инлайновая валидация (Inline Validation)
+                </div>
+                <div class="pattern-desc">Проверка поля сразу после того, как пользователь закончил ввод (onBlur), а не после нажатия кнопки.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Email: проверка при табе на другое поле (не на Enter)</div>
+                    <div class="detail-item">Визуал: красная граница + значок ошибки + текст ошибки под полем</div>
+                    <div class="detail-item">Зеленая граница и галочка при успешной валидации</div>
+                    <div class="detail-item">Задержка 500мс перед проверкой (не валидирует при каждом символе)</div>
+                    <div class="detail-item">Async валидация: проверка на сервере (есть ли email в БД), но с визуальным спиннером</div>
+                </div>
+                <div class="benefit">✅ Исправляет ошибку в контексте, пока человек еще помнит, что вводил</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">💬</span>Визуальные подсказки формата (Input Hinting)
+                </div>
+                <div class="pattern-desc">Пример правильного заполнения внутри поля или под ним для предотвращения путаницы.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Placeholder: "Пример: name@example.com" (исчезает при фокусе)</div>
+                    <div class="detail-item">Helper text под полем: "Используйте формат ДД.ММ.ГГГГ (29.12.2026)"</div>
+                    <div class="detail-item">Иконки: календарь для дат, @-знак для email, скрепка для файлов</div>
+                    <div class="detail-item">Длина ввода: счетчик символов для текстареи ("0 / 500 символов")</div>
+                    <div class="detail-item">Примеры вариантов: "Например: Россия, США, Франция"</div>
+                </div>
+                <div class="benefit">✅ Показывает ожидаемый формат, предотвращая путаницу</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🔍</span>Автодополнение и живой поиск (Autocomplete)
+                </div>
+                <div class="pattern-desc">Предложение существующих вариантов прямо в строке ввода при наборе текста.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Адреса: при вводе "Мос" появляется список городов (Москва, Мосальск)</div>
+                    <div class="detail-item">Email: при вводе "g" появляются @gmail.com, @google.com, @gmai.ru</div>
+                    <div class="detail-item">Артикулы товаров: фильтрация по типу + цена + фото в dropdown</div>
+                    <div class="detail-item">История поиска: последние 5 поисков пользователя</div>
+                    <div class="detail-item">Fuzzy matching: поиск по неполному совпадению (поиск "Казань" по "Кзн")</div>
+                    <div class="detail-item">Клик на вариант — автоматическая вставка и переход на следующее поле</div>
+                </div>
+                <div class="benefit">✅ Исключает опечатки и ускоряет заполнение формы</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">📝</span>Человекочитаемые сообщения об ошибках
+                </div>
+                <div class="pattern-desc">Конкретные, понятные сообщения вместо технических кодов ошибок.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">❌ ПЛОХО: "Error 404" или "Invalid input"</div>
+                    <div class="detail-item">✅ ХОРОШО: "В пароле должна быть хотя бы одна заглавная буква и цифра"</div>
+                    <div class="detail-item">Специфичность: указать точное поле ("Email" вместо "Data validation error")</div>
+                    <div class="detail-item">Конструктив: не просто "Ошибка", а "Что делать дальше"</div>
+                    <div class="detail-item">Тон: человеческий, без сложного жаргона ("Введите корректный номер" вместо "Invalid numeric input")</div>
+                    <div class="detail-item">Ссылка на справку: для сложных ошибок добавить "Подробнее →"</div>
+                </div>
+                <div class="benefit">✅ Дает четкую инструкцию, как исправить ошибку</div>
+            </div>
+        </div>
+
+        <!-- ГРУППА 2: ПРЕДОТВРАЩЕНИЕ СЛУЧАЙНЫХ ДЕЙСТВИЙ -->
+        <div class="group">
+            <div class="group-header">⚠️ Группа 2: Предотвращение случайных и разрушительных действий</div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🚫</span>Немедленная блокировка при клике (Prevent Double Action)
+                </div>
+                <div class="pattern-desc">После нажатия кнопка мгновенно блокируется и меняет состояние на «Загрузка...». Исключает двойной клик.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Кнопка становится disabled после первого клика (невозможно нажать снова)</div>
+                    <div class="detail-item">Визуал: серый цвет + спиннер + текст "Отправка..." или "Загрузка..."</div>
+                    <div class="detail-item">Timeout: если ответ сервера > 60 сек, показать "Операция заняла долго, повторить?"</div>
+                    <div class="detail-item">После завершения: restore кнопку в нормальное состояние или скрыть (если успех)</div>
+                    <div class="detail-item">На мобильных особенно важна минимальная задержка и четкий feedback</div>
+                </div>
+                <div class="benefit">✅ Исключает повторные списания денег или дублирование заявок в БД</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">↩️</span>Отмена вместо подтверждения (Undo over Confirm)
+                </div>
+                <div class="pattern-desc">Действие совершается мгновенно, но появляется кнопка «Отменить». Не прерывает поток работы.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Удаление письма: исчезает из папки, но внизу экрана toast "Письмо удалено" + кнопка "Отменить"</div>
+                    <div class="detail-item">Timeout на отмену: 5-7 секунд, затем письмо удаляется окончательно</div>
+                    <div class="detail-item">Перемещение задачи между досками: drag-drop, тут же toast с Undo</div>
+                    <div class="detail-item">Удаление из корзины: вместо диалога "Вы уверены?" — сразу удали, но дай отменить</div>
+                    <div class="detail-item">Batch операции: удалили 10 файлов, можешь отменить одну операцию на всех</div>
+                    <div class="detail-item">Можно использовать Ctrl+Z (Win) / Cmd+Z (Mac) для отмены в веб-приложении</div>
+                </div>
+                <div class="benefit">✅ Исправляет случайные клики, не прерывая поток работы</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🔴</span>Подтверждение разрушительных действий (Destructive Action Check)
+                </div>
+                <div class="pattern-desc">Для фатальных операций требуется дополнительное подтверждение (ввод текста или капча).</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Удаление аккаунта: требуется ввести слово "УДАЛИТЬ" или "Я понимаю риск"</div>
+                    <div class="detail-item">Очистка всех данных: ввод пароля или двухфакторная проверка</div>
+                    <div class="detail-item">Удаление проекта: ввод названия проекта ("Вы удаляете проект: [название]")</div>
+                    <div class="detail-item">Восстановление БД: только после double-check и интервала 24 часа</div>
+                    <div class="detail-item">Визуал: красная кнопка с предупреждением ⚠️, диалог модальный, нельзя отмахнуться</div>
+                    <div class="detail-item">Email-подтверждение: ссылка из письма для экстра защиты</div>
+                </div>
+                <div class="benefit">✅ Исключает случайную потерю данных из-за одного неверного клика</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">💾</span>Защита от потери данных при выходе
+                </div>
+                <div class="pattern-desc">Предупреждение при попытке закрыть страницу с незаполненной, но неотправленной формой.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Триггер: если в форме есть введенные (но не отправленные) данные</div>
+                    <div class="detail-item">Диалог: "У вас есть несохраненные изменения" + кнопки "Остаться" / "Уйти все равно"</div>
+                    <div class="detail-item">Для всех браузеров: window.onbeforeunload = подсказка</div>
+                    <div class="detail-item">Не срабатывает, если форма пуста или уже отправлена</div>
+                    <div class="detail-item">На мобильных: extra careful — может быть аккциденталь close вкладки</div>
+                </div>
+                <div class="benefit">✅ Предотвращает потерю работы при случайном закрытии вкладки</div>
+            </div>
+        </div>
+
+        <!-- ГРУППА 3: УПРОЩЕНИЕ И СНИЖЕНИЕ КОГНИТИВНОЙ НАГРУЗКИ -->
+        <div class="group">
+            <div class="group-header">🧠 Группа 3: Упрощение и снижение когнитивной нагрузки</div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🎯</span>Умные значения по умолчанию (Smart Defaults)
+                </div>
+                <div class="pattern-desc">Система заранее выбирает самые вероятные варианты, уменьшая объем ручной работы.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Страна по IP: пользователь из РФ → "Россия" предвыбрана</div>
+                    <div class="detail-item">Текущая дата: при создании события дата по умолчанию = сегодня</div>
+                    <div class="detail-item">Валюта: USD для США, RUB для России, EUR для Европы</div>
+                    <div class="detail-item">Язык: определить по браузеру или cookie пользователя</div>
+                    <div class="detail-item">Последние используемые: адрес доставки (если заказывал раньше)</div>
+                    <div class="detail-item">Правильный часовой пояс: автоматически из системы</div>
+                </div>
+                <div class="benefit">✅ Чем меньше полей юзер трогает вручную, тем меньше шансов на ошибку</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">📂</span>Прогрессивное раскрытие (Progressive Disclosure)
+                </div>
+                <div class="pattern-desc">Скрытие сложных или опасных настроек под кнопку «Дополнительно» или расширяемый раздел.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Форма подписки: базовые поля (Email, Пароль), а "Две фактор-аутентификация" под "+ Дополнительно"</div>
+                    <div class="detail-item">Настройки: новичок видит 5 базовых опций, опытный нажимает "Расширенные" и видит 30</div>
+                    <div class="detail-item">Безопасность: удаление аккаунта, API ключи, ограничение IP — в отдельной вкладке</div>
+                    <div class="detail-item">Визуал: кнопка "+ Еще" или стрелка ▼ "Показать детали"</div>
+                    <div class="detail-item">Новичок не сможет случайно изменить критический параметр, что он не понимает</div>
+                </div>
+                <div class="benefit">✅ Интерфейс остается простым, но сложность доступна при необходимости</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🪜</span>Пошаговые мастера (Wizards)
+                </div>
+                <div class="pattern-desc">Разбиение сложной формы на несколько простых этапов с прогрессом.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Форма из 20 полей → 4 простых этапа (Шаг 1/4, 2/4, 3/4, 4/4)</div>
+                    <div class="detail-item">Progress bar вверху показывает прогресс (50% заполнено)</div>
+                    <div class="detail-item">Кнопки: "← Назад", "Далее →" (или "Отправить" на последнем шаге)</div>
+                    <div class="detail-item">Валидация: каждый шаг проверяется перед переходом на следующий</div>
+                    <div class="detail-item">Сохранение прогресса: можно вернуться на шаг 2 и изменить данные</div>
+                    <div class="detail-item">Визуал: стандартная структура (числа 1, 2, 3 с галочками для завершенных)</div>
+                </div>
+                <div class="benefit">✅ Снижает риск запутаться в логике, пользователь сконцентрирован на одном этапе</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🥖</span>Хлебные крошки (Breadcrumbs)
+                </div>
+                <div class="pattern-desc">Постоянная индикация пути в иерархии, помогает понять текущее положение.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">E-shop: Главная > Электроника > Ноутбуки > ASUS Vivobook 15</div>
+                    <div class="detail-item">Админ-панель: Dashboard > Пользователи > ID:12345 > Действия</div>
+                    <div class="detail-item">Интерактивность: кликабельные links — один клик вернуться на "Электроника"</div>
+                    <div class="detail-item">Последний элемент: текст (не ссылка), показывает текущую страницу</div>
+                    <div class="detail-item">Разделитель: ">" или "/" или стрелка "→"</div>
+                    <div class="detail-item">На мобильных: может быть компактнее или скрыто в меню</div>
+                </div>
+                <div class="benefit">✅ Исключает дезориентацию, пользователь всегда знает, где он и куда может вернуться</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🎚️</span>Лимиты и ограничения (Constraints)
+                </div>
+                <div class="pattern-desc">Использование слайдеров, выпадающих списков вместо свободного ввода текста где диапазон ограничен.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Дата: не текстовое поле, а календарь (невозможно ввести "32 февраля")</div>
+                    <div class="detail-item">Количество товаров: слайдер от 1 до 100 (невозможно выбрать -5)</div>
+                    <div class="detail-item">Выбор категории: dropdown с фиксированным списком (невозможно написать неверную категорию)</div>
+                    <div class="detail-item">Диапазон цен: dual-range слайдер (от 1000 до 100000 руб)</div>
+                    <div class="detail-item">Статус: radio buttons или segmented control (вкл/выкл, активен/неактивен)</div>
+                    <div class="detail-item">Rating: звезды 1-5 (невозможно поставить 7 звезд)</div>
+                </div>
+                <div class="benefit">✅ Физически невозможно выбрать неверное значение</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">👀</span>Сводка перед подтверждением (Review Step)
+                </div>
+                <div class="pattern-desc">Финальный экран со всеми введенными данными перед окончательной покупкой или отправкой.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">E-commerce: сводка товаров, адрес доставки, способ оплаты, итоговая сумма</div>
+                    <div class="detail-item">Авиабилеты: вылет, прилет, пассажиры, цена — все видно до оплаты</div>
+                    <div class="detail-item">Формы: все поля отображены readonly для проверки (или edit ссылка для исправления)</div>
+                    <div class="detail-item">Подсчет: сумма, налоги, скидки — все детали разобраны</div>
+                    <div class="detail-item">Edit links: "Изменить адрес", "Изменить способ оплаты" — быстрый возврат без заново заполнения</div>
+                    <div class="detail-item">Финальная кнопка: "Подтвердить заказ" (только после проверки)</div>
+                </div>
+                <div class="benefit">✅ Позволяет увидеть и исправить опечатки в последний момент перед отправкой</div>
+            </div>
+        </div>
+
+        <!-- ГРУППА 4: БЕЗОПАСНОСТЬ И УДОБСТВО ДОСТУПА -->
+        <div class="group">
+            <div class="group-header">🔐 Группа 4: Безопасность и удобство доступа</div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">👁️</span>Показать/Скрыть пароль (Password Toggle)
+                </div>
+                <div class="pattern-desc">Иконка 👁️/👁️‍🗨️ позволяет проверить введенный текст, вдвое снижая ошибки при регистрации.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Иконка справа от поля: при клике текст показывается, при клике снова — скрывается</div>
+                    <div class="detail-item">Состояние: • • • • • • (скрыто) → password123 (видно)</div>
+                    <div class="detail-item">Избавляет от поля "Повторите пароль" (пользователь может сразу проверить)</div>
+                    <div class="detail-item">На мобильных: иконка достаточно большая (минимум 44x44px для удобства)</div>
+                    <div class="detail-item">При скрытии пароля: курсор остается в поле (не теряет фокус)</div>
+                    <div class="detail-item">UX: по умолчанию пароль скрыт, toggle всегда доступна</div>
+                </div>
+                <div class="benefit">✅ Вдвое снижает количество ошибок при регистрации и входе</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">✨</span>Магическая ссылка (Magic Link)
+                </div>
+                <div class="pattern-desc">Вход без пароля. Полностью устраняет ошибку "неверный пароль" или "я забыл пароль".</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Вход: пользователь вводит только Email (без пароля)</div>
+                    <div class="detail-item">Письмо: на указанный email приходит ссылка "Войти в аккаунт"</div>
+                    <div class="detail-item">Ссылка валидна: 15-30 минут (не бесконечно)</div>
+                    <div class="detail-item">Первый вход: если аккаунта нет, волшебная ссылка регистрирует пользователя</div>
+                    <div class="detail-item">Опцион: пользователь может установить пароль позже (не обязательно)</div>
+                    <div class="detail-item">Альтернатива OAuth: Google, GitHub, Apple для быстрого входа</div>
+                </div>
+                <div class="benefit">✅ Полностью устраняет самую частую причину ухода пользователей (забыли пароль)</div>
+            </div>
+        </div>
+
+        <!-- ГРУППА 5: КОНТЕКСТНОЕ ПОНИМАНИЕ И СОХРАНЕНИЕ -->
+        <div class="group">
+            <div class="group-header">🤖 Группа 5: Контекстное понимание и автосохранение</div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">🧠</span>Контекстное распознавание ошибок (Context Awareness)
+                </div>
+                <div class="pattern-desc">Система анализирует намерения и предупреждает о потенциальных ошибках перед их совершением.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Email: в письме есть слово "прикрепил", но файла нет → предупреждение перед отправкой</div>
+                    <div class="detail-item">Платеж: выбрана валюта USD, но сумма 50,000 (может быть ошибка) → подтверждение</div>
+                    <div class="detail-item">Спелчек: обнаружено много опечаток в письме → "Хотите исправить?"</div>
+                    <div class="detail-item">Дата: выбрана дата в прошлом → "Вы уверены? Дата 2020 года"</div>
+                    <div class="detail-item">Duplicate prevention: попытка добавить товар, который уже в корзине → "Уже добавлен"</div>
+                </div>
+                <div class="benefit">✅ Перехватывает частые ошибки до их совершения</div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-title">
+                    <span class="icon">💾</span>Сохранение черновиков (Autosave)
+                </div>
+                <div class="pattern-desc">Автоматическое сохранение введенных данных каждые несколько секунд в локальное хранилище.</div>
+                <div class="pattern-details">
+                    <div class="detail-item">Интервал: сохранение каждые 5-10 секунд (не постоянно, чтобы не слаговать)</div>
+                    <div class="detail-item">Хранение: localStorage (браузер) + серверное сохранение (опционально)</div>
+                    <div class="detail-item">Визуал: маленький текст "Автосохранено" вверху, исчезает через 2 сек</div>
+                    <div class="detail-item">При перезагрузке страницы: "Восстановить черновик? Сохранено 10 мин назад"</div>
+                    <div class="detail-item">Для текстареи, комментариев, длинных форм особенно важно</div>
+                    <div class="detail-item">Не сохранять пароли и чувствительные данные в localStorage</div>
+                </div>
+                <div class="benefit">✅ Предотвращает потерю работы при закрытии вкладки, сбое интернета или браузера</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
