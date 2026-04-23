@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мобильное приложение - Чек-лист продакшена</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+        }
+        .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.4em;
+        }
+        .card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .card a {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.3s;
+        }
+        .card a:hover {
+            opacity: 0.9;
+        }
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 Чек-лист продакшена мобильного приложения</h1>
+            <p>Руководство по best practices перед запуском</p>
+        </header>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-icon">🎯</div>
+                <h2>LEAN</h2>
+                <p>Принципы методологии Lean для эффективной разработки и постоянного улучшения.</p>
+                <a href="lean.html">Открыть чек-лист →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔄</div>
+                <h2>Фазы SDLC</h2>
+                <p>Best practices жизненного цикла разработки ПО для каждой фазы.</p>
+                <a href="sdlc.html">Открыть чек-лист →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📲</div>
+                <h2>Мобильная</h2>
+                <p>Основные best practices разработки мобильных приложений и требования платформ.</p>
+                <a href="mobile.html">Открыть чек-лист →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🚀</div>
+                <h2>Flutter</h2>
+                <p>Специфичные для Flutter best practices, оптимизация и гайдлайны продакшена.</p>
+                <a href="flutter.html">Открыть чек-лист →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📢</div>
+                <h2>Маркетинг</h2>
+                <p>Стратегия выхода на рынок, подготовка запуска и привлечение пользователей.</p>
+                <a href="marketing.html">Открыть чек-лист →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🎨</div>
+                <h2>Эвристики Нильсена</h2>
+                <p>10 эвристик юзабилити Якоба Нильсена для проектирования удобных интерфейсов.</p>
+                <a href="heuristics.html">Открыть чек-лист →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">✨</div>
+                <h2>Золотые правила</h2>
+                <p>8 золотых правил интерфейса Бена Шнейдермана для максимального удобства.</p>
+                <a href="golden-rules.html">Открыть чек-лист →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🧠</div>
+                <h2>Design Thinking</h2>
+                <p>Методология Design Thinking: эмпатия, идеация, прототипирование и тестирование решений.</p>
+                <a href="design-thinking.html">Открыть чек-лист →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>💡 Завершите все чек-листы перед выходом в продакшн</p>
+        </footer>
+    </div>
+</body>
+</html>

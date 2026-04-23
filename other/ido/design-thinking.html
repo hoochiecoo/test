@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Thinking - Чек-лист продакшена</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        header a {
+            text-decoration: none;
+            color: #667eea;
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+        h1 {
+            color: #667eea;
+            flex: 1;
+        }
+        .section {
+            margin-bottom: 35px;
+        }
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .description {
+            background: #f0f4ff;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .checklist li:before {
+            content: "☐";
+            margin-right: 12px;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            min-width: 20px;
+        }
+        .checklist li:hover {
+            background: #e8ecff;
+        }
+        .phase-icon {
+            font-size: 2em;
+            margin-right: 10px;
+        }
+        .principle {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f0f4ff;
+            border-left: 5px solid #667eea;
+            border-radius: 4px;
+        }
+        .principle h3 {
+            color: #764ba2;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        .principle-desc {
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        .examples {
+            background: white;
+            padding: 12px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        .example-item {
+            color: #666;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.5;
+        }
+        .example-item:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .example-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="main.html">← Назад</a>
+            <h1>🧠 Design Thinking</h1>
+        </header>
+
+        <div class="section">
+            <h2><span class="phase-icon">❤️</span>Фаза 1: Эмпатия</h2>
+            <div class="description">
+                Понимание потребностей и болевых точек пользователей. На этом этапе команда погружается в мир пользователя, собирает информацию через интервью, наблюдение и исследование.
+            </div>
+            <ul class="checklist">
+                <li>Проведены интервью с минимум 10-15 пользователями</li>
+                <li>Определены основные потребности пользователей</li>
+                <li>Выявлены главные болевые точки и проблемы</li>
+                <li>Собраны данные о поведении и привычках</li>
+                <li>Определены целевые аудитории и сегменты</li>
+                <li>Созданы персоны пользователей (минимум 3-5)</li>
+                <li>Документированы user journeys для каждой персоны</li>
+                <li>Выявлены эмоциональные состояния и контекст использования</li>
+                <li>Проведено наблюдение за пользователями в естественной среде</li>
+                <li>Результаты эмпатии задокументированы и поделены с командой</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span class="phase-icon">💡</span>Фаза 2: Идеация (Генерация идей)</h2>
+            <div class="description">
+                Генерирование максимального количества идей для решения выявленных проблем. На этом этапе нет плохих идей - работает принцип "quantity breeds quality".
+            </div>
+            <ul class="checklist">
+                <li>Проведены сессии мозгового штурма с командой</li>
+                <li>Сформулированы POV (Point of View) statements для проблем</li>
+                <li>Используется техника "How Might We" (как мы можем)</li>
+                <li>Сгенерировано минимум 50+ идей решений</li>
+                <li>Идеи документированы и видны всей команде</li>
+                <li>Нет критики идей на этапе генерации</li>
+                <li>Привлечены люди из разных отделов</li>
+                <li>Идеи сгруппированы по категориям и темам</li>
+                <li>Проведена оценка идей по критериям (влияние, выполнимость, ресурсы)</li>
+                <li>Выбраны лучшие идеи для разработки (5-10 финалистов)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span class="phase-icon">🎨</span>Фаза 3: Прототипирование</h2>
+            <div class="description">
+                Создание физического или цифрового прототипа идеи для проверки концепции. Прототип должен быть быстрым, дешевым и легко модифицируемым для обучения.
+            </div>
+            <ul class="checklist">
+                <li>Определена стратегия прототипирования (низкая точность сначала)</li>
+                <li>Созданы низко-точные прототипы (бумага, быстрые эскизы)</li>
+                <li>Определены ключевые интерактивные элементы для проверки</li>
+                <li>Выбрана платформа для прототипа (Figma, Adobe XD, код и т.д.)</li>
+                <li>Созданы wireframes и/или интерактивные макеты</li>
+                <li>Прототип охватывает основные user flows</li>
+                <li>Обозначены области неопределенности и вопросы для тестирования</li>
+                <li>Прототип удобен для демонстрации пользователям</li>
+                <li>Версионирование прототипа организовано</li>
+                <li>Команда готова быстро итерировать на основе обратной связи</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span class="phase-icon">🧪</span>Фаза 4: Тестирование</h2>
+            <div class="description">
+                Проверка прототипа с реальными пользователями для получения обратной связи и обучения. Это цикл: тест → обучение → итерация → снова тест.
+            </div>
+            <ul class="checklist">
+                <li>Определена тестовая аудитория (минимум 5-8 пользователей на итерацию)</li>
+                <li>Подготовлены сценарии и задачи для тестирования</li>
+                <li>Установлены правила и атмосфера для честной обратной связи</li>
+                <li>Проведены тестовые сессии с пользователями (30-60 минут)</li>
+                <li>Записаны поведение, комментарии и реакции пользователей</li>
+                <li>Собрана качественная и количественная обратная связь</li>
+                <li>Выявлены проблемы использования и узкие места</li>
+                <li>Документированы главные инсайты и обучение</li>
+                <li>Определены изменения для следующей итерации</li>
+                <li>Результаты поделены со всей командой</li>
+                <li>Проведены итерации на основе обратной связи</li>
+                <li>Валидация концепции перед полной разработкой</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span class="phase-icon">🔄</span>Итеративный цикл Design Thinking</h2>
+            <div class="description">
+                Design Thinking - это циклический процесс. После тестирования возвращайтесь к эмпатии или идеации, чтобы более глубоко понять проблему или уточнить решение.
+            </div>
+            <ul class="checklist">
+                <li>Команда понимает, что Design Thinking циклический</li>
+                <li>Готовность переделать работу на основе обучения</li>
+                <li>Нет фиксированной дороги - гибкость по мере обучения</li>
+                <li>Обратная связь не воспринимается как критика</li>
+                <li>Провал на ранних этапах - это успех (дешево и быстро)</li>
+                <li>Документированы все итерации и причины изменений</li>
+                <li>Прототипы постепенно увеличивают точность (от 20% к 80%+)</li>
+                <li>Команда проводит ретроспективы после каждого цикла</li>
+                <li>Обучение каждого цикла применяется в следующем</li>
+                <li>Процесс непрерывен вплоть до запуска продукта</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span class="phase-icon">✅</span>Ключевые принципы Design Thinking</h2>
+            <div class="description">
+                Эти принципы должны пронизывать каждую фазу процесса.
+            </div>
+
+            <div class="principle">
+                <h3>❤️ Человек-центричность</h3>
+                <div class="principle-desc">Все решения должны базироваться на потребностях реальных людей</div>
+                <div class="examples">
+                    <div class="example-item">Интервьюирование реальных пользователей вместо предположений — узнали, что пожилые люди нуждаются в крупнее шрифта, а не в современном минималистичном дизайне</div>
+                    <div class="example-item">Наблюдение за потоком пациентов в клинике выявило, что главная боль не в записи, а в длительном ожидании информации о своем статусе</div>
+                    <div class="example-item">Тестирование с инвалидами показало, что стандартные кнопки "скрыть/показать" не работают для людей с моторными нарушениями</div>
+                    <div class="example-item">Беседы с матерями показали, что им нужен не больше функций, а простота и доверие к приложению здоровья</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>💪 Оптимизм</h3>
+                <div class="principle-desc">Верим, что любую проблему можно решить инновационно</div>
+                <div class="examples">
+                    <div class="example-item">Вместо того, чтобы принять "это слишком сложно", команда Airbnb переопределила проблему доверия через фото и рейтинги</div>
+                    <div class="example-item">Uber не сказал "таксистам не нужна эта технология", а решил проблему прозрачности и справедливости цены</div>
+                    <div class="example-item">Netflix столкнулась с проблемой разочарования по доставке DVD, и вместо улучшения логистики перешла на потоковое видео</div>
+                    <div class="example-item">Stripe не согласилась с "платежи слишком сложны для разработчиков", создала простой API интеграции</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>🔍 Переопределение</h3>
+                <div class="principle-desc">Часто настоящая проблема отличается от предположения</div>
+                <div class="examples">
+                    <div class="example-item">Компания думала, что проблема в скорости приложения, но тестирование показало — пользователи просто не понимали, где находится нужная кнопка</div>
+                    <div class="example-item">Банк предполагал, что клиенты хотят больше финансовых продуктов, но на самом деле им нужна прозрачность и контроль своих трат</div>
+                    <div class="example-item">Фитнес-приложение планировало добавить AI-тренера, но выяснилось — людей мотивирует сообщество, а не совершенный алгоритм</div>
+                    <div class="example-item">Проблема: "Менеджеры не используют наше ПО". Реальная причина: им нужны микро-обновления, а не еженедельное обучение по новым фичам</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>🤝 Включенность</h3>
+                <div class="principle-desc">Все члены команды вносят идеи и участвуют</div>
+                <div class="examples">
+                    <div class="example-item">Мозговой штурм с бэк-эндом, дизайнером, поддержкой и маркетингом дал идею добавить чат-бот поддержки прямо в приложение</div>
+                    <div class="example-item">Девелопер из поддержки предложил фичу "экспорт логов", которая стала одной из самых запрашиваемых</div>
+                    <div class="example-item">Охранник офиса заметил, что посетители теряются в навигации — это привело к переделке onboarding</div>
+                    <div class="example-item">Расширенная команда (инженеры, дизайнеры, аналитики, HR) при проектировании внутреннего инструмента дала 3x лучший результат</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>🌍 Культурные различия</h3>
+                <div class="principle-desc">Ищем вдохновение в разных культурах и подходах</div>
+                <div class="examples">
+                    <div class="example-item">Подход WeChat объединить платежи, социалку и медиа вдохновил западные компании на переделку своих экосистем</div>
+                    <div class="example-item">Японская концепция "Mottainai" (не впустить впустую) привела к фичам сохранения драфтов и восстановления потеряных данных</div>
+                    <div class="example-item">Индийские стартапы показали, как работать с низкой скоростью интернета — это научило всех оптимизировать для медленных сетей</div>
+                    <div class="example-item">Африканские мобильные решения (MPESA) показали силу простоты — вдохновили на создание минималистичных интерфейсов</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>🎨 Мыслим визуально</h3>
+                <div class="principle-desc">Используем наброски, макеты, прототипы вместо только текста</div>
+                <div class="examples">
+                    <div class="example-item">Вместо документа из 20 страниц про новый user flow — быстрый Figma прототип показал проблему за 5 минут</div>
+                    <div class="example-item">Набросок на бумаге фундамент лучше объяснил идею, чем слайды PowerPoint и часовой звонок</div>
+                    <div class="example-item">Создание journey map визуализировала болевые точки и вдохновила на 3 новых фичи</div>
+                    <div class="example-item">Sketch + animation показал проблему в юзабилити за 30 секунд видео</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>⚡ Быстрое прототипирование</h3>
+                <div class="principle-desc">Лучше показать, чем рассказывать</div>
+                <div class="examples">
+                    <div class="example-item">Бумажный прототип в руках пользователя за 1 час дал больше insights, чем месячная разработка в Figma</div>
+                    <div class="example-item">MVP за неделю vs. план разработки на 3 месяца — прототип показал, что идея не работает, сэкономив месяцы</div>
+                    <div class="example-item">Бросили низко-точный прототип в Telegram — реальные люди начали его использовать и дали оценку</div>
+                    <div class="example-item">Быстрый Figma прототип вместо Specа — команда разработки поняла требования в 5 раз быстрее</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>🧪 Тест рано и часто</h3>
+                <div class="principle-desc">Ошибки рано лучше, чем ошибки поздно</div>
+                <div class="examples">
+                    <div class="example-item">Тест с 3 пользователями на низко-точном прототипе выявил фундаментальную проблему концепции за день</div>
+                    <div class="example-item">Запуск бета-версии на 100 пользователей выявил баг, который к production сломал бы 100к+ активных пользователей</div>
+                    <div class="example-item">Юзабилити-тестирование в каждом спринте — итоговый продукт требовал на 60% меньше обучения пользователей</div>
+                    <div class="example-item">A/B тест гипотезы за день — выяснили, что цвет кнопки важнее, чем предполагаемая архитектура</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>🤐 Зарезервировать суждение</h3>
+                <div class="principle-desc">Не спешить с выводами до тестирования</div>
+                <div class="examples">
+                    <div class="example-item">"Это очевидно плохая идея" — до тестирования фичу считали провалом, но она стала favorite пользователей</div>
+                    <div class="example-item">Все думали, что UX фича сложная, но юзабилити-тест показал — люди интуитивно её поняли</div>
+                    <div class="example-item">Команда была уверена в дизайне, но первое тестирование выявило, что это не то, чего хотят пользователи</div>
+                    <div class="example-item">Отложенное решение про название фичи — провели небольшой тест, и выбрали название, которое работало на 3x лучше</div>
+                </div>
+            </div>
+
+            <div class="principle">
+                <h3>🚀 Ориентация на действие</h3>
+                <div class="principle-desc">Из размышления переходим к делу</div>
+                <div class="examples">
+                    <div class="example-item">"Давайте сделаем бумажный прототип прямо сейчас" вместо "давайте обсудим следующую неделю" — сэкономили 5 дней</div>
+                    <div class="example-item">Вместо документирования всех идей — выбрали топ-3 и сразу начали прототипировать</div>
+                    <div class="example-item">Импровизированное тестирование в коридоре — за 2 часа собрали больше feedback, чем в плане за месяц</div>
+                    <div class="example-item">Hack day — 6 часов on-site дизайна и разработки выявили больше проблем, чем месячное планирование</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

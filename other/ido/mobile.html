@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мобильные Best Practices - Чек-лист продакшена</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        header a {
+            text-decoration: none;
+            color: #667eea;
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+        h1 {
+            color: #667eea;
+            flex: 1;
+        }
+        .section {
+            margin-bottom: 35px;
+        }
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .checklist li:before {
+            content: "☐";
+            margin-right: 12px;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            min-width: 20px;
+        }
+        .checklist li:hover {
+            background: #e8ecff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="main.html">← Назад</a>
+            <h1>📲 Мобильные Best Practices</h1>
+        </header>
+
+        <div class="section">
+            <h2>Требования платформ</h2>
+            <ul class="checklist">
+                <li>Минимальная версия iOS: 12.0 или выше (проверить требования AppStore)</li>
+                <li>Минимальная версия Android: API 21 (Android 5.0) или выше</li>
+                <li>Поддержка последних версий ОС (iOS 16+, Android 13+)</li>
+                <li>Тестирование на различных размерах и разрешениях экранов</li>
+                <li>Поддержка портретной и ландшафтной ориентаций</li>
+                <li>Обработка вырезов устройств, безопасных зон и срезов</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Оптимизация производительности</h2>
+            <ul class="checklist">
+                <li>Время запуска приложения < 3 секунд</li>
+                <li>Частота кадров 60 FPS (120 FPS для дисплеев с высокой частотой обновления)</li>
+                <li>Оптимизированное использование памяти (мониторить утечки)</li>
+                <li>Минимизированное потребление батареи</li>
+                <li>Оптимизированные сетевые запросы (кэширование, сжатие)</li>
+                <li>Оптимизированные запросы к БД</li>
+                <li>Оптимизированные изображения для мобильных экранов</li>
+                <li>Ленивая загрузка содержимого</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Пользовательский опыт</h2>
+            <ul class="checklist">
+                <li>Интуитивная навигация и архитектура информации</li>
+                <li>Единый язык дизайна по всему приложению</li>
+                <li>Удобные для сенсорного ввода кнопки и элементы (минимум 48dp)</li>
+                <li>Правильное расстояние и типография</li>
+                <li>Поддержка темного режима</li>
+                <li>Функции доступности (VoiceOver/TalkBack)</li>
+                <li>Четкие сообщения об ошибках и обратная связь</li>
+                <li>Состояния загрузки и индикаторы прогресса</li>
+                <li>Плавные анимации и переходы</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Безопасность</h2>
+            <ul class="checklist">
+                <li>Использовать HTTPS/TLS для всех сетевых коммуникаций</li>
+                <li>Внедрить закрепление сертификатов</li>
+                <li>Защитить чувствительные данные в зашифрованном хранилище</li>
+                <li>Никогда не жестко кодировать API ключи или секреты</li>
+                <li>Использовать OAuth2/OpenID Connect для аутентификации</li>
+                <li>Внедрить правильное управление сеансами</li>
+                <li>Проверить и очистить весь пользовательский ввод</li>
+                <li>Внедрить биометрическую аутентификацию, если необходимо</li>
+                <li>Регулярные аудиты безопасности и тестирование на проникновение</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Сеть и поддержка офлайна</h2>
+            <ul class="checklist">
+                <li>Грациозная обработка изменений подключения к сети</li>
+                <li>Внедрить офлайн-режим где применимо</li>
+                <li>Очередь запросов для офлайн-сценариев</li>
+                <li>Синхронизация данных при восстановлении соединения</li>
+                <li>Внедрить тайм-ауты запросов (рекомендуется 30s)</li>
+                <li>Логика повтора с экспоненциальной задержкой</li>
+                <li>Умное кэширование ответов API</li>
+                <li>Мониторить качество сети и адаптироваться</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Аналитика и Мониторинг</h2>
+            <ul class="checklist">
+                <li>Интегрировать библиотеку аналитики (Firebase, Amplitude, и т.д.)</li>
+                <li>Отслеживать ключевые события пользователей и воронки</li>
+                <li>Внедрить отчеты о сбоях</li>
+                <li>Мониторить метрики производительности приложения</li>
+                <li>Настроить сбор отзывов пользователей</li>
+                <li>Отслеживать показатели принятия функций</li>
+                <li>Мониторить время ответа API</li>
+                <li>Логировать ошибки с контекстом для отладки</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Локализация и Интернационализация</h2>
+            <ul class="checklist">
+                <li>Поддержка нескольких языков, если необходимо</li>
+                <li>Правильное направление текста (LTR/RTL)</li>
+                <li>Форматирование дат, времени и чисел по локали</li>
+                <li>Поддержка нескольких валют, если применимо</li>
+                <li>Перевод всего пользовательского контента</li>
+                <li>Тщательное тестирование RTL языков</li>
+                <li>Правильная обработка кодировки символов</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Разрешения и Приватность</h2>
+            <ul class="checklist">
+                <li>Запросить только необходимые разрешения</li>
+                <li>Объяснить, почему каждое разрешение нужно</li>
+                <li>Запросить разрешения в подходящее время (runtime)</li>
+                <li>Грациозная обработка отказа в разрешении</li>
+                <li>Политика конфиденциальности четко указана</li>
+                <li>Соответствие GDPR (если применимо)</li>
+                <li>Определена политика хранения данных</li>
+                <li>Никакого отслеживания без согласия</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

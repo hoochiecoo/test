@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter Best Practices - Чек-лист продакшена</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        header a {
+            text-decoration: none;
+            color: #667eea;
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+        h1 {
+            color: #667eea;
+            flex: 1;
+        }
+        .section {
+            margin-bottom: 35px;
+        }
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .checklist li:before {
+            content: "☐";
+            margin-right: 12px;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            min-width: 20px;
+        }
+        .checklist li:hover {
+            background: #e8ecff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="main.html">← Назад</a>
+            <h1>🚀 Flutter Best Practices</h1>
+        </header>
+
+        <div class="section">
+            <h2>Настройка окружения Flutter</h2>
+            <ul class="checklist">
+                <li>Версия Flutter SDK задокументирована и заблокирована</li>
+                <li>Совместимая версия Dart SDK указана</li>
+                <li>Все члены команды используют одинаковую версию Flutter</li>
+                <li>Git настроен для игнорирования артефактов сборки</li>
+                <li>.pubignore настроен правильно</li>
+                <li>Flutter channel stable используется для продакшена</li>
+                <li>Переменные окружения настроены</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Качество Кода и Архитектура</h2>
+            <ul class="checklist">
+                <li>Следовать принципам чистого кода</li>
+                <li>Использовать решение управления состоянием (Provider, Riverpod, Bloc)</li>
+                <li>Отделить бизнес-логику от UI</li>
+                <li>Использовать значимые имена классов и методов</li>
+                <li>Избегать глубоко вложенных виджетов</li>
+                <li>Извлечь переиспользуемые виджеты</li>
+                <li>Правильная обработка ошибок и управление исключениями</li>
+                <li>Отсутствие жестко кодированных строк (использовать локализацию)</li>
+                <li>Константы определены в отдельном файле</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Тестирование</h2>
+            <ul class="checklist">
+                <li>Модульные тесты для всей бизнес-логики (>80% покрытие)</li>
+                <li>Тесты виджетов для компонентов UI</li>
+                <li>Интеграционные тесты для критических потоков</li>
+                <li>Запускать тесты перед каждым коммитом</li>
+                <li>Мокировать внешние зависимости</li>
+                <li>Тестировать сценарии ошибок</li>
+                <li>Тесты производительности для критических путей</li>
+                <li>Тестирование на нескольких размерах устройств</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Управление Зависимостями</h2>
+            <ul class="checklist">
+                <li>Минимизировать внешние зависимости</li>
+                <li>Использовать только активно поддерживаемые пакеты</li>
+                <li>Держать файл pubspec.lock в контроле версий</li>
+                <li>Регулярно обновлять зависимости</li>
+                <li>Проверять журналы изменений перед обновлениями</li>
+                <li>Тестировать после каждого обновления зависимости</li>
+                <li>Правильно использовать ограничения версий (^, ~)</li>
+                <li>Задокументировать причину критических зависимостей</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Оптимизация Производительности</h2>
+            <ul class="checklist">
+                <li>Использовать const конструкторы где применимо</li>
+                <li>Внедрить стратегии кэширования виджетов</li>
+                <li>Оптимизировать отрисовку списков (ListView.builder)</li>
+                <li>Использовать RepaintBoundary для сложных виджетов</li>
+                <li>Профилировать приложение с DevTools</li>
+                <li>Мониторить использование памяти и предотвращать утечки</li>
+                <li>Оптимизировать загрузку и кэширование изображений</li>
+                <li>Использовать ленивую инициализацию для тяжелых операций</li>
+                <li>Внедрить правильное сохранение состояния</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Конфигурация Сборки</h2>
+            <ul class="checklist">
+                <li>Отдельные конфигурации сборки для dev/staging/prod</li>
+                <li>Различные ID приложений для разных сборок</li>
+                <li>Специфичные для окружения эндпоинты API</li>
+                <li>Различные иконки приложения для разных сборок</li>
+                <li>Правильно настроены сертификаты подписи</li>
+                <li>Release сборки оптимизированы (--split-per-abi)</li>
+                <li>Правила ProGuard/R8 настроены для Android</li>
+                <li>Bitcode включен для iOS</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>iOS Специфика</h2>
+            <ul class="checklist">
+                <li>Целевая версия iOS задана правильно (12.0+)</li>
+                <li>Podfile обновлен и заблокирован</li>
+                <li>Сертификат подписи и профиль provisioning действительны</li>
+                <li>Подписание приложения настроено автоматически или вручную</li>
+                <li>Политика конфиденциальности и деклараций данных добавлены</li>
+                <li>Протестировано на iPhone и iPad</li>
+                <li>Обработка безопасной зоны и notch протестирована</li>
+                <li>Поддержка темного режима проверена</li>
+                <li>Протестированы функции, специфичные для версии iOS</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Android Специфика</h2>
+            <ul class="checklist">
+                <li>minSdkVersion установлена правильно (API 21+)</li>
+                <li>targetSdkVersion установлена на последнюю</li>
+                <li>Android manifest настроен правильно</li>
+                <li>Необходимые разрешения объявлены</li>
+                <li>Файл keystore защищен резервной копией</li>
+                <li>Ключ подписи приложения настроен</li>
+                <li>Протестировано на различных версиях Android</li>
+                <li>Протестировано на телефонах и планшетах</li>
+                <li>Поведение кнопки "Назад" правильное</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Развертывание в App Store и Play Store</h2>
+            <ul class="checklist">
+                <li>Название приложения и описание завершены</li>
+                <li>Иконки приложения и скриншоты подготовлены</li>
+                <li>Политика конфиденциальности проверена и обновлена</li>
+                <li>Номер версии и номер сборки установлены правильно</li>
+                <li>Примечания к выпуску подготовлены</li>
+                <li>Анкета оценки содержимого заполнена</li>
+                <li>Ключевые слова и оптимизация поиска готовы</li>
+                <li>Переводы скриншотов и превью готовы</li>
+                <li>Сборка протестирована через TestFlight/Internal Testing</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Мониторинг и Аналитика</h2>
+            <ul class="checklist">
+                <li>Firebase настроена и интегрирована</li>
+                <li>Отчеты о сбоях включены</li>
+                <li>События аналитики отслеживаются</li>
+                <li>Мониторинг производительности активен</li>
+                <li>Реализовано пользовательское логирование ошибок</li>
+                <li>Отслеживание сеанса пользователя включено</li>
+                <li>Панель мониторинга в реальном времени настроена</li>
+                <li>Оповещения настроены для критических проблем</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фазы SDLC - Чек-лист продакшена</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        header a {
+            text-decoration: none;
+            color: #667eea;
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+        h1 {
+            color: #667eea;
+            flex: 1;
+        }
+        .section {
+            margin-bottom: 35px;
+        }
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .checklist li:before {
+            content: "☐";
+            margin-right: 12px;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            min-width: 20px;
+        }
+        .checklist li:hover {
+            background: #e8ecff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="main.html">← Назад</a>
+            <h1>🔄 Фазы SDLC - Best Practices</h1>
+        </header>
+
+        <div class="section">
+            <h2>1. Планирование и Требования</h2>
+            <ul class="checklist">
+                <li>Определить область и задачи проекта</li>
+                <li>Собрать и задокументировать требования</li>
+                <li>Создать пользовательские истории с критериями приемки</li>
+                <li>Провести оценку рисков</li>
+                <li>Оценить трудозатраты и сроки</li>
+                <li>Определить метрики успеха</li>
+                <li>Получить одобрение заинтересованных сторон</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>2. Проектирование и Архитектура</h2>
+            <ul class="checklist">
+                <li>Создать дизайн архитектуры системы</li>
+                <li>Спроектировать схему базы данных</li>
+                <li>Создать спецификации API (OpenAPI/Swagger)</li>
+                <li>Создать макеты и прототипы UI/UX</li>
+                <li>Определить архитектуру безопасности</li>
+                <li>Спланировать подход к масштабируемости</li>
+                <li>Задокументировать решения о проектировании</li>
+                <li>Провести обзор проектирования с командой</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>3. Разработка и Кодирование</h2>
+            <ul class="checklist">
+                <li>Настроить среду разработки</li>
+                <li>Настроить контроль версий и стратегию ветвления</li>
+                <li>Установить руководство по стилю кода и линтинг</li>
+                <li>Реализовать основные функции по дизайну</li>
+                <li>Написать модульные тесты (целевое покрытие >80%)</li>
+                <li>Провести обзор кода перед слиянием</li>
+                <li>Задокументировать код и API</li>
+                <li>Держать зависимости в актуальном состоянии</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>4. Тестирование и QA</h2>
+            <ul class="checklist">
+                <li>Выполнить ручное тестирование всех функций</li>
+                <li>Запустить автоматизированные модульные тесты</li>
+                <li>Запустить интеграционные тесты</li>
+                <li>Выполнить тестирование UI/UX</li>
+                <li>Провести тестирование производительности</li>
+                <li>Тестирование безопасности и сканирование уязвимостей</li>
+                <li>Тестирование на реальных устройствах (различные модели/версии)</li>
+                <li>Тестирование доступности (соответствие WCAG)</li>
+                <li>Создать отчет о тестировании с дефектами</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>5. Стейджинг и Предзапуск</h2>
+            <ul class="checklist">
+                <li>Развернуть на стейджинг-среду</li>
+                <li>Запустить сквозное тестирование</li>
+                <li>Проверить все интеграции</li>
+                <li>Тестировать потоки платежей/транзакций</li>
+                <li>Нагрузочное и стресс-тестирование</li>
+                <li>Завершить мониторинг и оповещение</li>
+                <li>Подготовить документацию поддержки</li>
+                <li>Создать процедуры отката</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>6. Развертывание в Продакшене</h2>
+            <ul class="checklist">
+                <li>Финальный чек-лист готовности продакшена</li>
+                <li>Развернуть с canary/поэтапным развертыванием</li>
+                <li>Мониторить частоту ошибок и производительность</li>
+                <li>Проверить, что все функции работают в продакшене</li>
+                <li>Тестировать критические пути пользователей</li>
+                <li>Мониторить журналы сервера и метрики</li>
+                <li>Иметь готовый план срочного исправления</li>
+                <li>Сообщить пользователям/заинтересованным сторонам</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>7. Постзапуск и Обслуживание</h2>
+            <ul class="checklist">
+                <li>Мониторить отчеты о сбоях и журналы ошибок</li>
+                <li>Активно собирать отзывы пользователей</li>
+                <li>Анализировать паттерны использования и метрики</li>
+                <li>Спланировать и выполнить исправления ошибок</li>
+                <li>Спланировать улучшения функций</li>
+                <li>Держать зависимости и патчи безопасности в актуальном состоянии</li>
+                <li>Задокументировать полученные уроки</li>
+                <li>Спланировать следующую итерацию релиза</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

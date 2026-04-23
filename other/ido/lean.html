@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAN Best Practices - Чек-лист продакшена</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        header a {
+            text-decoration: none;
+            color: #667eea;
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+        h1 {
+            color: #667eea;
+            flex: 1;
+        }
+        .section {
+            margin-bottom: 35px;
+        }
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .checklist li:before {
+            content: "☐";
+            margin-right: 12px;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            min-width: 20px;
+        }
+        .checklist li:hover {
+            background: #e8ecff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="main.html">← Назад</a>
+            <h1>🎯 LEAN Best Practices</h1>
+        </header>
+
+        <div class="section">
+            <h2>Принципы Lean</h2>
+            <ul class="checklist">
+                <li>Устранение отходов - убрать функции, не добавляющие ценность</li>
+                <li>Усиление обучения - собирать отзывы пользователей рано и часто</li>
+                <li>Позднее принятие решений - отложить критические решения</li>
+                <li>Доставка как можно быстрее - частые релизы</li>
+                <li>Расширение возможностей команды - автономное принятие решений</li>
+                <li>Построение целостности - сохранить согласованность системы и UX</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Разработка MVP</h2>
+            <ul class="checklist">
+                <li>Четко определить основное ценностное предложение</li>
+                <li>Определить только необходимые функции</li>
+                <li>Убрать дополнительные функции для MVP</li>
+                <li>Установить метрики для измерения успеха</li>
+                <li>Спланировать быстрые циклы итераций</li>
+                <li>Подготовиться к смене направления, если необходимо</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Lean Метрики и Аналитика</h2>
+            <ul class="checklist">
+                <li>Отслеживать метрики вовлеченности пользователей</li>
+                <li>Мониторить воронки конверсии</li>
+                <li>Измерять уровень принятия функций</li>
+                <li>Анализировать кривые удержания пользователей</li>
+                <li>Настроить фреймворк A/B тестирования</li>
+                <li>Создать ежедневные/еженедельные информационные панели</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Непрерывная Доставка</h2>
+            <ul class="checklist">
+                <li>Автоматизировать конвейер сборки и развертывания</li>
+                <li>Включить флаги функций для постепенного развертывания</li>
+                <li>Внедрить развертывание canary</li>
+                <li>Спланировать процедуры срочного исправления</li>
+                <li>Мониторить ошибки продакшена в реальном времени</li>
+                <li>Документировать процедуры отката</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Команда и Процесс</h2>
+            <ul class="checklist">
+                <li>Ежедневные синхронизации со всей командой</li>
+                <li>Еженедельные ретроспективы для улучшения</li>
+                <li>Двухнедельные обзоры спринтов с пользователями</li>
+                <li>Установлена кросс-функциональная сотрудничество</li>
+                <li>Четко определены каналы коммуникации</li>
+                <li>Включено децентрализованное принятие решений</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
