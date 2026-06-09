@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Распознавание речи</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+            width: 50%;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        p {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Поток распознавания (Как было)</th>
+                <th>История полных фраз</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td id="result"></td>
+                <td id="final-history"></td>
+            </tr>
+        </tbody>
+    </table>
+
+<script>
+// Инициализация контекста распознавания речи
+var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+
+// Настройки распознавания
+recognition.continuous = true;
+recognition.interimResults = true;
+recognition.lang = 'ru-RU'; // Восприятие на русском языке
+
+// Получение HTML-элементов для вывода
+const resultElement = document.getElementById('result');
+const finalHistoryElem = document.getElementById('final-history');
+
+// Старт при получении разрешения на микрофон
+navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+        recognition.start();
+
+        // Обработка результатов
+        recognition.onresult = event => {
+            // --- ЛЕВАЯ КОЛОНКА (Полностью как было в вашем коде) ---
+            const speechResult = event.results[event.results.length - 1][0].transcript;
+            const lines = speechResult.split('\n');
+            lines.forEach(line => {
+                const newLineElement = document.createElement('p');
+                newLineElement.innerText = line;
+                resultElement.prepend(newLineElement);
+            });
+
+            // --- ПРАВАЯ КОЛОНКА (Дополнительная: сохраняет только полные фразы) ---
+            const lastResult = event.results[event.results.length - 1];
+            if (lastResult.isFinal) {
+                const finalLine = lastResult[0].transcript.trim();
+                if (finalLine) {
+                    const finalElement = document.createElement('p');
+                    finalElement.innerText = finalLine;
+                    finalHistoryElem.prepend(finalElement);
+                }
+            }
+        };
+
+        // Перезапуск в случае автоотключения
+        recognition.onend = () => {
+            recognition.start();
+        };
+    })
+    .catch(error => {
+        console.error('Error getting user media: ', error);
+    });
+</script>
+</body>
+</html>
