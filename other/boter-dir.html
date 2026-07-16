@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEO Planner (Productivity Patterns)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #e6ebee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .phone-mockup {
+            width: 380px;
+            height: 750px;
+            background-color: #ffffff;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 8px solid #333;
+            position: relative;
+        }
+        .header {
+            background-color: #fff;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            color: #000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+        .api-input {
+            width: 90%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 12px;
+            margin: 0 auto;
+        }
+        .tools-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 5px 0;
+        }
+        .tool-btn {
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #1565c0;
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .tool-btn:hover {
+            background-color: #bbdefb;
+        }
+        .chat-container {
+            flex-grow: 1;
+            background-color: #93a8b3;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .bot {
+            background-color: #ffffff;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        .user {
+            background-color: #e3f2fd;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        .input-area {
+            background-color: #fff;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .input-box {
+            flex-grow: 1;
+            background-color: #f1f1f1;
+            border: none;
+            border-radius: 20px;
+            padding: 12px 15px;
+            outline: none;
+        }
+        .send-btn {
+            background-color: #1c93e3;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .send-btn:disabled {
+            background-color: #ccc;
+        }
+        .message ul, .message ol {
+            margin: 5px 0 5px 20px;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-mockup">
+    <div class="header">
+        CEO Productivity Bot 🧠
+        <input type="password" id="apiKey" class="api-input" placeholder="Вставьте ваш Gemini API Key">
+        <div class="tools-bar">
+            <button class="tool-btn" onclick="sendHiddenCommand('Сделай сверку часов: напомни мне мои главные задачи и спроси, на чем мой фокус.')">⏰ Сверка часов</button>
+            <button class="tool-btn" onclick="sendHiddenCommand('Подведи итоги дня. Что сделано, какие заметки/обещания в Inbox, и что переносим на завтра?')">🌙 Итоги дня</button>
+        </div>
+    </div>
+    
+    <div class="chat-container" id="chat">
+        <div class="message bot">
+            Привет! Я твой ИИ-партнер. Моя задача — разгрузить твою голову.<br><br>
+            • Кидай сюда <b>любые мысли и обещания</b> — я сохраню их в Inbox.<br>
+            • Напиши <b>план на день</b> — я буду держать тебя в фокусе.<br><br>
+            Введи API-ключ сверху и напиши мне первые задачи.
+        </div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="messageInput" class="input-box" placeholder="Задачи, мысли, обещания..." onkeypress="handleKeyPress(event)">
+        <button id="sendBtn" class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+</div>
+
+<script>
+    // Инструкция для ИИ
+    const SYSTEM_INSTRUCTION = "Ты — ИИ-ассистент генерального директора. Твоя главная цель — снижение его когнитивной нагрузки. Ты работаешь на основе 3 паттернов продуктивности: " +
+    "1. ПАТТЕРН БЫСТРЫЙ ЗАХВАТ (INBOX): Если директор пишет случайную мысль, идею или обещание кому-то (например: 'Обещал скинуть Оле презу', 'Надо купить кресла'), не задавай лишних вопросов. Коротко ответь: '📥 Сохранено в Inbox' или '📥 Обещание зафиксировано'. " +
+    "2. ПАТТЕРН ИНТЕРВАЛЬНЫЕ ПИНГИ: Если директор пишет задачи на день — утверди их четким списком. Если приходит команда 'Сверка часов' — возвращай его к списку задач и спрашивай: 'Ты сейчас делаешь то, что планировал, или спасаешь мир?'. " +
+    "3. ПАТТЕРН ЧИСТЫЙ ЛИСТ (ИТОГИ ДНЯ): По запросу итогов дня сформируй дайджест: что выполнено, что в Inbox, и предложи перенести остальное на завтра. " +
+    "Стиль общения: лаконичный, деловой, уверенный, без воды. Используй эмодзи (📌, ✅, 📥).";
+
+    let chatHistory = [];
+
+    async function sendMessage() {
+        const inputField = document.getElementById('messageInput');
+        const messageText = inputField.value.trim();
+        
+        if (!messageText) return;
+        
+        appendMessage(messageText, 'user');
+        inputField.value = '';
+        
+        await processAIRequest(messageText);
+    }
+
+    async function sendHiddenCommand(hiddenText) {
+        appendMessage("<i>Вызов системной команды...</i>", 'user');
+        await processAIRequest(hiddenText);
+    }
+
+    async function processAIRequest(text) {
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const sendBtn = document.getElementById('sendBtn');
+        const chat = document.getElementById('chat');
+
+        if (!apiKey) {
+            alert('Пожалуйста, вставьте ваш Gemini API ключ.');
+            return;
+        }
+
+        sendBtn.disabled = true;
+
+        chatHistory.push({
+            role: "user",
+            parts: [{ text: text }]
+        });
+
+        const typingId = "typing-" + Date.now();
+        appendMessage("...", "bot", typingId);
+
+        try {
+            // ТУТ СВЕЖАЯ МОДЕЛЬ: gemini-3.5-flash
+            const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + apiKey;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    system_instruction: {
+                        parts: [{ text: SYSTEM_INSTRUCTION }]
+                    },
+                    contents: chatHistory
+                })
+            });
+
+            const data = await response.json();
+            document.getElementById(typingId).remove();
+
+            if (data.error) {
+                appendMessage("❌ Ошибка API: " + data.error.message, 'bot');
+                chatHistory.pop(); 
+            } else {
+                const botReply = data.candidates[0].content.parts[0].text;
+                appendMessage(botReply, 'bot');
+                
+                chatHistory.push({
+                    role: "model",
+                    parts: [{ text: botReply }]
+                });
+            }
+        } catch (error) {
+            if (document.getElementById(typingId)) {
+                document.getElementById(typingId).remove();
+            }
+            appendMessage("❌ Ошибка сети или неверный ключ.", 'bot');
+            chatHistory.pop();
+        }
+
+        sendBtn.disabled = false;
+        document.getElementById('messageInput').focus();
+    }
+
+    function appendMessage(text, sender, id = null) {
+        const chat = document.getElementById('chat');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = "message " + sender;
+        if (id) msgDiv.id = id;
+        
+        let formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+            .replace(/\*(.*?)\*/g, '<i>$1</i>')    
+            .replace(/\n/g, '<br>');               
+            
+        msgDiv.innerHTML = formattedText;
+        chat.appendChild(msgDiv);
+        chat.scrollTop = chat.scrollHeight; 
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+</script>
+
+</body>
+</html>
