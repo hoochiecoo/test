@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Поиск домов по номеру</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+html,body{
+    margin:0;
+    height:100%;
+    font-family:Arial;
+}
+#map{
+    width:100%;
+    height:100%;
+}
+#panel{
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:1000;
+    background:white;
+    padding:10px;
+    border-radius:8px;
+    box-shadow:0 0 10px rgba(0,0,0,.3);
+    width:240px;
+}
+input{
+    width:100%;
+    padding:6px;
+    margin-top:5px;
+    box-sizing:border-box;
+}
+button{
+    width:100%;
+    margin-top:6px;
+    padding:8px;
+}
+#status{
+    margin-top:8px;
+    font-size:13px;
+}
+</style>
+
+</head>
+<body>
+
+<div id="panel">
+
+<b>1. Кликните по карте</b><br><br>
+
+<b>Номер дома</b>
+
+<input id="house" placeholder="например 15">
+
+<button onclick="search()">Найти</button>
+
+<div id="status">
+Точка не выбрана
+</div>
+
+</div>
+
+<div id="map"></div>
+
+<script>
+
+const map=L.map("map").setView([55.75,37.61],12);
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+maxZoom:19,
+attribution:'© OpenStreetMap'
+}
+).addTo(map);
+
+let center=null;
+let centerMarker=null;
+let markers=[];
+
+map.on("click",e=>{
+
+center=e.latlng;
+
+if(centerMarker)
+map.removeLayer(centerMarker);
+
+centerMarker=L.marker(center).addTo(map);
+
+document.getElementById("status").innerHTML=
+"Точка выбрана<br>"+
+center.lat.toFixed(5)+
+"<br>"+
+center.lng.toFixed(5);
+
+});
+
+function clearMarkers(){
+
+markers.forEach(m=>map.removeLayer(m));
+
+markers=[];
+
+}
+
+async function search(){
+
+if(!center){
+
+alert("Сначала выберите точку");
+
+return;
+
+}
+
+const house=document.getElementById("house").value.trim();
+
+if(house===""){
+
+alert("Введите номер дома");
+
+return;
+
+}
+
+clearMarkers();
+
+document.getElementById("status").innerHTML="Поиск...";
+
+const radius=1000;
+
+const query=`
+
+[out:json][timeout:25];
+
+(
+
+node["addr:housenumber"="${house}"](around:${radius},${center.lat},${center.lng});
+
+way["addr:housenumber"="${house}"](around:${radius},${center.lat},${center.lng});
+
+relation["addr:housenumber"="${house}"](around:${radius},${center.lat},${center.lng});
+
+);
+
+out center;
+
+`;
+
+const url="https://overpass-api.de/api/interpreter";
+
+try{
+
+const response=await fetch(url,{
+method:"POST",
+body:query
+});
+
+const data=await response.json();
+
+if(data.elements.length===0){
+
+document.getElementById("status").innerHTML=
+"Ничего не найдено";
+
+return;
+
+}
+
+data.elements.forEach(item=>{
+
+const lat=item.lat || item.center.lat;
+
+const lon=item.lon || item.center.lon;
+
+const street=item.tags["addr:street"] || "Без названия улицы";
+
+const popup=
+"<b>"+house+"</b><br>"+street;
+
+const m=L.marker([lat,lon])
+.addTo(map)
+.bindPopup(popup);
+
+markers.push(m);
+
+});
+
+const group=L.featureGroup(markers);
+
+map.fitBounds(group.getBounds().pad(0.2));
+
+document.getElementById("status").innerHTML=
+"Найдено: "+markers.length;
+
+}
+catch(e){
+
+console.log(e);
+
+document.getElementById("status").innerHTML=
+"Ошибка поиска";
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
