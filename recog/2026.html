@@ -1,5387 +1,4813 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
+<meta charset="UTF-8">
 
-  <title>Speech Recognition Translator</title>
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, viewport-fit=cover"
+>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<title>Speech Recognition Translator</title>
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      font-family: Arial, sans-serif;
-      background: #fff;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    body {
-      overflow: hidden;
-    }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: #fff;
+}
 
-    button,
-    select {
-      font: inherit;
-    }
+body {
+  overflow: hidden;
+}
 
-    .container {
-      display: flex;
-      width: 100%;
-      height: 100dvh;
-    }
+button,
+select {
+  font: inherit;
+}
 
-    .column {
-      flex: 1;
-      height: 100dvh;
-      padding: 12px;
-      overflow-y: auto;
-      border-right: 1px solid #ddd;
-      -webkit-overflow-scrolling: touch;
-    }
+.container {
+  display: flex;
+  width: 100%;
+  height: 100dvh;
+}
 
-    /* =========================
-       LIVE
-    ========================= */
+.column {
+  flex: 1;
+  height: 100dvh;
+  padding: 12px;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+  -webkit-overflow-scrolling: touch;
+}
 
-    #liveTranslation {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
 
-    .live-header {
-      flex: 0 0 auto;
+/* =========================
+   LIVE
+========================= */
 
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+#liveTranslation {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-      gap: 8px;
+.live-header {
+  flex: 0 0 auto;
 
-      padding: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-      border-bottom: 1px solid #eee;
-    }
+  gap: 8px;
 
-    .live-title {
-      margin: 0;
+  padding: 8px 0;
 
-      font-size: 20px;
+  border-bottom: 1px solid #eee;
+}
 
-      white-space: nowrap;
-    }
+.live-title {
+  margin: 0;
 
-    .header-controls {
-      display: flex;
-      align-items: center;
+  font-size: 19px;
 
-      gap: 5px;
+  white-space: nowrap;
+}
 
-      min-width: 0;
-    }
+.header-controls {
+  display: flex;
+  align-items: center;
 
-    /* =========================
-       LANGUAGE BUTTON
-    ========================= */
+  gap: 5px;
 
-    #languageButton {
-      flex: 0 1 auto;
+  min-width: 0;
+}
 
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
 
-      min-width: 68px;
-      max-width: 120px;
+/* =========================
+   LANGUAGE
+========================= */
 
-      padding: 8px 10px;
+#languageButton {
+  flex: 0 1 auto;
 
-      border: 1px solid #ddd;
-      border-radius: 999px;
+  min-width: 66px;
 
-      background: #f5f5f5;
-      color: #333;
+  padding: 8px 10px;
 
-      font-size: 12px;
-      font-weight: 700;
+  border: 1px solid #ddd;
+  border-radius: 999px;
 
-      cursor: pointer;
+  background: #f5f5f5;
+  color: #333;
 
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
 
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
+  cursor: pointer;
 
-    #languageButton:active {
-      transform: scale(0.98);
-    }
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    /* =========================
-       RECORD BUTTON
-    ========================= */
 
-    #recordButton {
-      flex: 0 0 auto;
+/* =========================
+   RECORD
+========================= */
 
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+#recordButton {
+  flex: 0 0 auto;
 
-      gap: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
-      min-width: 94px;
+  gap: 6px;
 
-      padding: 8px 11px;
+  min-width: 92px;
 
-      border: 1px solid #ddd;
-      border-radius: 999px;
+  padding: 8px 10px;
 
-      background: #f5f5f5;
-      color: #555;
+  border: 1px solid #ddd;
+  border-radius: 999px;
 
-      font-size: 12px;
-      font-weight: 700;
+  background: #f5f5f5;
+  color: #555;
 
-      cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
 
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
+  cursor: pointer;
 
-    #recordButton:active {
-      transform: scale(0.98);
-    }
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    .record-dot {
-      width: 9px;
-      height: 9px;
+.record-dot {
+  width: 9px;
+  height: 9px;
 
-      flex: 0 0 auto;
+  flex: 0 0 auto;
 
-      border-radius: 50%;
+  border-radius: 50%;
 
-      background: #999;
-    }
+  background: #999;
+}
 
-    #recordButton.recording {
-      background: #fff4f4;
-      border-color: #efb4b4;
-      color: #b40000;
-    }
+#recordButton.ready {
+  background: #eef9ee;
+  border-color: #b9ddb9;
+  color: #176117;
+}
 
-    #recordButton.recording .record-dot {
-      background: #e00000;
+#recordButton.ready .record-dot {
+  background: #35a535;
+}
 
-      animation: pulse 1.1s infinite;
-    }
+#recordButton.starting {
+  background: #fffbe9;
+  border-color: #e5d687;
+  color: #796600;
+}
 
-    #recordButton.starting {
-      background: #fffbe9;
-      border-color: #e5d687;
-      color: #7b6800;
-    }
+#recordButton.starting .record-dot {
+  background: #d7b600;
+  animation: pulse 0.8s infinite;
+}
 
-    #recordButton.starting .record-dot {
-      background: #d7b600;
+#recordButton.recording {
+  background: #fff4f4;
+  border-color: #efb4b4;
+  color: #b40000;
+}
 
-      animation: pulse 0.8s infinite;
-    }
+#recordButton.recording .record-dot {
+  background: #e00000;
+  animation: pulse 1s infinite;
+}
 
-    #recordButton.stopped {
-      background: #f5f5f5;
-      border-color: #ddd;
-      color: #666;
-    }
+#recordButton.stopped {
+  background: #f5f5f5;
+  border-color: #ddd;
+  color: #666;
+}
 
-    #recordButton.ready {
-      background: #eef9ee;
-      border-color: #b9ddb9;
-      color: #176117;
-    }
+#recordButton.error {
+  background: #fff1f1;
+  border-color: #e5a4a4;
+  color: #a00000;
+}
 
-    #recordButton.ready .record-dot {
-      background: #35a535;
-    }
+#recordButton.error .record-dot {
+  background: #c90000;
+}
 
-    #recordButton.error {
-      background: #fff1f1;
-      border-color: #e5a4a4;
-      color: #a00000;
-    }
+@keyframes pulse {
+  0%   { opacity: 1; }
+  50%  { opacity: .25; }
+  100% { opacity: 1; }
+}
 
-    #recordButton.error .record-dot {
-      background: #cc0000;
-    }
 
-    @keyframes pulse {
-      0% {
-        opacity: 1;
-      }
+/* =========================
+   ERROR / DEBUG STATUS
+========================= */
 
-      50% {
-        opacity: 0.3;
-      }
+#error {
+  display: none;
 
-      100% {
-        opacity: 1;
-      }
-    }
+  padding: 7px;
 
-    /* =========================
-       LIVE TOP
-    ========================= */
+  color: #a00000;
 
-    #liveTop {
-      flex: 1 1 auto;
+  font-size: 12px;
+  font-weight: 700;
 
-      min-height: 0;
+  text-align: center;
 
-      overflow-y: auto;
+  background: #fff4f4;
 
-      -webkit-overflow-scrolling: touch;
-    }
+  border-bottom: 1px solid #f2cccc;
+}
 
-    #new > div {
-      padding: 7px 0;
+#speechState {
+  flex: 0 0 auto;
 
-      border-bottom: 1px solid #eee;
+  min-height: 17px;
 
-      line-height: 1.5;
-    }
+  padding: 3px 2px;
 
-    #new span {
-      cursor: pointer;
-    }
+  color: #aaa;
 
-    /* =========================
-       12 WORDS
-    ========================= */
+  font-size: 10px;
+  text-align: right;
+}
 
-    #stableArea {
-      flex: 0 0 auto;
 
-      width: 100%;
+/* =========================
+   LIVE TOP
+========================= */
 
-      padding: 5px 0 4px;
+#liveTop {
+  flex: 1 1 auto;
 
-      border-top: 2px solid #ddd;
+  min-height: 0;
 
-      background: #fafafa;
-    }
+  overflow-y: auto;
 
-    .stable-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+  -webkit-overflow-scrolling: touch;
+}
 
-      padding: 4px 3px 7px;
+#new > div {
+  padding: 7px 0;
 
-      color: #777;
+  border-bottom: 1px solid #eee;
 
-      font-size: 11px;
-      font-weight: 700;
+  line-height: 1.5;
+}
 
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
+#new span {
+  cursor: pointer;
+}
 
-    #cursorInfo {
-      color: #333;
-    }
 
-    #stableWords {
-      display: grid;
+/* =========================
+   LAST 12
+========================= */
 
-      grid-template-columns:
-        repeat(3, minmax(0, 1fr));
+#stableArea {
+  flex: 0 0 auto;
 
-      gap: 4px;
+  width: 100%;
 
-      width: 100%;
-    }
+  padding: 5px 0 4px;
 
-    .stable-word {
-      position: relative;
+  border-top: 2px solid #ddd;
 
-      min-width: 0;
-      min-height: 52px;
+  background: #fafafa;
+}
 
-      padding: 6px 5px;
+.stable-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-      overflow: hidden;
+  padding: 4px 3px 7px;
 
-      background: #fff;
+  color: #777;
 
-      border: 1px solid #e3e3e3;
-      border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
 
-      cursor: pointer;
-    }
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
 
-    .stable-word.cursor {
-      border: 2px solid #222;
+#cursorInfo {
+  color: #333;
+}
 
-      padding: 5px 4px;
-    }
+#stableWords {
+  display: grid;
 
-    .slot-number {
-      position: absolute;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
 
-      top: 2px;
-      right: 4px;
+  gap: 4px;
+}
 
-      color: #bbb;
+.stable-word {
+  position: relative;
 
-      font-size: 9px;
-    }
+  min-width: 0;
+  min-height: 52px;
 
-    .stable-original {
-      display: block;
+  padding: 6px 5px;
 
-      width: calc(100% - 12px);
+  overflow: hidden;
 
-      overflow: hidden;
+  background: #fff;
 
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.15;
+  border: 1px solid #e3e3e3;
+  border-radius: 7px;
 
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+  cursor: pointer;
+}
 
-    .stable-translation {
-      display: block;
+.stable-word.cursor {
+  padding: 5px 4px;
 
-      width: 100%;
+  border: 2px solid #222;
+}
 
-      margin-top: 4px;
+.slot-number {
+  position: absolute;
 
-      overflow: hidden;
+  top: 2px;
+  right: 4px;
 
-      color: #666;
+  color: #bbb;
 
-      font-size: 12px;
-      line-height: 1.15;
+  font-size: 9px;
+}
 
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+.stable-original {
+  display: block;
 
-    /* =========================
-       SAVED
-    ========================= */
+  width: calc(100% - 12px);
 
-    #savedLines {
-      margin-top: 15px;
+  overflow: hidden;
 
-      line-height: 2;
-    }
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.15;
 
-    #savedLines span {
-      display: inline-block;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-      margin-right: 8px;
-      margin-bottom: 8px;
+.stable-translation {
+  display: block;
 
-      padding: 7px 10px;
+  width: 100%;
 
-      background: #f2f2f2;
+  margin-top: 4px;
 
-      border-radius: 8px;
-    }
+  overflow: hidden;
 
-    #sortButton {
-      padding: 10px 14px;
+  color: #666;
 
-      border: 0;
-      border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.15;
 
-      background: #eee;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-      cursor: pointer;
-    }
 
-    /* =========================
-       FINAL
-    ========================= */
+/* =========================
+   SAVED
+========================= */
 
-    #finalText {
-      display: flex;
-      flex-direction: column;
+#savedLines {
+  margin-top: 15px;
 
-      gap: 10px;
+  line-height: 2;
+}
 
-      padding-bottom: 20px;
-    }
+#savedLines span {
+  display: inline-block;
 
-    .final-entry {
-      padding: 10px 0;
+  margin-right: 8px;
+  margin-bottom: 8px;
 
-      border-bottom: 1px solid #eee;
-    }
+  padding: 7px 10px;
 
-    .final-entry.interim {
-      padding: 10px;
+  background: #f2f2f2;
 
-      background: #fafafa;
+  border-radius: 8px;
+}
 
-      border: 1px dashed #ddd;
-      border-radius: 10px;
-    }
+#sortButton {
+  padding: 10px 14px;
 
-    .final-label {
-      margin-bottom: 4px;
+  border: 0;
+  border-radius: 8px;
 
-      color: #999;
+  background: #eee;
 
-      font-size: 10px;
-      font-weight: 700;
+  cursor: pointer;
+}
 
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
 
-    .final-entry.interim .final-label {
-      color: #8c7a00;
-    }
+/* =========================
+   FINAL
+========================= */
 
-    .final-original {
-      font-size: 17px;
-      font-weight: 600;
-      line-height: 1.45;
-    }
+#finalText {
+  display: flex;
+  flex-direction: column;
 
-    .final-entry.interim .final-original {
-      color: #555;
-    }
+  gap: 10px;
 
-    .final-translation {
-      margin-top: 5px;
+  padding-bottom: 20px;
+}
 
-      color: #666;
+.final-entry {
+  padding: 10px 0;
 
-      font-size: 15px;
-      line-height: 1.45;
-    }
+  border-bottom: 1px solid #eee;
+}
 
-    .final-translation.lagging {
-      opacity: 0.82;
-    }
+.final-entry.interim {
+  padding: 10px;
 
-    .translation-status {
-      display: inline-block;
+  background: #fafafa;
 
-      margin-left: 7px;
+  border: 1px dashed #ddd;
+  border-radius: 10px;
+}
 
-      color: #aaa;
+.final-label {
+  margin-bottom: 4px;
 
-      font-size: 10px;
-      font-weight: 400;
+  color: #999;
 
-      vertical-align: middle;
-    }
+  font-size: 10px;
+  font-weight: 700;
 
-    /* =========================
-       ERROR
-    ========================= */
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
 
-    #error {
-      display: none;
+.final-entry.interim .final-label {
+  color: #8c7a00;
+}
 
-      padding: 8px;
+.final-original {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+}
 
-      color: red;
+.final-entry.interim .final-original {
+  color: #555;
+}
 
-      font-size: 12px;
-      font-weight: bold;
+.final-translation {
+  margin-top: 5px;
 
-      text-align: center;
-    }
+  color: #666;
 
-    /* =========================
-       MODAL
-    ========================= */
+  font-size: 15px;
+  line-height: 1.45;
+}
 
-    #languageModal {
-      position: fixed;
+.final-translation.lagging {
+  opacity: .82;
+}
 
-      inset: 0;
+.translation-status {
+  display: inline-block;
 
-      z-index: 5000;
+  margin-left: 7px;
 
-      display: none;
+  color: #aaa;
 
-      align-items: center;
-      justify-content: center;
+  font-size: 10px;
 
-      padding: 16px;
+  vertical-align: middle;
+}
 
-      background: rgba(0, 0, 0, 0.42);
 
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-    }
+/* =========================
+   MODAL
+========================= */
 
-    #languageModal.open {
-      display: flex;
-    }
+#languageModal {
+  position: fixed;
 
-    .modal-card {
-      width: min(460px, 100%);
+  inset: 0;
 
-      max-height: calc(100dvh - 32px);
+  z-index: 5000;
 
-      overflow-y: auto;
+  display: none;
 
-      padding: 18px;
+  align-items: center;
+  justify-content: center;
 
-      background: #fff;
+  padding: 16px;
 
-      border-radius: 16px;
+  background: rgba(0, 0, 0, .42);
 
-      box-shadow:
-        0 16px 50px rgba(0, 0, 0, 0.24);
-    }
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
 
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+#languageModal.open {
+  display: flex;
+}
 
-      gap: 12px;
+.modal-card {
+  width: min(460px, 100%);
 
-      margin-bottom: 18px;
-    }
+  max-height: calc(100dvh - 32px);
 
-    .modal-header h3 {
-      margin: 0;
+  overflow-y: auto;
 
-      font-size: 20px;
-    }
+  padding: 18px;
 
-    #closeLanguageModal {
-      width: 36px;
-      height: 36px;
+  background: #fff;
 
-      padding: 0;
+  border-radius: 16px;
 
-      border: 0;
-      border-radius: 50%;
+  box-shadow:
+    0 16px 50px rgba(0,0,0,.24);
+}
 
-      background: #f2f2f2;
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-      font-size: 20px;
+  margin-bottom: 18px;
+}
 
-      cursor: pointer;
-    }
+.modal-header h3 {
+  margin: 0;
+}
 
-    .language-field {
-      margin-bottom: 10px;
-    }
+#closeLanguageModal {
+  width: 36px;
+  height: 36px;
 
-    .language-field label {
-      display: block;
+  padding: 0;
 
-      margin-bottom: 7px;
+  border: 0;
+  border-radius: 50%;
 
-      color: #555;
+  background: #f2f2f2;
 
-      font-size: 13px;
-      font-weight: 700;
-    }
+  font-size: 20px;
 
-    .language-field select {
-      width: 100%;
+  cursor: pointer;
+}
 
-      padding: 12px;
+.language-field {
+  margin-bottom: 10px;
+}
 
-      background: #fff;
+.language-field label {
+  display: block;
 
-      border: 1px solid #d8d8d8;
-      border-radius: 10px;
+  margin-bottom: 7px;
 
-      font-size: 16px;
-    }
+  color: #555;
 
-    .language-swap-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
 
-      padding: 3px 0 10px;
-    }
+.language-field select {
+  width: 100%;
 
-    #swapLanguages {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+  padding: 12px;
 
-      width: 46px;
-      height: 40px;
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
 
-      padding: 0;
+  background: #fff;
 
-      border: 1px solid #ddd;
-      border-radius: 999px;
+  font-size: 16px;
+}
 
-      background: #f4f4f4;
-      color: #222;
+.language-swap-wrap {
+  display: flex;
+  justify-content: center;
 
-      font-size: 24px;
-      font-weight: 700;
+  padding: 3px 0 10px;
+}
 
-      cursor: pointer;
-    }
+#swapLanguages {
+  width: 46px;
+  height: 40px;
 
-    #applyLanguages {
-      width: 100%;
+  padding: 0;
 
-      padding: 13px 16px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
 
-      border: 0;
-      border-radius: 11px;
+  background: #f4f4f4;
 
-      background: #111;
-      color: #fff;
+  font-size: 24px;
+  font-weight: 700;
 
-      font-size: 15px;
-      font-weight: 700;
+  cursor: pointer;
+}
 
-      cursor: pointer;
-    }
+#applyLanguages {
+  width: 100%;
 
-    #deleteHistoryButton {
-      width: 100%;
+  padding: 13px 16px;
 
-      margin-top: 10px;
+  border: 0;
+  border-radius: 11px;
 
-      padding: 12px 16px;
+  background: #111;
+  color: #fff;
 
-      border: 1px solid #e5b1b1;
-      border-radius: 11px;
+  font-weight: 700;
 
-      background: #fff5f5;
-      color: #b00000;
+  cursor: pointer;
+}
 
-      font-size: 14px;
-      font-weight: 700;
+#deleteHistoryButton {
+  width: 100%;
 
-      cursor: pointer;
-    }
+  margin-top: 10px;
 
-    .language-note {
-      margin-top: 12px;
+  padding: 12px 16px;
 
-      color: #888;
+  border: 1px solid #e5b1b1;
+  border-radius: 11px;
 
-      font-size: 12px;
-      line-height: 1.4;
-    }
+  background: #fff5f5;
+  color: #b00000;
 
-    /* =========================
-       MOBILE
-    ========================= */
+  font-weight: 700;
 
-    .mobile-menu {
-      display: none;
-    }
+  cursor: pointer;
+}
 
-    @media (max-width: 768px) {
-      body {
-        overflow: hidden;
-      }
+.language-note {
+  margin-top: 12px;
 
-      .container {
-        display: block;
+  color: #888;
 
-        height:
-          calc(
-            100dvh -
-            68px -
-            env(safe-area-inset-bottom)
-          );
-      }
+  font-size: 12px;
+  line-height: 1.4;
+}
 
-      .column {
-        display: none;
 
-        width: 100%;
+/* =========================
+   MOBILE
+========================= */
 
-        height:
-          calc(
-            100dvh -
-            68px -
-            env(safe-area-inset-bottom)
-          );
+.mobile-menu {
+  display: none;
+}
 
-        padding: 10px;
+@media (max-width: 768px) {
+  .container {
+    display: block;
 
-        border: 0;
-      }
+    height:
+      calc(
+        100dvh -
+        68px -
+        env(safe-area-inset-bottom)
+      );
+  }
 
-      .column.active {
-        display: block;
-      }
+  .column {
+    display: none;
 
-      #liveTranslation.active {
-        display: flex;
-      }
+    width: 100%;
 
-      .live-header {
-        padding: 6px 0;
-      }
+    height:
+      calc(
+        100dvh -
+        68px -
+        env(safe-area-inset-bottom)
+      );
 
-      .live-title {
-        font-size: 16px;
-      }
+    padding: 10px;
 
-      .header-controls {
-        gap: 4px;
-      }
+    border: 0;
+  }
 
-      #languageButton {
-        min-width: 57px;
-        max-width: 82px;
+  .column.active {
+    display: block;
+  }
 
-        padding: 7px 7px;
+  #liveTranslation.active {
+    display: flex;
+  }
 
-        font-size: 10px;
-      }
+  .live-title {
+    font-size: 16px;
+  }
 
-      #recordButton {
-        min-width: 78px;
+  #languageButton {
+    min-width: 56px;
 
-        padding: 7px 7px;
+    padding: 7px 6px;
 
-        font-size: 10px;
-      }
+    font-size: 10px;
+  }
 
-      #new > div {
-        padding: 7px 0;
+  #recordButton {
+    min-width: 76px;
 
-        font-size: 17px;
-        line-height: 1.5;
-      }
+    padding: 7px 6px;
 
-      #stableWords {
-        grid-template-columns:
-          repeat(3, minmax(0, 1fr));
-      }
+    font-size: 10px;
+  }
 
-      .stable-word {
-        min-height: 48px;
+  #new > div {
+    font-size: 17px;
+  }
 
-        padding: 5px;
-      }
+  .stable-word {
+    min-height: 48px;
+  }
 
-      .stable-word.cursor {
-        padding: 4px 3px;
-      }
+  .stable-original {
+    font-size: 14px;
+  }
 
-      .stable-original {
-        font-size: 14px;
-      }
+  .stable-translation {
+    font-size: 11px;
+  }
 
-      .stable-translation {
-        margin-top: 3px;
+  #savedTranslations h2,
+  #finalResult h2 {
+    position: sticky;
 
-        font-size: 11px;
-      }
+    top: 0;
 
-      #savedTranslations h2,
-      #finalResult h2 {
-        position: sticky;
+    z-index: 10;
 
-        top: 0;
+    margin: 0;
 
-        z-index: 10;
+    padding: 10px 0;
 
-        margin: 0;
+    background: #fff;
 
-        padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
 
-        background: #fff;
+  .mobile-menu {
+    position: fixed;
 
-        border-bottom: 1px solid #eee;
-      }
+    left: 0;
+    right: 0;
+    bottom: 0;
 
-      .mobile-menu {
-        position: fixed;
+    z-index: 1000;
 
-        left: 0;
-        right: 0;
-        bottom: 0;
+    display: flex;
 
-        z-index: 1000;
+    height:
+      calc(
+        68px +
+        env(safe-area-inset-bottom)
+      );
 
-        display: flex;
+    padding-bottom:
+      env(safe-area-inset-bottom);
 
-        height:
-          calc(
-            68px +
-            env(safe-area-inset-bottom)
-          );
+    background:
+      rgba(255,255,255,.96);
 
-        padding-bottom:
-          env(safe-area-inset-bottom);
+    border-top: 1px solid #ddd;
 
-        background:
-          rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
 
-        border-top: 1px solid #ddd;
+  .mobile-menu button {
+    flex: 1;
 
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
+    border: 0;
 
-      .mobile-menu button {
-        flex: 1;
+    background: transparent;
 
-        border: 0;
+    color: #777;
 
-        background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+  }
 
-        color: #777;
+  .mobile-menu button.active {
+    background: #f3f3f3;
+    color: #000;
+  }
 
-        font-size: 14px;
-        font-weight: 600;
+  #languageModal {
+    align-items: flex-end;
 
-        cursor: pointer;
-      }
+    padding:
+      12px
+      12px
+      calc(
+        12px +
+        env(safe-area-inset-bottom)
+      );
+  }
 
-      .mobile-menu button.active {
-        background: #f3f3f3;
-        color: #000;
-      }
+  .modal-card {
+    width: 100%;
+    max-height: 85dvh;
 
-      #languageModal {
-        align-items: flex-end;
-
-        padding:
-          12px
-          12px
-          calc(
-            12px +
-            env(safe-area-inset-bottom)
-          );
-      }
-
-      .modal-card {
-        width: 100%;
-
-        max-height: 85dvh;
-
-        border-radius: 18px;
-      }
-    }
-  </style>
+    border-radius: 18px;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <!-- LIVE -->
+  <!-- ======================
+       LIVE
+  ======================= -->
 
-    <div
-      class="column active"
-      id="liveTranslation"
-    >
+  <div
+    class="column active"
+    id="liveTranslation"
+  >
 
-      <div class="live-header">
+    <div class="live-header">
 
-        <h2 class="live-title">
-          Live Translation
-        </h2>
+      <h2 class="live-title">
+        Live Translation
+      </h2>
 
-        <div class="header-controls">
+      <div class="header-controls">
 
-          <button
-            id="languageButton"
-            type="button"
-          >
-            SR → RU
-          </button>
+        <button
+          id="languageButton"
+          type="button"
+        >
+          SR → RU
+        </button>
 
-          <button
-            id="recordButton"
-            class="ready"
-            type="button"
-          >
-            <span class="record-dot"></span>
+        <button
+          id="recordButton"
+          class="ready"
+          type="button"
+        >
+          <span class="record-dot"></span>
 
-            <span id="recordStatus">
-              Start
-            </span>
-          </button>
-
-        </div>
-
-      </div>
-
-      <div id="error"></div>
-
-
-      <div id="liveTop">
-        <div id="new"></div>
-      </div>
-
-
-      <div id="stableArea">
-
-        <div class="stable-header">
-
-          <span>
-            Last 12 words
+          <span id="recordStatus">
+            Start
           </span>
-
-          <span id="cursorInfo">
-            next: 1
-          </span>
-
-        </div>
-
-        <div id="stableWords"></div>
+        </button>
 
       </div>
 
     </div>
 
+    <div id="error"></div>
 
-    <!-- SAVED -->
+    <div id="speechState">
+      ready
+    </div>
 
-    <div
-      class="column"
-      id="savedTranslations"
-    >
-
-      <h2>
-        Saved Translations
-      </h2>
-
-      <button id="sortButton">
-        Sort Alphabetically
-      </button>
-
-      <div id="savedLines"></div>
-
+    <div id="liveTop">
+      <div id="new"></div>
     </div>
 
 
-    <!-- FINAL -->
+    <div id="stableArea">
 
-    <div
-      class="column"
-      id="finalResult"
-    >
+      <div class="stable-header">
 
-      <h2>
-        Final Result
-      </h2>
+        <span>
+          Last 12 words
+        </span>
 
-      <div id="finalText"></div>
+        <span id="cursorInfo">
+          next: 1
+        </span>
+
+      </div>
+
+      <div id="stableWords"></div>
 
     </div>
 
   </div>
 
 
-  <!-- MOBILE MENU -->
+  <!-- ======================
+       SAVED
+  ======================= -->
 
-  <nav class="mobile-menu">
+  <div
+    class="column"
+    id="savedTranslations"
+  >
 
-    <button
-      class="menu-button active"
-      data-target="liveTranslation"
-    >
-      Live
+    <h2>
+      Saved Translations
+    </h2>
+
+    <button id="sortButton">
+      Sort Alphabetically
     </button>
 
-    <button
-      class="menu-button"
-      data-target="savedTranslations"
-    >
-      Saved
-    </button>
-
-    <button
-      class="menu-button"
-      data-target="finalResult"
-    >
-      Final
-    </button>
-
-  </nav>
-
-
-  <!-- LANG MODAL -->
-
-  <div id="languageModal">
-
-    <div class="modal-card">
-
-      <div class="modal-header">
-
-        <h3>
-          Languages
-        </h3>
-
-        <button
-          id="closeLanguageModal"
-          type="button"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <div class="language-field">
-
-        <label for="speechLanguageSelect">
-          Speech recognition
-        </label>
-
-        <select id="speechLanguageSelect"></select>
-
-      </div>
-
-
-      <div class="language-swap-wrap">
-
-        <button
-          id="swapLanguages"
-          type="button"
-          title="Swap languages"
-        >
-          ⇄
-        </button>
-
-      </div>
-
-
-      <div class="language-field">
-
-        <label for="translationLanguageSelect">
-          Translate to
-        </label>
-
-        <select id="translationLanguageSelect"></select>
-
-      </div>
-
-
-      <button
-        id="applyLanguages"
-        type="button"
-      >
-        Apply
-      </button>
-
-
-      <button
-        id="deleteHistoryButton"
-        type="button"
-      >
-        Delete history
-      </button>
-
-
-      <div class="language-note">
-        On mobile, press Start once to allow microphone access.
-        After that automatic recognition restart is enabled.
-      </div>
-
-    </div>
+    <div id="savedLines"></div>
 
   </div>
 
 
-  <script>
+  <!-- ======================
+       FINAL
+  ======================= -->
 
-    /* =========================================================
-       SETTINGS
-    ========================================================= */
+  <div
+    class="column"
+    id="finalResult"
+  >
 
-    const LIVE_WORD_LIMIT = 2;
+    <h2>
+      Final Result
+    </h2>
 
-    const LIVE_LINE_LIMIT = 30;
+    <div id="finalText"></div>
 
-    const SLOT_COUNT = 12;
+  </div>
 
-    /*
-      Duplicate blocking only among
-      the last 6 ACCEPTED words.
-    */
-    const DUPLICATE_WINDOW = 6;
+</div>
 
-    const FINAL_HISTORY_LIMIT = 1000;
 
-    const FIRST_INTERIM_TRANSLATE_DELAY = 40;
+<!-- ======================
+     MOBILE MENU
+======================= -->
 
-    const INTERIM_TRANSLATE_DELAY = 300;
+<nav class="mobile-menu">
 
-    const RESTART_DELAY = 400;
+  <button
+    class="menu-button active"
+    data-target="liveTranslation"
+  >
+    Live
+  </button>
 
-    const RESTART_RETRY_DELAY = 900;
+  <button
+    class="menu-button"
+    data-target="savedTranslations"
+  >
+    Saved
+  </button>
 
-    const STORAGE_KEY =
-      'speechTranslationFullStateV8';
+  <button
+    class="menu-button"
+    data-target="finalResult"
+  >
+    Final
+  </button>
 
+</nav>
 
-    /* =========================================================
-       LANGUAGES
-    ========================================================= */
 
-    const SPEECH_LANGUAGES = [
-      ['Afrikaans', 'af-ZA'],
+<!-- ======================
+     LANGUAGE MODAL
+======================= -->
 
-      ['Arabic — Algeria', 'ar-DZ'],
-      ['Arabic — Bahrain', 'ar-BH'],
-      ['Arabic — Egypt', 'ar-EG'],
-      ['Arabic — Iraq', 'ar-IQ'],
-      ['Arabic — Israel', 'ar-IL'],
-      ['Arabic — Jordan', 'ar-JO'],
-      ['Arabic — Kuwait', 'ar-KW'],
-      ['Arabic — Lebanon', 'ar-LB'],
-      ['Arabic — Morocco', 'ar-MA'],
-      ['Arabic — Oman', 'ar-OM'],
-      ['Arabic — Qatar', 'ar-QA'],
-      ['Arabic — Saudi Arabia', 'ar-SA'],
-      ['Arabic — Tunisia', 'ar-TN'],
-      ['Arabic — UAE', 'ar-AE'],
-      ['Arabic — Yemen', 'ar-YE'],
+<div id="languageModal">
 
-      ['Basque', 'eu-ES'],
+  <div class="modal-card">
 
-      ['Bengali — Bangladesh', 'bn-BD'],
-      ['Bengali — India', 'bn-IN'],
+    <div class="modal-header">
 
-      ['Bulgarian', 'bg-BG'],
+      <h3>
+        Languages
+      </h3>
 
-      ['Catalan', 'ca-ES'],
+      <button
+        id="closeLanguageModal"
+        type="button"
+      >
+        ×
+      </button>
 
-      ['Chinese — Cantonese', 'yue-Hant-HK'],
-      ['Chinese — Mandarin China', 'cmn-Hans-CN'],
-      ['Chinese — Mandarin Taiwan', 'cmn-Hant-TW'],
+    </div>
 
-      ['Croatian', 'hr-HR'],
 
-      ['Czech', 'cs-CZ'],
+    <div class="language-field">
 
-      ['Danish', 'da-DK'],
+      <label for="speechLanguageSelect">
+        Speech recognition
+      </label>
 
-      ['Dutch', 'nl-NL'],
+      <select id="speechLanguageSelect"></select>
 
-      ['English — Australia', 'en-AU'],
-      ['English — Canada', 'en-CA'],
-      ['English — Ghana', 'en-GH'],
-      ['English — India', 'en-IN'],
-      ['English — Ireland', 'en-IE'],
-      ['English — Kenya', 'en-KE'],
-      ['English — New Zealand', 'en-NZ'],
-      ['English — Nigeria', 'en-NG'],
-      ['English — Philippines', 'en-PH'],
-      ['English — Singapore', 'en-SG'],
-      ['English — South Africa', 'en-ZA'],
-      ['English — Tanzania', 'en-TZ'],
-      ['English — UK', 'en-GB'],
-      ['English — US', 'en-US'],
+    </div>
 
-      ['Finnish', 'fi-FI'],
 
-      ['French — Canada', 'fr-CA'],
-      ['French — France', 'fr-FR'],
+    <div class="language-swap-wrap">
 
-      ['Galician', 'gl-ES'],
+      <button
+        id="swapLanguages"
+        type="button"
+      >
+        ⇄
+      </button>
 
-      ['German', 'de-DE'],
+    </div>
 
-      ['Greek', 'el-GR'],
 
-      ['Gujarati', 'gu-IN'],
+    <div class="language-field">
 
-      ['Hebrew', 'he-IL'],
+      <label for="translationLanguageSelect">
+        Translate to
+      </label>
 
-      ['Hindi', 'hi-IN'],
+      <select id="translationLanguageSelect"></select>
 
-      ['Hungarian', 'hu-HU'],
+    </div>
 
-      ['Icelandic', 'is-IS'],
 
-      ['Indonesian', 'id-ID'],
+    <button
+      id="applyLanguages"
+      type="button"
+    >
+      Apply
+    </button>
 
-      ['Italian', 'it-IT'],
 
-      ['Japanese', 'ja-JP'],
+    <button
+      id="deleteHistoryButton"
+      type="button"
+    >
+      Delete history
+    </button>
 
-      ['Kannada', 'kn-IN'],
 
-      ['Korean', 'ko-KR'],
+    <div class="language-note">
+      Mobile mode uses short recognition sessions
+      and automatically starts the next session.
+    </div>
 
-      ['Latvian', 'lv-LV'],
+  </div>
+
+</div>
+
+
+<script>
+/* =========================================================
+   SETTINGS
+========================================================= */
 
-      ['Lithuanian', 'lt-LT'],
-
-      ['Malay — Malaysia', 'ms-MY'],
-
-      ['Malayalam', 'ml-IN'],
-
-      ['Marathi', 'mr-IN'],
-
-      ['Norwegian', 'nb-NO'],
-
-      ['Persian', 'fa-IR'],
-
-      ['Polish', 'pl-PL'],
-
-      ['Portuguese — Brazil', 'pt-BR'],
-      ['Portuguese — Portugal', 'pt-PT'],
-
-      ['Romanian', 'ro-RO'],
-
-      ['Russian', 'ru-RU'],
-
-      ['Serbian', 'sr-RS'],
-
-      ['Slovak', 'sk-SK'],
-
-      ['Slovenian', 'sl-SI'],
-
-      ['Spanish — Argentina', 'es-AR'],
-      ['Spanish — Bolivia', 'es-BO'],
-      ['Spanish — Chile', 'es-CL'],
-      ['Spanish — Colombia', 'es-CO'],
-      ['Spanish — Costa Rica', 'es-CR'],
-      ['Spanish — Dominican Republic', 'es-DO'],
-      ['Spanish — Ecuador', 'es-EC'],
-      ['Spanish — El Salvador', 'es-SV'],
-      ['Spanish — Guatemala', 'es-GT'],
-      ['Spanish — Honduras', 'es-HN'],
-      ['Spanish — Mexico', 'es-MX'],
-      ['Spanish — Nicaragua', 'es-NI'],
-      ['Spanish — Panama', 'es-PA'],
-      ['Spanish — Paraguay', 'es-PY'],
-      ['Spanish — Peru', 'es-PE'],
-      ['Spanish — Puerto Rico', 'es-PR'],
-      ['Spanish — Spain', 'es-ES'],
-      ['Spanish — US', 'es-US'],
-      ['Spanish — Uruguay', 'es-UY'],
-      ['Spanish — Venezuela', 'es-VE'],
-
-      ['Swedish', 'sv-SE'],
-
-      ['Tamil — India', 'ta-IN'],
-
-      ['Telugu', 'te-IN'],
-
-      ['Thai', 'th-TH'],
-
-      ['Turkish', 'tr-TR'],
-
-      ['Ukrainian', 'uk-UA'],
-
-      ['Urdu — India', 'ur-IN'],
-      ['Urdu — Pakistan', 'ur-PK'],
-
-      ['Vietnamese', 'vi-VN']
-    ];
-
-
-    const TRANSLATION_LANGUAGES = [
-      ['Afrikaans', 'af'],
-      ['Albanian', 'sq'],
-      ['Amharic', 'am'],
-      ['Arabic', 'ar'],
-      ['Armenian', 'hy'],
-      ['Azerbaijani', 'az'],
-      ['Basque', 'eu'],
-      ['Belarusian', 'be'],
-      ['Bengali', 'bn'],
-      ['Bosnian', 'bs'],
-      ['Bulgarian', 'bg'],
-      ['Catalan', 'ca'],
-      ['Cebuano', 'ceb'],
-      ['Chinese — Simplified', 'zh-CN'],
-      ['Chinese — Traditional', 'zh-TW'],
-      ['Corsican', 'co'],
-      ['Croatian', 'hr'],
-      ['Czech', 'cs'],
-      ['Danish', 'da'],
-      ['Dutch', 'nl'],
-      ['English', 'en'],
-      ['Esperanto', 'eo'],
-      ['Estonian', 'et'],
-      ['Finnish', 'fi'],
-      ['French', 'fr'],
-      ['Frisian', 'fy'],
-      ['Galician', 'gl'],
-      ['Georgian', 'ka'],
-      ['German', 'de'],
-      ['Greek', 'el'],
-      ['Gujarati', 'gu'],
-      ['Haitian Creole', 'ht'],
-      ['Hausa', 'ha'],
-      ['Hawaiian', 'haw'],
-      ['Hebrew', 'he'],
-      ['Hindi', 'hi'],
-      ['Hmong', 'hmn'],
-      ['Hungarian', 'hu'],
-      ['Icelandic', 'is'],
-      ['Igbo', 'ig'],
-      ['Indonesian', 'id'],
-      ['Irish', 'ga'],
-      ['Italian', 'it'],
-      ['Japanese', 'ja'],
-      ['Javanese', 'jw'],
-      ['Kannada', 'kn'],
-      ['Kazakh', 'kk'],
-      ['Khmer', 'km'],
-      ['Kinyarwanda', 'rw'],
-      ['Korean', 'ko'],
-      ['Kurdish', 'ku'],
-      ['Kyrgyz', 'ky'],
-      ['Lao', 'lo'],
-      ['Latin', 'la'],
-      ['Latvian', 'lv'],
-      ['Lithuanian', 'lt'],
-      ['Luxembourgish', 'lb'],
-      ['Macedonian', 'mk'],
-      ['Malagasy', 'mg'],
-      ['Malay', 'ms'],
-      ['Malayalam', 'ml'],
-      ['Maltese', 'mt'],
-      ['Maori', 'mi'],
-      ['Marathi', 'mr'],
-      ['Mongolian', 'mn'],
-      ['Myanmar', 'my'],
-      ['Nepali', 'ne'],
-      ['Norwegian', 'no'],
-      ['Odia', 'or'],
-      ['Pashto', 'ps'],
-      ['Persian', 'fa'],
-      ['Polish', 'pl'],
-      ['Portuguese', 'pt'],
-      ['Punjabi', 'pa'],
-      ['Romanian', 'ro'],
-      ['Russian', 'ru'],
-      ['Samoan', 'sm'],
-      ['Scots Gaelic', 'gd'],
-      ['Serbian', 'sr'],
-      ['Sesotho', 'st'],
-      ['Shona', 'sn'],
-      ['Sindhi', 'sd'],
-      ['Sinhala', 'si'],
-      ['Slovak', 'sk'],
-      ['Slovenian', 'sl'],
-      ['Somali', 'so'],
-      ['Spanish', 'es'],
-      ['Sundanese', 'su'],
-      ['Swahili', 'sw'],
-      ['Swedish', 'sv'],
-      ['Tagalog', 'tl'],
-      ['Tajik', 'tg'],
-      ['Tamil', 'ta'],
-      ['Tatar', 'tt'],
-      ['Telugu', 'te'],
-      ['Thai', 'th'],
-      ['Turkish', 'tr'],
-      ['Turkmen', 'tk'],
-      ['Ukrainian', 'uk'],
-      ['Urdu', 'ur'],
-      ['Uyghur', 'ug'],
-      ['Uzbek', 'uz'],
-      ['Vietnamese', 'vi'],
-      ['Welsh', 'cy'],
-      ['Xhosa', 'xh'],
-      ['Yiddish', 'yi'],
-      ['Yoruba', 'yo'],
-      ['Zulu', 'zu']
-    ];
-
-
-    const SPEECH_DEFAULTS = {
-      af: 'af-ZA',
-      ar: 'ar-SA',
-      bg: 'bg-BG',
-      bn: 'bn-IN',
-      ca: 'ca-ES',
-      cs: 'cs-CZ',
-      da: 'da-DK',
-      de: 'de-DE',
-      el: 'el-GR',
-      en: 'en-US',
-      es: 'es-ES',
-      eu: 'eu-ES',
-      fa: 'fa-IR',
-      fi: 'fi-FI',
-      fr: 'fr-FR',
-      gl: 'gl-ES',
-      gu: 'gu-IN',
-      he: 'he-IL',
-      hi: 'hi-IN',
-      hr: 'hr-HR',
-      hu: 'hu-HU',
-      id: 'id-ID',
-      is: 'is-IS',
-      it: 'it-IT',
-      ja: 'ja-JP',
-      kn: 'kn-IN',
-      ko: 'ko-KR',
-      lt: 'lt-LT',
-      lv: 'lv-LV',
-      ml: 'ml-IN',
-      mr: 'mr-IN',
-      ms: 'ms-MY',
-      nl: 'nl-NL',
-      no: 'nb-NO',
-      pl: 'pl-PL',
-      pt: 'pt-BR',
-      ro: 'ro-RO',
-      ru: 'ru-RU',
-      sk: 'sk-SK',
-      sl: 'sl-SI',
-      sr: 'sr-RS',
-      sv: 'sv-SE',
-      ta: 'ta-IN',
-      te: 'te-IN',
-      th: 'th-TH',
-      tr: 'tr-TR',
-      uk: 'uk-UA',
-      ur: 'ur-PK',
-      vi: 'vi-VN'
-    };
-
-
-    function speechToTranslationCode(
-      speechCode
-    ) {
-
-      const code =
-        String(
-          speechCode || ''
-        );
-
-
-      if (
-        code === 'cmn-Hans-CN'
-      ) {
-        return 'zh-CN';
-      }
-
-
-      if (
-        code === 'cmn-Hant-TW' ||
-        code === 'yue-Hant-HK'
-      ) {
-        return 'zh-TW';
-      }
-
-
-      const base =
-        code
-          .split('-')[0]
-          .toLowerCase();
-
-
-      const exists =
-        TRANSLATION_LANGUAGES.some(
-          item =>
-            item[1] === base
-        );
-
-
-      return exists
-        ? base
-        : null;
-    }
-
-
-    function translationToSpeechCode(
-      translationCode
-    ) {
-
-      const code =
-        String(
-          translationCode || ''
-        );
-
-
-      if (
-        code === 'zh-CN'
-      ) {
-        return 'cmn-Hans-CN';
-      }
-
-
-      if (
-        code === 'zh-TW'
-      ) {
-        return 'cmn-Hant-TW';
-      }
-
-
-      if (
-        SPEECH_DEFAULTS[
-          code
-        ]
-      ) {
-        return SPEECH_DEFAULTS[
-          code
-        ];
-      }
-
-
-      const found =
-        SPEECH_LANGUAGES.find(
-          item =>
-            item[1]
-              .toLowerCase()
-              .startsWith(
-                code.toLowerCase() +
-                '-'
-              )
-        );
-
-
-      return found
-        ? found[1]
-        : null;
-    }
-
-
-    /* =========================================================
-       CURRENT LANG
-    ========================================================= */
-
-    let speechLanguage =
-      'sr-RS';
-
-    let translationLanguage =
-      'ru';
-
-
-    /* =========================================================
-       DOM
-    ========================================================= */
-
-    const newLineElement =
-      document.getElementById(
-        'new'
-      );
-
-    const savedLinesElement =
-      document.getElementById(
-        'savedLines'
-      );
-
-    const finalTextElement =
-      document.getElementById(
-        'finalText'
-      );
-
-    const stableWordsElement =
-      document.getElementById(
-        'stableWords'
-      );
-
-    const cursorInfo =
-      document.getElementById(
-        'cursorInfo'
-      );
-
-    const sortButton =
-      document.getElementById(
-        'sortButton'
-      );
-
-    const errorElement =
-      document.getElementById(
-        'error'
-      );
-
-    const recordButton =
-      document.getElementById(
-        'recordButton'
-      );
-
-    const recordStatus =
-      document.getElementById(
-        'recordStatus'
-      );
-
-    const languageButton =
-      document.getElementById(
-        'languageButton'
-      );
-
-    const languageModal =
-      document.getElementById(
-        'languageModal'
-      );
-
-    const closeLanguageModal =
-      document.getElementById(
-        'closeLanguageModal'
-      );
-
-    const speechLanguageSelect =
-      document.getElementById(
-        'speechLanguageSelect'
-      );
-
-    const translationLanguageSelect =
-      document.getElementById(
-        'translationLanguageSelect'
-      );
-
-    const swapLanguagesButton =
-      document.getElementById(
-        'swapLanguages'
-      );
-
-    const applyLanguages =
-      document.getElementById(
-        'applyLanguages'
-      );
-
-    const deleteHistoryButton =
-      document.getElementById(
-        'deleteHistoryButton'
-      );
-
-
-    /* =========================================================
-       ERROR UI
-    ========================================================= */
-
-    function showError(
-      message
-    ) {
-
-      errorElement.textContent =
-        message;
-
-
-      errorElement.style.display =
-        'block';
-
-    }
-
-
-    function hideError() {
-
-      errorElement.style.display =
-        'none';
-
-
-      errorElement.textContent =
-        '';
-
-    }
-
-
-    /* =========================================================
-       STATUS
-    ========================================================= */
-
-    function setRecordStatus(
-      state,
-      text
-    ) {
-
-      recordButton.classList.remove(
-        'recording',
-        'starting',
-        'stopped',
-        'ready',
-        'error'
-      );
-
-
-      recordButton.classList.add(
-        state
-      );
-
-
-      recordStatus.textContent =
-        text;
-
-    }
-
-
-    /* =========================================================
-       APP DATA
-    ========================================================= */
-
-    let liveHistory =
-      [];
-
-    let savedWords =
-      [];
-
-    let finalHistory =
-      [];
-
-    let slotCursor =
-      0;
-
-    let recentAcceptedKeys =
-      [];
-
-    const slots =
-      [];
-
-
-    let currentInterim = {
-
-      original:
-        '',
-
-      translation:
-        '',
-
-      translatedOriginal:
-        '',
-
-      generation:
-        0,
-
-      requestSequence:
-        0,
-
-      appliedSequence:
-        0
-
-    };
-
-
-    let interimTranslationTimer =
-      null;
-
-
-    /* =========================================================
-       STORAGE
-    ========================================================= */
-
-    function saveAllState() {
-
-      try {
-
-        const state = {
-
-          speechLanguage,
-          translationLanguage,
-
-          liveHistory:
-            liveHistory.slice(
-              0,
-              LIVE_LINE_LIMIT
-            ),
-
-          savedWords,
-
-          finalHistory,
-
-          slotCursor,
-
-          recentAcceptedKeys:
-            recentAcceptedKeys.slice(
-              -DUPLICATE_WINDOW
-            ),
-
-          slots:
-            slots.map(
-              slot => ({
-
-                word:
-                  slot.word || '',
-
-                key:
-                  slot.key || '',
-
-                translation:
-                  slot.translation
-                    .textContent || ''
-
-              })
-            )
-
-        };
-
-
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(
-            state
+const LIVE_WORD_LIMIT = 2;
+const LIVE_LINE_LIMIT = 30;
+
+const SLOT_COUNT = 12;
+
+/*
+  Duplicate check ONLY across
+  last 6 accepted words.
+*/
+const DUPLICATE_WINDOW = 6;
+
+const FINAL_HISTORY_LIMIT = 1000;
+
+const FIRST_INTERIM_TRANSLATE_DELAY = 40;
+const INTERIM_TRANSLATE_DELAY = 300;
+
+/*
+  Mobile sessions are intentionally
+  restarted quickly.
+*/
+const RESTART_DELAY = 250;
+const RESTART_RETRY_DELAY = 800;
+
+const STORAGE_KEY =
+  'speechTranslationFullStateV9';
+
+
+/* =========================================================
+   MOBILE DETECTION
+========================================================= */
+
+const IS_MOBILE =
+  /Android|iPhone|iPad|iPod|Mobile/i
+    .test(navigator.userAgent) ||
+  window.matchMedia(
+    '(pointer: coarse)'
+  ).matches;
+
+
+/* =========================================================
+   LANGUAGES
+========================================================= */
+
+const SPEECH_LANGUAGES = [
+  ['Afrikaans', 'af-ZA'],
+
+  ['Arabic — Algeria', 'ar-DZ'],
+  ['Arabic — Bahrain', 'ar-BH'],
+  ['Arabic — Egypt', 'ar-EG'],
+  ['Arabic — Iraq', 'ar-IQ'],
+  ['Arabic — Israel', 'ar-IL'],
+  ['Arabic — Jordan', 'ar-JO'],
+  ['Arabic — Kuwait', 'ar-KW'],
+  ['Arabic — Lebanon', 'ar-LB'],
+  ['Arabic — Morocco', 'ar-MA'],
+  ['Arabic — Oman', 'ar-OM'],
+  ['Arabic — Qatar', 'ar-QA'],
+  ['Arabic — Saudi Arabia', 'ar-SA'],
+  ['Arabic — Tunisia', 'ar-TN'],
+  ['Arabic — UAE', 'ar-AE'],
+  ['Arabic — Yemen', 'ar-YE'],
+
+  ['Basque', 'eu-ES'],
+
+  ['Bengali — Bangladesh', 'bn-BD'],
+  ['Bengali — India', 'bn-IN'],
+
+  ['Bulgarian', 'bg-BG'],
+  ['Catalan', 'ca-ES'],
+
+  ['Chinese — Cantonese', 'yue-Hant-HK'],
+  ['Chinese — Mandarin China', 'cmn-Hans-CN'],
+  ['Chinese — Mandarin Taiwan', 'cmn-Hant-TW'],
+
+  ['Croatian', 'hr-HR'],
+  ['Czech', 'cs-CZ'],
+  ['Danish', 'da-DK'],
+  ['Dutch', 'nl-NL'],
+
+  ['English — Australia', 'en-AU'],
+  ['English — Canada', 'en-CA'],
+  ['English — Ghana', 'en-GH'],
+  ['English — India', 'en-IN'],
+  ['English — Ireland', 'en-IE'],
+  ['English — Kenya', 'en-KE'],
+  ['English — New Zealand', 'en-NZ'],
+  ['English — Nigeria', 'en-NG'],
+  ['English — Philippines', 'en-PH'],
+  ['English — Singapore', 'en-SG'],
+  ['English — South Africa', 'en-ZA'],
+  ['English — Tanzania', 'en-TZ'],
+  ['English — UK', 'en-GB'],
+  ['English — US', 'en-US'],
+
+  ['Finnish', 'fi-FI'],
+
+  ['French — Canada', 'fr-CA'],
+  ['French — France', 'fr-FR'],
+
+  ['Galician', 'gl-ES'],
+  ['German', 'de-DE'],
+  ['Greek', 'el-GR'],
+  ['Gujarati', 'gu-IN'],
+  ['Hebrew', 'he-IL'],
+  ['Hindi', 'hi-IN'],
+  ['Hungarian', 'hu-HU'],
+  ['Icelandic', 'is-IS'],
+  ['Indonesian', 'id-ID'],
+  ['Italian', 'it-IT'],
+  ['Japanese', 'ja-JP'],
+  ['Kannada', 'kn-IN'],
+  ['Korean', 'ko-KR'],
+  ['Latvian', 'lv-LV'],
+  ['Lithuanian', 'lt-LT'],
+  ['Malay — Malaysia', 'ms-MY'],
+  ['Malayalam', 'ml-IN'],
+  ['Marathi', 'mr-IN'],
+  ['Norwegian', 'nb-NO'],
+  ['Persian', 'fa-IR'],
+  ['Polish', 'pl-PL'],
+
+  ['Portuguese — Brazil', 'pt-BR'],
+  ['Portuguese — Portugal', 'pt-PT'],
+
+  ['Romanian', 'ro-RO'],
+  ['Russian', 'ru-RU'],
+
+  /*
+    Serbian:
+    sr-RS is the standard locale.
+  */
+  ['Serbian', 'sr-RS'],
+
+  ['Slovak', 'sk-SK'],
+  ['Slovenian', 'sl-SI'],
+
+  ['Spanish — Argentina', 'es-AR'],
+  ['Spanish — Bolivia', 'es-BO'],
+  ['Spanish — Chile', 'es-CL'],
+  ['Spanish — Colombia', 'es-CO'],
+  ['Spanish — Costa Rica', 'es-CR'],
+  ['Spanish — Dominican Republic', 'es-DO'],
+  ['Spanish — Ecuador', 'es-EC'],
+  ['Spanish — El Salvador', 'es-SV'],
+  ['Spanish — Guatemala', 'es-GT'],
+  ['Spanish — Honduras', 'es-HN'],
+  ['Spanish — Mexico', 'es-MX'],
+  ['Spanish — Nicaragua', 'es-NI'],
+  ['Spanish — Panama', 'es-PA'],
+  ['Spanish — Paraguay', 'es-PY'],
+  ['Spanish — Peru', 'es-PE'],
+  ['Spanish — Puerto Rico', 'es-PR'],
+  ['Spanish — Spain', 'es-ES'],
+  ['Spanish — US', 'es-US'],
+  ['Spanish — Uruguay', 'es-UY'],
+  ['Spanish — Venezuela', 'es-VE'],
+
+  ['Swedish', 'sv-SE'],
+  ['Tamil', 'ta-IN'],
+  ['Telugu', 'te-IN'],
+  ['Thai', 'th-TH'],
+  ['Turkish', 'tr-TR'],
+  ['Ukrainian', 'uk-UA'],
+  ['Urdu — India', 'ur-IN'],
+  ['Urdu — Pakistan', 'ur-PK'],
+  ['Vietnamese', 'vi-VN']
+];
+
+
+const TRANSLATION_LANGUAGES = [
+  ['Afrikaans', 'af'],
+  ['Albanian', 'sq'],
+  ['Amharic', 'am'],
+  ['Arabic', 'ar'],
+  ['Armenian', 'hy'],
+  ['Azerbaijani', 'az'],
+  ['Basque', 'eu'],
+  ['Belarusian', 'be'],
+  ['Bengali', 'bn'],
+  ['Bosnian', 'bs'],
+  ['Bulgarian', 'bg'],
+  ['Catalan', 'ca'],
+  ['Cebuano', 'ceb'],
+  ['Chinese — Simplified', 'zh-CN'],
+  ['Chinese — Traditional', 'zh-TW'],
+  ['Corsican', 'co'],
+  ['Croatian', 'hr'],
+  ['Czech', 'cs'],
+  ['Danish', 'da'],
+  ['Dutch', 'nl'],
+  ['English', 'en'],
+  ['Esperanto', 'eo'],
+  ['Estonian', 'et'],
+  ['Finnish', 'fi'],
+  ['French', 'fr'],
+  ['Frisian', 'fy'],
+  ['Galician', 'gl'],
+  ['Georgian', 'ka'],
+  ['German', 'de'],
+  ['Greek', 'el'],
+  ['Gujarati', 'gu'],
+  ['Haitian Creole', 'ht'],
+  ['Hausa', 'ha'],
+  ['Hawaiian', 'haw'],
+  ['Hebrew', 'he'],
+  ['Hindi', 'hi'],
+  ['Hmong', 'hmn'],
+  ['Hungarian', 'hu'],
+  ['Icelandic', 'is'],
+  ['Igbo', 'ig'],
+  ['Indonesian', 'id'],
+  ['Irish', 'ga'],
+  ['Italian', 'it'],
+  ['Japanese', 'ja'],
+  ['Javanese', 'jw'],
+  ['Kannada', 'kn'],
+  ['Kazakh', 'kk'],
+  ['Khmer', 'km'],
+  ['Kinyarwanda', 'rw'],
+  ['Korean', 'ko'],
+  ['Kurdish', 'ku'],
+  ['Kyrgyz', 'ky'],
+  ['Lao', 'lo'],
+  ['Latin', 'la'],
+  ['Latvian', 'lv'],
+  ['Lithuanian', 'lt'],
+  ['Luxembourgish', 'lb'],
+  ['Macedonian', 'mk'],
+  ['Malagasy', 'mg'],
+  ['Malay', 'ms'],
+  ['Malayalam', 'ml'],
+  ['Maltese', 'mt'],
+  ['Maori', 'mi'],
+  ['Marathi', 'mr'],
+  ['Mongolian', 'mn'],
+  ['Myanmar', 'my'],
+  ['Nepali', 'ne'],
+  ['Norwegian', 'no'],
+  ['Odia', 'or'],
+  ['Pashto', 'ps'],
+  ['Persian', 'fa'],
+  ['Polish', 'pl'],
+  ['Portuguese', 'pt'],
+  ['Punjabi', 'pa'],
+  ['Romanian', 'ro'],
+  ['Russian', 'ru'],
+  ['Samoan', 'sm'],
+  ['Scots Gaelic', 'gd'],
+  ['Serbian', 'sr'],
+  ['Sesotho', 'st'],
+  ['Shona', 'sn'],
+  ['Sindhi', 'sd'],
+  ['Sinhala', 'si'],
+  ['Slovak', 'sk'],
+  ['Slovenian', 'sl'],
+  ['Somali', 'so'],
+  ['Spanish', 'es'],
+  ['Sundanese', 'su'],
+  ['Swahili', 'sw'],
+  ['Swedish', 'sv'],
+  ['Tagalog', 'tl'],
+  ['Tajik', 'tg'],
+  ['Tamil', 'ta'],
+  ['Tatar', 'tt'],
+  ['Telugu', 'te'],
+  ['Thai', 'th'],
+  ['Turkish', 'tr'],
+  ['Turkmen', 'tk'],
+  ['Ukrainian', 'uk'],
+  ['Urdu', 'ur'],
+  ['Uyghur', 'ug'],
+  ['Uzbek', 'uz'],
+  ['Vietnamese', 'vi'],
+  ['Welsh', 'cy'],
+  ['Xhosa', 'xh'],
+  ['Yiddish', 'yi'],
+  ['Yoruba', 'yo'],
+  ['Zulu', 'zu']
+];
+
+
+const SPEECH_DEFAULTS = {
+  af: 'af-ZA',
+  ar: 'ar-SA',
+  bg: 'bg-BG',
+  bn: 'bn-IN',
+  ca: 'ca-ES',
+  cs: 'cs-CZ',
+  da: 'da-DK',
+  de: 'de-DE',
+  el: 'el-GR',
+  en: 'en-US',
+  es: 'es-ES',
+  eu: 'eu-ES',
+  fa: 'fa-IR',
+  fi: 'fi-FI',
+  fr: 'fr-FR',
+  gl: 'gl-ES',
+  gu: 'gu-IN',
+  he: 'he-IL',
+  hi: 'hi-IN',
+  hr: 'hr-HR',
+  hu: 'hu-HU',
+  id: 'id-ID',
+  is: 'is-IS',
+  it: 'it-IT',
+  ja: 'ja-JP',
+  kn: 'kn-IN',
+  ko: 'ko-KR',
+  lt: 'lt-LT',
+  lv: 'lv-LV',
+  ml: 'ml-IN',
+  mr: 'mr-IN',
+  ms: 'ms-MY',
+  nl: 'nl-NL',
+  no: 'nb-NO',
+  pl: 'pl-PL',
+  pt: 'pt-BR',
+  ro: 'ro-RO',
+  ru: 'ru-RU',
+  sk: 'sk-SK',
+  sl: 'sl-SI',
+  sr: 'sr-RS',
+  sv: 'sv-SE',
+  ta: 'ta-IN',
+  te: 'te-IN',
+  th: 'th-TH',
+  tr: 'tr-TR',
+  uk: 'uk-UA',
+  ur: 'ur-PK',
+  vi: 'vi-VN'
+};
+
+
+function speechToTranslationCode(
+  speechCode
+) {
+  if (
+    speechCode === 'cmn-Hans-CN'
+  ) {
+    return 'zh-CN';
+  }
+
+  if (
+    speechCode === 'cmn-Hant-TW' ||
+    speechCode === 'yue-Hant-HK'
+  ) {
+    return 'zh-TW';
+  }
+
+  const base =
+    String(
+      speechCode || ''
+    )
+      .split('-')[0]
+      .toLowerCase();
+
+  return TRANSLATION_LANGUAGES.some(
+    item =>
+      item[1] === base
+  )
+    ? base
+    : null;
+}
+
+
+function translationToSpeechCode(
+  code
+) {
+  if (
+    code === 'zh-CN'
+  ) {
+    return 'cmn-Hans-CN';
+  }
+
+  if (
+    code === 'zh-TW'
+  ) {
+    return 'cmn-Hant-TW';
+  }
+
+  if (
+    SPEECH_DEFAULTS[code]
+  ) {
+    return SPEECH_DEFAULTS[code];
+  }
+
+  const found =
+    SPEECH_LANGUAGES.find(
+      item =>
+        item[1]
+          .toLowerCase()
+          .startsWith(
+            String(code)
+              .toLowerCase() +
+            '-'
           )
+    );
+
+  return found
+    ? found[1]
+    : null;
+}
+
+
+/* =========================================================
+   CURRENT LANG
+========================================================= */
+
+let speechLanguage =
+  'sr-RS';
+
+let translationLanguage =
+  'ru';
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const newLineElement =
+  document.getElementById(
+    'new'
+  );
+
+const savedLinesElement =
+  document.getElementById(
+    'savedLines'
+  );
+
+const finalTextElement =
+  document.getElementById(
+    'finalText'
+  );
+
+const stableWordsElement =
+  document.getElementById(
+    'stableWords'
+  );
+
+const cursorInfo =
+  document.getElementById(
+    'cursorInfo'
+  );
+
+const recordButton =
+  document.getElementById(
+    'recordButton'
+  );
+
+const recordStatus =
+  document.getElementById(
+    'recordStatus'
+  );
+
+const speechState =
+  document.getElementById(
+    'speechState'
+  );
+
+const errorElement =
+  document.getElementById(
+    'error'
+  );
+
+const languageButton =
+  document.getElementById(
+    'languageButton'
+  );
+
+const languageModal =
+  document.getElementById(
+    'languageModal'
+  );
+
+const closeLanguageModal =
+  document.getElementById(
+    'closeLanguageModal'
+  );
+
+const speechLanguageSelect =
+  document.getElementById(
+    'speechLanguageSelect'
+  );
+
+const translationLanguageSelect =
+  document.getElementById(
+    'translationLanguageSelect'
+  );
+
+const swapLanguagesButton =
+  document.getElementById(
+    'swapLanguages'
+  );
+
+const applyLanguages =
+  document.getElementById(
+    'applyLanguages'
+  );
+
+const deleteHistoryButton =
+  document.getElementById(
+    'deleteHistoryButton'
+  );
+
+const sortButton =
+  document.getElementById(
+    'sortButton'
+  );
+
+
+/* =========================================================
+   UI STATUS
+========================================================= */
+
+function setSpeechState(
+  text
+) {
+  speechState.textContent =
+    text;
+}
+
+
+function showError(
+  message
+) {
+  errorElement.textContent =
+    message;
+
+  errorElement.style.display =
+    'block';
+}
+
+
+function hideError() {
+  errorElement.textContent =
+    '';
+
+  errorElement.style.display =
+    'none';
+}
+
+
+function setRecordStatus(
+  state,
+  text
+) {
+  recordButton.classList.remove(
+    'ready',
+    'starting',
+    'recording',
+    'stopped',
+    'error'
+  );
+
+  recordButton.classList.add(
+    state
+  );
+
+  recordStatus.textContent =
+    text;
+}
+
+
+/* =========================================================
+   DATA
+========================================================= */
+
+let liveHistory = [];
+
+let savedWords = [];
+
+let finalHistory = [];
+
+let slotCursor = 0;
+
+let recentAcceptedKeys = [];
+
+const slots = [];
+
+
+let currentInterim = {
+  original: '',
+  translation: '',
+  translatedOriginal: '',
+
+  generation: 0,
+
+  requestSequence: 0,
+  appliedSequence: 0
+};
+
+
+let interimTranslationTimer =
+  null;
+
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+function saveAllState() {
+  try {
+    const state = {
+      speechLanguage,
+      translationLanguage,
+
+      liveHistory:
+        liveHistory.slice(
+          0,
+          LIVE_LINE_LIMIT
+        ),
+
+      savedWords,
+
+      finalHistory,
+
+      slotCursor,
+
+      recentAcceptedKeys:
+        recentAcceptedKeys.slice(
+          -DUPLICATE_WINDOW
+        ),
+
+      slots:
+        slots.map(
+          slot => ({
+            word:
+              slot.word || '',
+
+            key:
+              slot.key || '',
+
+            translation:
+              slot.translation
+                .textContent || ''
+          })
+        )
+    };
+
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(
+        state
+      )
+    );
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      'Storage save:',
+      error
+    );
+  }
+}
+
+
+function loadAllState() {
+  const keys = [
+    STORAGE_KEY,
+
+    'speechTranslationFullStateV8',
+    'speechTranslationFullStateV7',
+    'speechTranslationFullStateV6',
+    'speechTranslationFullStateV5',
+    'speechTranslationFullStateV4',
+    'speechTranslationFullStateV3'
+  ];
+
+
+  for (
+    const key
+    of keys
+  ) {
+    try {
+      const raw =
+        localStorage.getItem(
+          key
         );
 
-      } catch (
-        error
+
+      if (
+        !raw
       ) {
-
-        console.warn(
-          'Storage save:',
-          error
-        );
-
+        continue;
       }
 
+
+      const data =
+        JSON.parse(
+          raw
+        );
+
+
+      if (
+        data &&
+        typeof data ===
+        'object'
+      ) {
+        return data;
+      }
+
+    } catch (
+      error
+    ) {
+      console.warn(
+        'Storage load:',
+        error
+      );
     }
+  }
 
 
-    function loadAllState() {
-
-      try {
-
-        const keys = [
-          STORAGE_KEY,
-
-          'speechTranslationFullStateV7',
-          'speechTranslationFullStateV6',
-          'speechTranslationFullStateV5',
-          'speechTranslationFullStateV4',
-          'speechTranslationFullStateV3'
-        ];
+  return null;
+}
 
 
-        for (
-          const key
-          of keys
+/* =========================================================
+   TRANSLATION
+========================================================= */
+
+const translationCache =
+  new Map();
+
+const pendingTranslations =
+  new Map();
+
+
+function translateText(
+  text,
+  targetLang
+) {
+  const cleanText =
+    String(
+      text || ''
+    ).trim();
+
+
+  if (
+    !cleanText
+  ) {
+    return Promise.resolve('');
+  }
+
+
+  const cacheKey =
+    targetLang +
+    ':' +
+    cleanText.toLocaleLowerCase();
+
+
+  if (
+    translationCache.has(
+      cacheKey
+    )
+  ) {
+    return Promise.resolve(
+      translationCache.get(
+        cacheKey
+      )
+    );
+  }
+
+
+  if (
+    pendingTranslations.has(
+      cacheKey
+    )
+  ) {
+    return pendingTranslations.get(
+      cacheKey
+    );
+  }
+
+
+  const request =
+    fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(cleanText)}`
+    )
+
+    .then(
+      response => {
+        if (
+          !response.ok
         ) {
-
-          const raw =
-            localStorage.getItem(
-              key
-            );
-
-
-          if (
-            !raw
-          ) {
-            continue;
-          }
-
-
-          const data =
-            JSON.parse(
-              raw
-            );
-
-
-          if (
-            data &&
-            typeof data ===
-            'object'
-          ) {
-
-            return data;
-
-          }
-
+          throw new Error(
+            `HTTP ${response.status}`
+          );
         }
 
-      } catch (
-        error
-      ) {
+        return response.json();
+      }
+    )
 
-        console.warn(
-          'Storage load:',
+    .then(
+      data => {
+        const translated =
+          Array.isArray(
+            data?.[0]
+          )
+            ? data[0]
+                .map(
+                  part =>
+                    part?.[0] || ''
+                )
+                .join('')
+            : '';
+
+
+        translationCache.set(
+          cacheKey,
+          translated
+        );
+
+
+        return translated;
+      }
+    )
+
+    .catch(
+      error => {
+        console.error(
+          'Translation:',
           error
         );
 
+        return '';
       }
+    )
 
-
-      return null;
-
-    }
-
-
-    /* =========================================================
-       TRANSLATION
-    ========================================================= */
-
-    const translationCache =
-      new Map();
-
-    const pendingTranslations =
-      new Map();
-
-
-    function translateText(
-      text,
-      targetLang
-    ) {
-
-      const cleanText =
-        String(
-          text || ''
-        ).trim();
-
-
-      if (
-        !cleanText
-      ) {
-
-        return Promise.resolve(
-          ''
-        );
-
-      }
-
-
-      const cacheKey =
-        targetLang +
-        ':' +
-        cleanText.toLocaleLowerCase();
-
-
-      if (
-        translationCache.has(
-          cacheKey
-        )
-      ) {
-
-        return Promise.resolve(
-          translationCache.get(
-            cacheKey
-          )
-        );
-
-      }
-
-
-      if (
-        pendingTranslations.has(
-          cacheKey
-        )
-      ) {
-
-        return pendingTranslations.get(
+    .finally(
+      () => {
+        pendingTranslations.delete(
           cacheKey
         );
-
       }
+    );
 
 
-      const request =
-        fetch(
-          `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(cleanText)}`
-        )
-
-        .then(
-          response => {
-
-            if (
-              !response.ok
-            ) {
-
-              throw new Error(
-                `HTTP ${response.status}`
-              );
-
-            }
+  pendingTranslations.set(
+    cacheKey,
+    request
+  );
 
 
-            return response.json();
-
-          }
-        )
-
-        .then(
-          data => {
-
-            const translated =
-              Array.isArray(
-                data?.[0]
-              )
-                ? data[0]
-                    .map(
-                      part =>
-                        part?.[0] || ''
-                    )
-                    .join('')
-                : '';
+  return request;
+}
 
 
-            translationCache.set(
-              cacheKey,
-              translated
-            );
+/* =========================================================
+   CLEAN WORD
+========================================================= */
+
+function cleanWordValue(
+  word
+) {
+  return String(
+    word || ''
+  )
+    .trim()
+    .replace(
+      /^[.,!?;:"'()[\]{}]+|[.,!?;:"'()[\]{}]+$/g,
+      ''
+    );
+}
 
 
-            return translated;
-
-          }
-        )
-
-        .catch(
-          error => {
-
-            console.error(
-              'Translation:',
-              error
-            );
+function normalizeWord(
+  word
+) {
+  return cleanWordValue(
+    word
+  ).toLocaleLowerCase();
+}
 
 
-            return '';
+/* =========================================================
+   LANG SELECTORS
+========================================================= */
 
-          }
-        )
-
-        .finally(
-          () => {
-
-            pendingTranslations.delete(
-              cacheKey
-            );
-
-          }
-        );
+function fillLanguageSelects() {
+  const speechFragment =
+    document.createDocumentFragment();
 
 
-      pendingTranslations.set(
-        cacheKey,
-        request
+  for (
+    const [name, code]
+    of SPEECH_LANGUAGES
+  ) {
+    const option =
+      document.createElement(
+        'option'
       );
 
+    option.value =
+      code;
 
-      return request;
+    option.textContent =
+      `${name} — ${code}`;
 
-    }
+    speechFragment.appendChild(
+      option
+    );
+  }
 
 
-    /* =========================================================
-       CLEAN
-    ========================================================= */
+  speechLanguageSelect.replaceChildren(
+    speechFragment
+  );
 
-    function cleanWordValue(
-      word
+
+  const translateFragment =
+    document.createDocumentFragment();
+
+
+  for (
+    const [name, code]
+    of TRANSLATION_LANGUAGES
+  ) {
+    const option =
+      document.createElement(
+        'option'
+      );
+
+    option.value =
+      code;
+
+    option.textContent =
+      `${name} — ${code}`;
+
+    translateFragment.appendChild(
+      option
+    );
+  }
+
+
+  translationLanguageSelect.replaceChildren(
+    translateFragment
+  );
+}
+
+
+function shortCode(
+  code
+) {
+  return String(
+    code || ''
+  )
+    .split('-')[0]
+    .toUpperCase();
+}
+
+
+function updateLanguageButton() {
+  languageButton.textContent =
+    `${shortCode(speechLanguage)} → ${shortCode(translationLanguage)}`;
+}
+
+
+languageButton.addEventListener(
+  'click',
+  () => {
+    speechLanguageSelect.value =
+      speechLanguage;
+
+    translationLanguageSelect.value =
+      translationLanguage;
+
+    languageModal.classList.add(
+      'open'
+    );
+  }
+);
+
+
+closeLanguageModal.addEventListener(
+  'click',
+  () => {
+    languageModal.classList.remove(
+      'open'
+    );
+  }
+);
+
+
+languageModal.addEventListener(
+  'click',
+  event => {
+    if (
+      event.target ===
+      languageModal
     ) {
-
-      return String(
-        word || ''
-      )
-        .trim()
-        .replace(
-          /^[.,!?;:"'()[\]{}]+|[.,!?;:"'()[\]{}]+$/g,
-          ''
-        );
-
-    }
-
-
-    function normalizeWord(
-      word
-    ) {
-
-      return cleanWordValue(
-        word
-      ).toLocaleLowerCase();
-
-    }
-
-
-    /* =========================================================
-       LANGUAGE UI
-    ========================================================= */
-
-    function fillLanguageSelects() {
-
-      const speechFragment =
-        document.createDocumentFragment();
-
-
-      for (
-        const [name, code]
-        of SPEECH_LANGUAGES
-      ) {
-
-        const option =
-          document.createElement(
-            'option'
-          );
-
-
-        option.value =
-          code;
-
-
-        option.textContent =
-          `${name} — ${code}`;
-
-
-        speechFragment.appendChild(
-          option
-        );
-
-      }
-
-
-      speechLanguageSelect.replaceChildren(
-        speechFragment
-      );
-
-
-      const translationFragment =
-        document.createDocumentFragment();
-
-
-      for (
-        const [name, code]
-        of TRANSLATION_LANGUAGES
-      ) {
-
-        const option =
-          document.createElement(
-            'option'
-          );
-
-
-        option.value =
-          code;
-
-
-        option.textContent =
-          `${name} — ${code}`;
-
-
-        translationFragment.appendChild(
-          option
-        );
-
-      }
-
-
-      translationLanguageSelect.replaceChildren(
-        translationFragment
-      );
-
-    }
-
-
-    function shortLanguageCode(
-      code
-    ) {
-
-      return String(
-        code || ''
-      )
-        .split('-')[0]
-        .toUpperCase();
-
-    }
-
-
-    function updateLanguageButton() {
-
-      languageButton.textContent =
-        `${shortLanguageCode(speechLanguage)} → ${shortLanguageCode(translationLanguage)}`;
-
-    }
-
-
-    function openLanguageSelector() {
-
-      speechLanguageSelect.value =
-        speechLanguage;
-
-
-      translationLanguageSelect.value =
-        translationLanguage;
-
-
-      languageModal.classList.add(
-        'open'
-      );
-
-    }
-
-
-    function closeLanguageSelector() {
-
       languageModal.classList.remove(
         'open'
       );
-
     }
+  }
+);
 
 
-    languageButton.addEventListener(
-      'click',
-      openLanguageSelector
-    );
+swapLanguagesButton.addEventListener(
+  'click',
+  () => {
+    const oldSpeech =
+      speechLanguageSelect.value;
+
+    const oldTarget =
+      translationLanguageSelect.value;
 
 
-    closeLanguageModal.addEventListener(
-      'click',
-      closeLanguageSelector
-    );
-
-
-    languageModal.addEventListener(
-      'click',
-      event => {
-
-        if (
-          event.target ===
-          languageModal
-        ) {
-
-          closeLanguageSelector();
-
-        }
-
-      }
-    );
-
-
-    swapLanguagesButton.addEventListener(
-      'click',
-      () => {
-
-        const oldSpeech =
-          speechLanguageSelect.value;
-
-
-        const oldTarget =
-          translationLanguageSelect.value;
-
-
-        const newSpeech =
-          translationToSpeechCode(
-            oldTarget
-          );
-
-
-        const newTarget =
-          speechToTranslationCode(
-            oldSpeech
-          );
-
-
-        if (
-          newSpeech &&
-          newTarget
-        ) {
-
-          speechLanguageSelect.value =
-            newSpeech;
-
-
-          translationLanguageSelect.value =
-            newTarget;
-
-        }
-
-      }
-    );
-
-
-    /* =========================================================
-       SAVED
-    ========================================================= */
-
-    function renderSavedWords() {
-
-      const fragment =
-        document.createDocumentFragment();
-
-
-      for (
-        const word
-        of savedWords
-      ) {
-
-        const item =
-          document.createElement(
-            'span'
-          );
-
-
-        item.textContent =
-          word;
-
-
-        fragment.appendChild(
-          item
-        );
-
-      }
-
-
-      savedLinesElement.replaceChildren(
-        fragment
+    const newSpeech =
+      translationToSpeechCode(
+        oldTarget
       );
 
-    }
+    const newTarget =
+      speechToTranslationCode(
+        oldSpeech
+      );
 
 
-    function saveWord(
-      word
+    if (
+      newSpeech &&
+      newTarget
     ) {
+      speechLanguageSelect.value =
+        newSpeech;
 
-      const clean =
-        cleanWordValue(
-          word
-        );
+      translationLanguageSelect.value =
+        newTarget;
+    }
+  }
+);
 
 
+/* =========================================================
+   SAVED
+========================================================= */
+
+function renderSavedWords() {
+  const fragment =
+    document.createDocumentFragment();
+
+
+  for (
+    const word
+    of savedWords
+  ) {
+    const element =
+      document.createElement(
+        'span'
+      );
+
+    element.textContent =
+      word;
+
+    fragment.appendChild(
+      element
+    );
+  }
+
+
+  savedLinesElement.replaceChildren(
+    fragment
+  );
+}
+
+
+function saveWord(
+  word
+) {
+  const clean =
+    cleanWordValue(
+      word
+    );
+
+
+  if (
+    !clean
+  ) {
+    return;
+  }
+
+
+  savedWords.push(
+    clean
+  );
+
+
+  const element =
+    document.createElement(
+      'span'
+    );
+
+  element.textContent =
+    clean;
+
+
+  savedLinesElement.appendChild(
+    element
+  );
+
+
+  saveAllState();
+}
+
+
+sortButton.addEventListener(
+  'click',
+  () => {
+    savedWords.sort(
+      (
+        a,
+        b
+      ) =>
+        a.localeCompare(
+          b
+        )
+    );
+
+    renderSavedWords();
+
+    saveAllState();
+  }
+);
+
+
+/* =========================================================
+   LAST 12
+========================================================= */
+
+function createStableSlots() {
+  const fragment =
+    document.createDocumentFragment();
+
+
+  for (
+    let i = 0;
+    i < SLOT_COUNT;
+    i++
+  ) {
+    const card =
+      document.createElement(
+        'div'
+      );
+
+    card.className =
+      'stable-word';
+
+
+    const number =
+      document.createElement(
+        'span'
+      );
+
+    number.className =
+      'slot-number';
+
+    number.textContent =
+      i + 1;
+
+
+    const original =
+      document.createElement(
+        'span'
+      );
+
+    original.className =
+      'stable-original';
+
+    original.textContent =
+      '—';
+
+
+    const translation =
+      document.createElement(
+        'span'
+      );
+
+    translation.className =
+      'stable-translation';
+
+
+    card.append(
+      number,
+      original,
+      translation
+    );
+
+
+    const slot = {
+      card,
+      original,
+      translation,
+
+      word: '',
+      key: '',
+      version: 0
+    };
+
+
+    card.addEventListener(
+      'click',
+      () => {
+        if (
+          slot.word
+        ) {
+          saveWord(
+            slot.word
+          );
+        }
+      }
+    );
+
+
+    slots.push(
+      slot
+    );
+
+    fragment.appendChild(
+      card
+    );
+  }
+
+
+  stableWordsElement.appendChild(
+    fragment
+  );
+
+  updateCursorUI();
+}
+
+
+function updateCursorUI() {
+  for (
+    let i = 0;
+    i < SLOT_COUNT;
+    i++
+  ) {
+    slots[i].card.classList.toggle(
+      'cursor',
+      i === slotCursor
+    );
+  }
+
+
+  cursorInfo.textContent =
+    `next: ${slotCursor + 1}`;
+}
+
+
+function duplicateRecently(
+  key
+) {
+  return recentAcceptedKeys.includes(
+    key
+  );
+}
+
+
+function rememberAcceptedKey(
+  key
+) {
+  recentAcceptedKeys.push(
+    key
+  );
+
+
+  if (
+    recentAcceptedKeys.length >
+    DUPLICATE_WINDOW
+  ) {
+    recentAcceptedKeys.splice(
+      0,
+      recentAcceptedKeys.length -
+      DUPLICATE_WINDOW
+    );
+  }
+}
+
+
+function writeWordToNextSlot(
+  word
+) {
+  const clean =
+    cleanWordValue(
+      word
+    );
+
+
+  if (
+    !clean
+  ) {
+    return;
+  }
+
+
+  const key =
+    normalizeWord(
+      clean
+    );
+
+
+  /*
+    DUPLICATES BLOCKED ONLY
+    ACROSS LAST 6 ACCEPTED WORDS.
+  */
+  if (
+    duplicateRecently(
+      key
+    )
+  ) {
+    return;
+  }
+
+
+  const slot =
+    slots[
+      slotCursor
+    ];
+
+
+  slot.version++;
+
+
+  const version =
+    slot.version;
+
+
+  slot.word =
+    clean;
+
+  slot.key =
+    key;
+
+
+  slot.original.textContent =
+    clean;
+
+  slot.translation.textContent =
+    '...';
+
+
+  rememberAcceptedKey(
+    key
+  );
+
+
+  const targetSlot =
+    slot;
+
+
+  slotCursor =
+    (
+      slotCursor + 1
+    ) % SLOT_COUNT;
+
+
+  updateCursorUI();
+
+  saveAllState();
+
+
+  translateText(
+    clean,
+    translationLanguage
+  )
+
+  .then(
+    translated => {
       if (
-        !clean
+        targetSlot.version !==
+        version
       ) {
         return;
       }
 
 
-      savedWords.push(
-        clean
+      targetSlot.translation.textContent =
+        translated;
+
+      saveAllState();
+    }
+  );
+}
+
+
+function clearSlots() {
+  slotCursor = 0;
+
+  recentAcceptedKeys = [];
+
+
+  for (
+    const slot
+    of slots
+  ) {
+    slot.version++;
+
+    slot.word = '';
+    slot.key = '';
+
+    slot.original.textContent =
+      '—';
+
+    slot.translation.textContent =
+      '';
+  }
+
+
+  updateCursorUI();
+}
+
+
+/* =========================================================
+   LIVE
+========================================================= */
+
+let previousLiveText =
+  '';
+
+
+function createLiveLineElement(
+  item
+) {
+  const line =
+    document.createElement(
+      'div'
+    );
+
+
+  if (
+    !item ||
+    !Array.isArray(
+      item.words
+    )
+  ) {
+    return line;
+  }
+
+
+  for (
+    const entry
+    of item.words
+  ) {
+    if (
+      !entry?.word
+    ) {
+      continue;
+    }
+
+
+    const wordElement =
+      document.createElement(
+        'span'
       );
 
 
-      const element =
+    wordElement.textContent =
+      entry.word + ' ';
+
+
+    wordElement.addEventListener(
+      'click',
+      () =>
+        saveWord(
+          entry.word
+        )
+    );
+
+
+    if (
+      entry.translation
+    ) {
+      const translation =
         document.createElement(
           'span'
         );
 
+      translation.textContent =
+        `(${entry.translation}) `;
 
-      element.textContent =
-        clean;
-
-
-      savedLinesElement.appendChild(
-        element
+      wordElement.appendChild(
+        translation
       );
-
-
-      saveAllState();
-
     }
 
 
-    /* =========================================================
-       12 SLOTS
-    ========================================================= */
-
-    function createStableSlots() {
-
-      const fragment =
-        document.createDocumentFragment();
+    line.appendChild(
+      wordElement
+    );
+  }
 
 
-      for (
-        let i = 0;
-        i < SLOT_COUNT;
-        i++
-      ) {
+  return line;
+}
 
-        const card =
-          document.createElement(
-            'div'
+
+function renderLiveHistory() {
+  const fragment =
+    document.createDocumentFragment();
+
+
+  for (
+    const item
+    of liveHistory
+  ) {
+    fragment.appendChild(
+      createLiveLineElement(
+        item
+      )
+    );
+  }
+
+
+  newLineElement.replaceChildren(
+    fragment
+  );
+}
+
+
+function addRawLiveLine(
+  words
+) {
+  const cleaned =
+    words
+      .map(
+        cleanWordValue
+      )
+      .filter(Boolean);
+
+
+  if (
+    !cleaned.length
+  ) {
+    return;
+  }
+
+
+  const key =
+    cleaned
+      .join(' ')
+      .toLocaleLowerCase();
+
+
+  if (
+    key ===
+    previousLiveText
+  ) {
+    return;
+  }
+
+
+  previousLiveText =
+    key;
+
+
+  const item = {
+    words:
+      cleaned.map(
+        word => ({
+          word,
+          translation: ''
+        })
+      )
+  };
+
+
+  liveHistory.unshift(
+    item
+  );
+
+
+  if (
+    liveHistory.length >
+    LIVE_LINE_LIMIT
+  ) {
+    liveHistory.length =
+      LIVE_LINE_LIMIT;
+  }
+
+
+  const line =
+    document.createElement(
+      'div'
+    );
+
+
+  for (
+    const entry
+    of item.words
+  ) {
+    const wordElement =
+      document.createElement(
+        'span'
+      );
+
+
+    wordElement.textContent =
+      entry.word + ' ';
+
+
+    wordElement.addEventListener(
+      'click',
+      () =>
+        saveWord(
+          entry.word
+        )
+    );
+
+
+    line.appendChild(
+      wordElement
+    );
+
+
+    writeWordToNextSlot(
+      entry.word
+    );
+
+
+    translateText(
+      entry.word,
+      translationLanguage
+    )
+
+    .then(
+      translated => {
+        entry.translation =
+          translated;
+
+
+        if (
+          translated &&
+          wordElement.isConnected
+        ) {
+          const tr =
+            document.createElement(
+              'span'
+            );
+
+          tr.textContent =
+            `(${translated}) `;
+
+          wordElement.appendChild(
+            tr
           );
+        }
 
 
-        card.className =
-          'stable-word';
-
-
-        const number =
-          document.createElement(
-            'span'
-          );
-
-
-        number.className =
-          'slot-number';
-
-
-        number.textContent =
-          i + 1;
-
-
-        const original =
-          document.createElement(
-            'span'
-          );
-
-
-        original.className =
-          'stable-original';
-
-
-        original.textContent =
-          '—';
-
-
-        const translation =
-          document.createElement(
-            'span'
-          );
-
-
-        translation.className =
-          'stable-translation';
-
-
-        card.append(
-          number,
-          original,
-          translation
-        );
-
-
-        const slot = {
-
-          card,
-          original,
-          translation,
-
-          word: '',
-          key: '',
-
-          version: 0
-
-        };
-
-
-        card.addEventListener(
-          'click',
-          () => {
-
-            if (
-              slot.word
-            ) {
-
-              saveWord(
-                slot.word
-              );
-
-            }
-
-          }
-        );
-
-
-        slots.push(
-          slot
-        );
-
-
-        fragment.appendChild(
-          card
-        );
-
+        saveAllState();
       }
+    );
+  }
 
 
-      stableWordsElement.appendChild(
-        fragment
+  newLineElement.prepend(
+    line
+  );
+
+
+  while (
+    newLineElement.children.length >
+    LIVE_LINE_LIMIT
+  ) {
+    newLineElement
+      .lastElementChild
+      .remove();
+  }
+
+
+  saveAllState();
+}
+
+
+/* =========================================================
+   FINAL
+========================================================= */
+
+function countWords(
+  text
+) {
+  return String(
+    text || ''
+  )
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .length;
+}
+
+
+function trimFinalHistory() {
+  let total =
+    finalHistory.reduce(
+      (
+        sum,
+        item
+      ) =>
+        sum +
+        countWords(
+          item.original
+        ),
+      0
+    );
+
+
+  while (
+    total >
+      FINAL_HISTORY_LIMIT &&
+    finalHistory.length >
+      1
+  ) {
+    const removed =
+      finalHistory.shift();
+
+
+    total -=
+      countWords(
+        removed?.original
+      );
+  }
+}
+
+
+function createFinalElement(
+  item,
+  interim = false
+) {
+  const wrapper =
+    document.createElement(
+      'div'
+    );
+
+
+  wrapper.className =
+    interim
+      ? 'final-entry interim'
+      : 'final-entry';
+
+
+  const label =
+    document.createElement(
+      'div'
+    );
+
+  label.className =
+    'final-label';
+
+  label.textContent =
+    interim
+      ? 'Live interim'
+      : 'Final';
+
+
+  const original =
+    document.createElement(
+      'div'
+    );
+
+  original.className =
+    'final-original';
+
+  original.textContent =
+    item.original || '';
+
+
+  const translation =
+    document.createElement(
+      'div'
+    );
+
+  translation.className =
+    'final-translation';
+
+
+  if (
+    item.translation
+  ) {
+    translation.textContent =
+      item.translation;
+
+
+    if (
+      interim &&
+      item.translatedOriginal &&
+      item.translatedOriginal !==
+      item.original
+    ) {
+      translation.classList.add(
+        'lagging'
       );
 
 
-      updateCursorUI();
-
-    }
-
-
-    function updateCursorUI() {
-
-      for (
-        let i = 0;
-        i < SLOT_COUNT;
-        i++
-      ) {
-
-        slots[i].card.classList.toggle(
-          'cursor',
-          i === slotCursor
+      const mark =
+        document.createElement(
+          'span'
         );
 
-      }
+      mark.className =
+        'translation-status';
+
+      mark.textContent =
+        '↻';
 
 
-      cursorInfo.textContent =
-        `next: ${slotCursor + 1}`;
-
+      translation.appendChild(
+        mark
+      );
     }
 
-
-    function duplicateRecently(
-      key
-    ) {
-
-      return recentAcceptedKeys.includes(
-        key
-      );
-
-    }
+  } else {
+    translation.textContent =
+      '…';
+  }
 
 
-    function rememberAcceptedKey(
-      key
-    ) {
-
-      recentAcceptedKeys.push(
-        key
-      );
+  wrapper.append(
+    label,
+    original,
+    translation
+  );
 
 
+  return wrapper;
+}
+
+
+function renderFinalHistory() {
+  const fragment =
+    document.createDocumentFragment();
+
+
+  if (
+    currentInterim.original
+  ) {
+    fragment.appendChild(
+      createFinalElement(
+        currentInterim,
+        true
+      )
+    );
+  }
+
+
+  for (
+    let i =
+      finalHistory.length - 1;
+    i >= 0;
+    i--
+  ) {
+    fragment.appendChild(
+      createFinalElement(
+        finalHistory[i]
+      )
+    );
+  }
+
+
+  finalTextElement.replaceChildren(
+    fragment
+  );
+}
+
+
+/* =========================================================
+   INTERIM TRANSLATION
+========================================================= */
+
+function clearCurrentInterim() {
+  currentInterim.generation++;
+
+  currentInterim.original =
+    '';
+
+  currentInterim.translation =
+    '';
+
+  currentInterim.translatedOriginal =
+    '';
+
+  currentInterim.requestSequence =
+    0;
+
+  currentInterim.appliedSequence =
+    0;
+
+
+  if (
+    interimTranslationTimer
+  ) {
+    clearTimeout(
+      interimTranslationTimer
+    );
+
+    interimTranslationTimer =
+      null;
+  }
+}
+
+
+function scheduleInterimTranslation(
+  delay
+) {
+  if (
+    interimTranslationTimer
+  ) {
+    clearTimeout(
+      interimTranslationTimer
+    );
+  }
+
+
+  interimTranslationTimer =
+    setTimeout(
+      () => {
+        interimTranslationTimer =
+          null;
+
+        requestInterimTranslation();
+      },
+      delay
+    );
+}
+
+
+function requestInterimTranslation() {
+  const text =
+    currentInterim.original;
+
+
+  if (
+    !text ||
+    currentInterim.translatedOriginal ===
+      text
+  ) {
+    return;
+  }
+
+
+  const generation =
+    currentInterim.generation;
+
+
+  const sequence =
+    ++currentInterim.requestSequence;
+
+
+  const target =
+    translationLanguage;
+
+
+  translateText(
+    text,
+    target
+  )
+
+  .then(
+    translated => {
       if (
-        recentAcceptedKeys.length >
-        DUPLICATE_WINDOW
-      ) {
-
-        recentAcceptedKeys.splice(
-          0,
-          recentAcceptedKeys.length -
-          DUPLICATE_WINDOW
-        );
-
-      }
-
-    }
-
-
-    function writeWordToNextSlot(
-      word
-    ) {
-
-      const clean =
-        cleanWordValue(
-          word
-        );
-
-
-      if (
-        !clean
+        generation !==
+        currentInterim.generation
       ) {
         return;
       }
 
 
-      const key =
-        normalizeWord(
-          clean
-        );
+      if (
+        !translated
+      ) {
+        return;
+      }
+
+
+      if (
+        sequence <
+        currentInterim.appliedSequence
+      ) {
+        return;
+      }
+
+
+      currentInterim.appliedSequence =
+        sequence;
+
+      currentInterim.translation =
+        translated;
+
+      currentInterim.translatedOriginal =
+        text;
+
+
+      renderFinalHistory();
 
 
       /*
-        Ignore duplicate only among
-        last 6 ACCEPTED words.
+        Recognition moved forward while
+        translation was running.
       */
-
       if (
-        duplicateRecently(
-          key
+        currentInterim.original !==
+        text
+      ) {
+        scheduleInterimTranslation(
+          INTERIM_TRANSLATE_DELAY
+        );
+      }
+    }
+  );
+}
+
+
+function updateLongInterim(
+  transcript
+) {
+  const text =
+    String(
+      transcript || ''
+    ).trim();
+
+
+  if (
+    !text ||
+    text ===
+      currentInterim.original
+  ) {
+    return;
+  }
+
+
+  const alreadyTranslated =
+    Boolean(
+      currentInterim.translation
+    );
+
+
+  currentInterim.original =
+    text;
+
+
+  /*
+    IMPORTANT:
+    don't erase old actual translation.
+  */
+  renderFinalHistory();
+
+
+  scheduleInterimTranslation(
+    alreadyTranslated
+      ? INTERIM_TRANSLATE_DELAY
+      : FIRST_INTERIM_TRANSLATE_DELAY
+  );
+}
+
+
+function appendFinalHistory(
+  transcript
+) {
+  const text =
+    String(
+      transcript || ''
+    ).trim();
+
+
+  if (
+    !text
+  ) {
+    return;
+  }
+
+
+  clearCurrentInterim();
+
+
+  const item = {
+    original:
+      text,
+
+    translation:
+      '',
+
+    targetLanguage:
+      translationLanguage
+  };
+
+
+  finalHistory.push(
+    item
+  );
+
+
+  trimFinalHistory();
+
+  renderFinalHistory();
+
+  saveAllState();
+
+
+  const target =
+    translationLanguage;
+
+
+  translateText(
+    text,
+    target
+  )
+
+  .then(
+    translated => {
+      if (
+        !finalHistory.includes(
+          item
         )
       ) {
         return;
+      }
+
+
+      item.translation =
+        translated;
+
+      item.targetLanguage =
+        target;
+
+
+      renderFinalHistory();
+
+      saveAllState();
+    }
+  );
+}
+
+
+/* =========================================================
+   CREATE SLOTS
+========================================================= */
+
+createStableSlots();
+
+
+/* =========================================================
+   RESTORE
+========================================================= */
+
+const restoredState =
+  loadAllState();
+
+
+if (
+  restoredState
+) {
+  if (
+    typeof restoredState.speechLanguage ===
+    'string'
+  ) {
+    speechLanguage =
+      restoredState.speechLanguage;
+  }
+
+
+  if (
+    typeof restoredState.translationLanguage ===
+    'string'
+  ) {
+    translationLanguage =
+      restoredState.translationLanguage;
+  }
+
+
+  if (
+    Array.isArray(
+      restoredState.liveHistory
+    )
+  ) {
+    liveHistory =
+      restoredState.liveHistory.slice(
+        0,
+        LIVE_LINE_LIMIT
+      );
+  }
+
+
+  if (
+    Array.isArray(
+      restoredState.savedWords
+    )
+  ) {
+    savedWords =
+      restoredState.savedWords.filter(
+        item =>
+          typeof item ===
+          'string'
+      );
+  }
+
+
+  if (
+    Array.isArray(
+      restoredState.finalHistory
+    )
+  ) {
+    if (
+      restoredState.finalHistory.length &&
+      typeof restoredState.finalHistory[0] ===
+      'string'
+    ) {
+      const oldText =
+        restoredState.finalHistory
+          .filter(
+            item =>
+              typeof item ===
+              'string'
+          )
+          .join(' ');
+
+
+      if (
+        oldText
+      ) {
+        finalHistory = [
+          {
+            original:
+              oldText,
+
+            translation:
+              '',
+
+            targetLanguage:
+              translationLanguage
+          }
+        ];
+      }
+
+    } else {
+      finalHistory =
+        restoredState.finalHistory
+          .filter(
+            item =>
+              item &&
+              typeof item.original ===
+              'string'
+          )
+          .map(
+            item => ({
+              original:
+                item.original,
+
+              translation:
+                typeof item.translation ===
+                'string'
+                  ? item.translation
+                  : '',
+
+              targetLanguage:
+                item.targetLanguage ||
+                translationLanguage
+            })
+          );
+    }
+
+
+    trimFinalHistory();
+  }
+
+
+  if (
+    Number.isInteger(
+      restoredState.slotCursor
+    )
+  ) {
+    slotCursor =
+      (
+        restoredState.slotCursor %
+        SLOT_COUNT +
+        SLOT_COUNT
+      ) % SLOT_COUNT;
+  }
+
+
+  if (
+    Array.isArray(
+      restoredState.slots
+    )
+  ) {
+    for (
+      let i = 0;
+      i < SLOT_COUNT;
+      i++
+    ) {
+      const stored =
+        restoredState.slots[i];
+
+
+      if (
+        !stored
+      ) {
+        continue;
       }
 
 
       const slot =
-        slots[
-          slotCursor
-        ];
+        slots[i];
 
 
-      slot.version++;
-
-
-      const version =
-        slot.version;
+      const word =
+        typeof stored.word ===
+        'string'
+          ? stored.word
+          : '';
 
 
       slot.word =
-        clean;
-
+        word;
 
       slot.key =
-        key;
+        word
+          ? normalizeWord(
+              word
+            )
+          : '';
 
 
       slot.original.textContent =
-        clean;
+        word || '—';
 
 
       slot.translation.textContent =
-        '...';
+        typeof stored.translation ===
+        'string'
+          ? stored.translation
+          : '';
+    }
+  }
 
 
-      rememberAcceptedKey(
-        key
-      );
+  if (
+    Array.isArray(
+      restoredState.recentAcceptedKeys
+    )
+  ) {
+    recentAcceptedKeys =
+      restoredState.recentAcceptedKeys
+        .filter(
+          item =>
+            typeof item ===
+            'string' &&
+            item
+        )
+        .slice(
+          -DUPLICATE_WINDOW
+        );
+
+  } else {
+    /*
+      Migration from versions that did
+      not save the last-six window.
+    */
+    const rebuilt = [];
 
 
-      const targetSlot =
-        slot;
-
-
-      slotCursor =
+    for (
+      let offset =
+        DUPLICATE_WINDOW;
+      offset >= 1;
+      offset--
+    ) {
+      const index =
         (
-          slotCursor + 1
+          slotCursor -
+          offset +
+          SLOT_COUNT
         ) % SLOT_COUNT;
 
 
-      updateCursorUI();
-
-
-      saveAllState();
-
-
-      translateText(
-        clean,
-        translationLanguage
-      )
-
-      .then(
-        translated => {
-
-          if (
-            targetSlot.version !==
-            version
-          ) {
-            return;
-          }
-
-
-          targetSlot.translation.textContent =
-            translated;
-
-
-          saveAllState();
-
-        }
-      );
-
-    }
-
-
-    function clearSlots() {
-
-      slotCursor =
-        0;
-
-
-      recentAcceptedKeys =
-        [];
-
-
-      for (
-        const slot
-        of slots
-      ) {
-
-        slot.version++;
-
-
-        slot.word =
-          '';
-
-
-        slot.key =
-          '';
-
-
-        slot.original.textContent =
-          '—';
-
-
-        slot.translation.textContent =
-          '';
-
-      }
-
-
-      updateCursorUI();
-
-    }
-
-
-    /* =========================================================
-       LIVE
-    ========================================================= */
-
-    let previousLiveText =
-      '';
-
-
-    function createLiveLineElement(
-      item
-    ) {
-
-      const line =
-        document.createElement(
-          'div'
-        );
+      const key =
+        slots[index]?.key;
 
 
       if (
-        !item ||
-        !Array.isArray(
-          item.words
-        )
+        key
       ) {
-
-        return line;
-
-      }
-
-
-      for (
-        const entry
-        of item.words
-      ) {
-
-        if (
-          !entry ||
-          !entry.word
-        ) {
-          continue;
-        }
-
-
-        const wordElement =
-          document.createElement(
-            'span'
-          );
-
-
-        wordElement.textContent =
-          entry.word + ' ';
-
-
-        wordElement.addEventListener(
-          'click',
-          () => {
-
-            saveWord(
-              entry.word
-            );
-
-          }
+        rebuilt.push(
+          key
         );
-
-
-        if (
-          entry.translation
-        ) {
-
-          const translationElement =
-            document.createElement(
-              'span'
-            );
-
-
-          translationElement.textContent =
-            `(${entry.translation}) `;
-
-
-          wordElement.appendChild(
-            translationElement
-          );
-
-        }
-
-
-        line.appendChild(
-          wordElement
-        );
-
       }
-
-
-      return line;
-
     }
 
 
-    function renderLiveHistory() {
+    recentAcceptedKeys =
+      rebuilt.slice(
+        -DUPLICATE_WINDOW
+      );
+  }
+}
 
-      const fragment =
-        document.createDocumentFragment();
+
+fillLanguageSelects();
+
+updateLanguageButton();
+
+renderLiveHistory();
+
+renderSavedWords();
+
+renderFinalHistory();
+
+updateCursorUI();
 
 
-      for (
-        const item
-        of liveHistory
-      ) {
+/* =========================================================
+   RESTORE MISSING FINAL TRANSLATIONS
+========================================================= */
 
-        fragment.appendChild(
-          createLiveLineElement(
+for (
+  const item
+  of finalHistory
+) {
+  if (
+    item.original &&
+    !item.translation
+  ) {
+    const target =
+      item.targetLanguage ||
+      translationLanguage;
+
+
+    translateText(
+      item.original,
+      target
+    )
+
+    .then(
+      translated => {
+        if (
+          !finalHistory.includes(
             item
           )
-        );
+        ) {
+          return;
+        }
 
+
+        item.translation =
+          translated;
+
+
+        renderFinalHistory();
+
+        saveAllState();
       }
+    );
+  }
+}
 
 
-      newLineElement.replaceChildren(
-        fragment
+/* =========================================================
+   SPEECH RECOGNITION
+========================================================= */
+
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
+
+let recognition =
+  null;
+
+let recognitionRunning =
+  false;
+
+let recognitionStarting =
+  false;
+
+let shouldRecognize =
+  false;
+
+let userActivatedRecognition =
+  false;
+
+let restartTimer =
+  null;
+
+let languageRestartPending =
+  false;
+
+
+/*
+  This generation prevents an old
+  onend from restarting after Stop.
+*/
+let recognitionGeneration =
+  0;
+
+
+/* =========================================================
+   CREATE RECOGNITION
+========================================================= */
+
+function createRecognition() {
+  if (
+    !SpeechRecognition
+  ) {
+    return false;
+  }
+
+
+  recognition =
+    new SpeechRecognition();
+
+
+  /*
+    Desktop:
+    normal continuous recognition.
+
+    Mobile:
+    short sessions.
+    onend automatically starts another one.
+
+    This avoids relying on continuous=true
+    on Android.
+  */
+  recognition.continuous =
+    !IS_MOBILE;
+
+
+  recognition.interimResults =
+    true;
+
+
+  recognition.maxAlternatives =
+    1;
+
+
+  recognition.lang =
+    speechLanguage;
+
+
+  recognition.onstart =
+    handleRecognitionStart;
+
+
+  recognition.onaudiostart =
+    () => {
+      setSpeechState(
+        'microphone audio active'
       );
+  };
 
-    }
+
+  recognition.onsoundstart =
+    () => {
+      setSpeechState(
+        'sound detected'
+      );
+  };
 
 
-    function addRawLiveLine(
-      words
+  recognition.onspeechstart =
+    () => {
+      setSpeechState(
+        'speech detected'
+      );
+  };
+
+
+  recognition.onspeechend =
+    () => {
+      setSpeechState(
+        'speech ended'
+      );
+  };
+
+
+  recognition.onsoundend =
+    () => {
+      setSpeechState(
+        'sound ended'
+      );
+  };
+
+
+  recognition.onaudioend =
+    () => {
+      setSpeechState(
+        'audio session ended'
+      );
+  };
+
+
+  recognition.onnomatch =
+    () => {
+      setSpeechState(
+        'speech heard, no match'
+      );
+  };
+
+
+  recognition.onresult =
+    handleRecognitionResult;
+
+
+  recognition.onerror =
+    handleRecognitionError;
+
+
+  recognition.onend =
+    handleRecognitionEnd;
+
+
+  return true;
+}
+
+
+/* =========================================================
+   RESTART
+========================================================= */
+
+function clearRestartTimer() {
+  if (
+    restartTimer !== null
+  ) {
+    clearTimeout(
+      restartTimer
+    );
+
+    restartTimer =
+      null;
+  }
+}
+
+
+function scheduleRecognitionRestart(
+  delay = RESTART_DELAY
+) {
+  if (
+    !shouldRecognize ||
+    !userActivatedRecognition
+  ) {
+    return;
+  }
+
+
+  if (
+    document.visibilityState !==
+    'visible'
+  ) {
+    return;
+  }
+
+
+  if (
+    recognitionRunning ||
+    recognitionStarting
+  ) {
+    return;
+  }
+
+
+  clearRestartTimer();
+
+
+  const generation =
+    recognitionGeneration;
+
+
+  setRecordStatus(
+    'starting',
+    'Restart'
+  );
+
+
+  restartTimer =
+    setTimeout(
+      () => {
+        restartTimer =
+          null;
+
+
+        if (
+          generation !==
+          recognitionGeneration
+        ) {
+          return;
+        }
+
+
+        startRecognitionInternal();
+
+      },
+
+      delay
+    );
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+function startRecognitionInternal() {
+  if (
+    !shouldRecognize ||
+    !userActivatedRecognition
+  ) {
+    return;
+  }
+
+
+  if (
+    document.visibilityState !==
+    'visible'
+  ) {
+    return;
+  }
+
+
+  if (
+    recognitionRunning ||
+    recognitionStarting
+  ) {
+    return;
+  }
+
+
+  if (
+    !recognition
+  ) {
+    if (
+      !createRecognition()
     ) {
-
-      const cleaned =
-        words
-          .map(
-            cleanWordValue
-          )
-          .filter(Boolean);
+      return;
+    }
+  }
 
 
-      if (
-        !cleaned.length
-      ) {
-        return;
-      }
+  recognition.lang =
+    speechLanguage;
 
 
-      const liveKey =
-        cleaned
-          .join(' ')
-          .toLocaleLowerCase();
+  recognitionStarting =
+    true;
 
 
-      if (
-        liveKey ===
-        previousLiveText
-      ) {
-        return;
-      }
+  setRecordStatus(
+    'starting',
+    'Starting'
+  );
 
 
-      previousLiveText =
-        liveKey;
+  setSpeechState(
+    IS_MOBILE
+      ? 'mobile session starting'
+      : 'recognition starting'
+  );
 
 
-      const item = {
-
-        words:
-          cleaned.map(
-            word => ({
-
-              word,
-
-              translation:
-                ''
-
-            })
-          )
-
-      };
+  hideError();
 
 
-      liveHistory.unshift(
-        item
+  try {
+    recognition.start();
+
+  } catch (
+    error
+  ) {
+    recognitionStarting =
+      false;
+
+
+    console.warn(
+      'recognition.start:',
+      error
+    );
+
+
+    /*
+      InvalidStateError means the old
+      engine may still be closing.
+
+      Wait and try again.
+    */
+    scheduleRecognitionRestart(
+      RESTART_RETRY_DELAY
+    );
+  }
+}
+
+
+/* =========================================================
+   FIRST USER START
+========================================================= */
+
+function startFromUserClick() {
+  if (
+    !SpeechRecognition
+  ) {
+    setRecordStatus(
+      'error',
+      'Unsupported'
+    );
+
+
+    showError(
+      'This Chrome version does not expose SpeechRecognition / webkitSpeechRecognition.'
+    );
+
+
+    return;
+  }
+
+
+  if (
+    !window.isSecureContext
+  ) {
+    setRecordStatus(
+      'error',
+      'HTTPS'
+    );
+
+
+    showError(
+      'This page is not in a secure context. On the phone open it through HTTPS, not http://192.168...'
+    );
+
+
+    return;
+  }
+
+
+  /*
+    IMPORTANT:
+    no getUserMedia here.
+
+    SpeechRecognition itself opens
+    the microphone.
+  */
+
+  userActivatedRecognition =
+    true;
+
+
+  shouldRecognize =
+    true;
+
+
+  recognitionGeneration++;
+
+
+  hideError();
+
+
+  if (
+    !recognition
+  ) {
+    createRecognition();
+  }
+
+
+  /*
+    Direct call from click handler.
+  */
+  startRecognitionInternal();
+}
+
+
+/* =========================================================
+   MANUAL STOP
+========================================================= */
+
+function stopRecognitionManually() {
+  shouldRecognize =
+    false;
+
+
+  languageRestartPending =
+    false;
+
+
+  recognitionGeneration++;
+
+
+  clearRestartTimer();
+
+
+  setRecordStatus(
+    'stopped',
+    'Stopped'
+  );
+
+
+  setSpeechState(
+    'stopped by user'
+  );
+
+
+  if (
+    recognition
+  ) {
+    try {
+      recognition.abort();
+
+    } catch (
+      error
+    ) {
+      console.warn(
+        'recognition.abort:',
+        error
       );
+    }
+  }
+}
 
 
-      if (
-        liveHistory.length >
-        LIVE_LINE_LIMIT
-      ) {
+/* =========================================================
+   RECORD BUTTON
+========================================================= */
 
-        liveHistory.length =
-          LIVE_LINE_LIMIT;
+recordButton.addEventListener(
+  'click',
+  () => {
+    if (
+      shouldRecognize
+    ) {
+      stopRecognitionManually();
 
-      }
-
-
-      const line =
-        document.createElement(
-          'div'
-        );
-
-
-      for (
-        const entry
-        of item.words
-      ) {
-
-        const wordElement =
-          document.createElement(
-            'span'
-          );
-
-
-        wordElement.textContent =
-          entry.word + ' ';
-
-
-        wordElement.addEventListener(
-          'click',
-          () => {
-
-            saveWord(
-              entry.word
-            );
-
-          }
-        );
-
-
-        line.appendChild(
-          wordElement
-        );
-
-
-        writeWordToNextSlot(
-          entry.word
-        );
-
-
-        translateText(
-          entry.word,
-          translationLanguage
-        )
-
-        .then(
-          translated => {
-
-            entry.translation =
-              translated;
-
-
-            if (
-              translated
-            ) {
-
-              const translationElement =
-                document.createElement(
-                  'span'
-                );
-
-
-              translationElement.textContent =
-                `(${translated}) `;
-
-
-              wordElement.appendChild(
-                translationElement
-              );
-
-            }
-
-
-            saveAllState();
-
-          }
-        );
-
-      }
-
-
-      newLineElement.prepend(
-        line
-      );
-
-
-      while (
-        newLineElement.children.length >
-        LIVE_LINE_LIMIT
-      ) {
-
-        newLineElement
-          .lastElementChild
-          .remove();
-
-      }
-
-
-      saveAllState();
-
+      return;
     }
 
 
-    /* =========================================================
-       FINAL
-    ========================================================= */
+    startFromUserClick();
+  }
+);
 
-    function countWords(
+
+/* =========================================================
+   ON START
+========================================================= */
+
+function handleRecognitionStart() {
+  recognitionRunning =
+    true;
+
+
+  recognitionStarting =
+    false;
+
+
+  languageRestartPending =
+    false;
+
+
+  clearRestartTimer();
+
+
+  hideError();
+
+
+  setRecordStatus(
+    'recording',
+    'Recording'
+  );
+
+
+  setSpeechState(
+    IS_MOBILE
+      ? 'recording · mobile session'
+      : 'recording'
+  );
+}
+
+
+/* =========================================================
+   RESULTS
+========================================================= */
+
+function handleRecognitionResult(
+  event
+) {
+  /*
+    Process newly finalized results.
+  */
+  for (
+    let i = event.resultIndex;
+    i < event.results.length;
+    i++
+  ) {
+    const result =
+      event.results[i];
+
+
+    if (
+      !result?.[0]
+    ) {
+      continue;
+    }
+
+
+    const transcript =
+      String(
+        result[0].transcript || ''
+      ).trim();
+
+
+    if (
+      !transcript
+    ) {
+      continue;
+    }
+
+
+    if (
+      result.isFinal
+    ) {
+      appendFinalHistory(
+        transcript
+      );
+    }
+  }
+
+
+  /*
+    Build CURRENT interim from every
+    non-final result currently held
+    by the recognition engine.
+
+    This is more reliable than only
+    taking one result from resultIndex.
+  */
+
+  const interimParts = [];
+
+
+  for (
+    let i = 0;
+    i < event.results.length;
+    i++
+  ) {
+    const result =
+      event.results[i];
+
+
+    if (
+      result?.isFinal ||
+      !result?.[0]
+    ) {
+      continue;
+    }
+
+
+    const text =
+      String(
+        result[0].transcript || ''
+      ).trim();
+
+
+    if (
       text
     ) {
+      interimParts.push(
+        text
+      );
+    }
+  }
 
-      return String(
-        text || ''
-      )
-        .trim()
+
+  const fullInterim =
+    interimParts
+      .join(' ')
+      .trim();
+
+
+  if (
+    fullInterim
+  ) {
+    updateLongInterim(
+      fullInterim
+    );
+
+
+    const allWords =
+      fullInterim
         .split(/\s+/)
-        .filter(Boolean)
-        .length;
-
-    }
+        .filter(Boolean);
 
 
-    function trimFinalHistory() {
-
-      let total =
-        finalHistory.reduce(
-          (
-            sum,
-            item
-          ) =>
-            sum +
-            countWords(
-              item.original
-            ),
-          0
-        );
+    /*
+      LIVE remains short.
+    */
+    const rawWords =
+      allWords.slice(
+        -LIVE_WORD_LIMIT
+      );
 
 
-      while (
-        total >
-          FINAL_HISTORY_LIMIT &&
-        finalHistory.length >
-          1
-      ) {
-
-        const removed =
-          finalHistory.shift();
+    addRawLiveLine(
+      rawWords
+    );
+  }
 
 
-        total -=
-          countWords(
-            removed?.original
-          );
-
-      }
-
-    }
+  setSpeechState(
+    'result received'
+  );
+}
 
 
-    function createFinalElement(
-      item,
-      interim = false
+/* =========================================================
+   ERRORS
+========================================================= */
+
+function handleRecognitionError(
+  event
+) {
+  const error =
+    event.error || 'unknown';
+
+
+  console.warn(
+    'SpeechRecognition error:',
+    error,
+    event
+  );
+
+
+  setSpeechState(
+    `error: ${error}`
+  );
+
+
+  /*
+    IMPORTANT:
+    don't pretend the engine is fully
+    ended here.
+
+    onend is authoritative.
+  */
+
+  recognitionStarting =
+    false;
+
+
+  if (
+    error === 'not-allowed' ||
+    error === 'service-not-allowed'
+  ) {
+    shouldRecognize =
+      false;
+
+
+    recognitionGeneration++;
+
+
+    clearRestartTimer();
+
+
+    setRecordStatus(
+      'error',
+      'Blocked'
+    );
+
+
+    showError(
+      'Chrome blocked speech recognition. Open Chrome → Site settings → Microphone, allow this site, then press Start again.'
+    );
+
+
+    return;
+  }
+
+
+  if (
+    error === 'audio-capture'
+  ) {
+    shouldRecognize =
+      false;
+
+
+    recognitionGeneration++;
+
+
+    clearRestartTimer();
+
+
+    setRecordStatus(
+      'error',
+      'No mic'
+    );
+
+
+    showError(
+      'Chrome could not open the microphone. Check Android microphone permission for Chrome and close other apps using the microphone.'
+    );
+
+
+    return;
+  }
+
+
+  if (
+    error === 'network'
+  ) {
+    setRecordStatus(
+      'starting',
+      'Network'
+    );
+
+
+    showError(
+      'Speech recognition network error. Keep internet enabled; Chrome speech recognition may use a remote recognition service.'
+    );
+
+
+    return;
+  }
+
+
+  if (
+    error === 'no-speech'
+  ) {
+    setRecordStatus(
+      'starting',
+      'Listening'
+    );
+
+
+    return;
+  }
+
+
+  if (
+    error === 'aborted'
+  ) {
+    /*
+      Normal when we manually abort
+      or switch language.
+    */
+    return;
+  }
+
+
+  setRecordStatus(
+    'starting',
+    'Retry'
+  );
+}
+
+
+/* =========================================================
+   ON END
+========================================================= */
+
+function handleRecognitionEnd() {
+  recognitionRunning =
+    false;
+
+
+  recognitionStarting =
+    false;
+
+
+  setSpeechState(
+    'recognition session ended'
+  );
+
+
+  if (
+    !shouldRecognize
+  ) {
+    setRecordStatus(
+      'stopped',
+      'Stopped'
+    );
+
+    return;
+  }
+
+
+  if (
+    document.visibilityState !==
+    'visible'
+  ) {
+    setRecordStatus(
+      'stopped',
+      'Paused'
+    );
+
+    return;
+  }
+
+
+  /*
+    On Android this is the main
+    continuous-recognition mechanism:
+    short session -> onend -> restart.
+  */
+  scheduleRecognitionRestart(
+    RESTART_DELAY
+  );
+}
+
+
+/* =========================================================
+   LANGUAGE CHANGE
+========================================================= */
+
+function restartForLanguageChange() {
+  if (
+    !shouldRecognize
+  ) {
+    return;
+  }
+
+
+  if (
+    recognition
+  ) {
+    recognition.lang =
+      speechLanguage;
+  }
+
+
+  if (
+    recognitionRunning ||
+    recognitionStarting
+  ) {
+    languageRestartPending =
+      true;
+
+
+    setRecordStatus(
+      'starting',
+      'Switching'
+    );
+
+
+    try {
+      recognition.abort();
+
+    } catch (
+      error
     ) {
+      recognitionRunning =
+        false;
 
-      const wrapper =
-        document.createElement(
-          'div'
-        );
+      recognitionStarting =
+        false;
 
-
-      wrapper.className =
-        interim
-          ? 'final-entry interim'
-          : 'final-entry';
-
-
-      const label =
-        document.createElement(
-          'div'
-        );
-
-
-      label.className =
-        'final-label';
-
-
-      label.textContent =
-        interim
-          ? 'Live interim'
-          : 'Final';
-
-
-      const original =
-        document.createElement(
-          'div'
-        );
-
-
-      original.className =
-        'final-original';
-
-
-      original.textContent =
-        item.original || '';
-
-
-      const translation =
-        document.createElement(
-          'div'
-        );
-
-
-      translation.className =
-        'final-translation';
-
-
-      if (
-        item.translation
-      ) {
-
-        translation.textContent =
-          item.translation;
-
-
-        if (
-          interim &&
-          item.translatedOriginal &&
-          item.translatedOriginal !==
-          item.original
-        ) {
-
-          translation.classList.add(
-            'lagging'
-          );
-
-
-          const mark =
-            document.createElement(
-              'span'
-            );
-
-
-          mark.className =
-            'translation-status';
-
-
-          mark.textContent =
-            '↻';
-
-
-          translation.appendChild(
-            mark
-          );
-
-        }
-
-      } else {
-
-        translation.textContent =
-          '…';
-
-      }
-
-
-      wrapper.append(
-        label,
-        original,
-        translation
-      );
-
-
-      return wrapper;
-
+      scheduleRecognitionRestart();
     }
 
 
-    function renderFinalHistory() {
-
-      const fragment =
-        document.createDocumentFragment();
+    return;
+  }
 
 
-      if (
-        currentInterim.original
-      ) {
-
-        fragment.appendChild(
-          createFinalElement(
-            currentInterim,
-            true
-          )
-        );
-
-      }
+  scheduleRecognitionRestart();
+}
 
 
-      for (
-        let i =
-          finalHistory.length - 1;
-        i >= 0;
-        i--
-      ) {
-
-        fragment.appendChild(
-          createFinalElement(
-            finalHistory[i],
-            false
-          )
-        );
-
-      }
+applyLanguages.addEventListener(
+  'click',
+  () => {
+    const newSpeech =
+      speechLanguageSelect.value;
 
 
-      finalTextElement.replaceChildren(
-        fragment
-      );
-
-    }
+    const newTranslation =
+      translationLanguageSelect.value;
 
 
-    /* =========================================================
-       INTERIM TRANSLATION
-    ========================================================= */
-
-    function clearCurrentInterim() {
-
-      currentInterim.generation++;
+    const speechChanged =
+      newSpeech !==
+      speechLanguage;
 
 
-      currentInterim.original =
-        '';
+    const translationChanged =
+      newTranslation !==
+      translationLanguage;
 
 
+    speechLanguage =
+      newSpeech;
+
+
+    translationLanguage =
+      newTranslation;
+
+
+    updateLanguageButton();
+
+
+    if (
+      translationChanged
+    ) {
       currentInterim.translation =
         '';
 
-
       currentInterim.translatedOriginal =
         '';
-
-
-      currentInterim.requestSequence =
-        0;
-
 
       currentInterim.appliedSequence =
         0;
 
 
       if (
-        interimTranslationTimer
-      ) {
-
-        clearTimeout(
-          interimTranslationTimer
-        );
-
-
-        interimTranslationTimer =
-          null;
-
-      }
-
-    }
-
-
-    function scheduleInterimTranslation(
-      delay
-    ) {
-
-      if (
-        interimTranslationTimer
-      ) {
-
-        clearTimeout(
-          interimTranslationTimer
-        );
-
-      }
-
-
-      interimTranslationTimer =
-        setTimeout(
-          () => {
-
-            interimTranslationTimer =
-              null;
-
-
-            requestInterimTranslation();
-
-          },
-
-          delay
-        );
-
-    }
-
-
-    function requestInterimTranslation() {
-
-      const text =
-        currentInterim.original;
-
-
-      if (
-        !text
-      ) {
-        return;
-      }
-
-
-      if (
-        currentInterim.translatedOriginal ===
-        text
-      ) {
-        return;
-      }
-
-
-      const generation =
-        currentInterim.generation;
-
-
-      const sequence =
-        ++currentInterim.requestSequence;
-
-
-      const target =
-        translationLanguage;
-
-
-      translateText(
-        text,
-        target
-      )
-
-      .then(
-        translated => {
-
-          if (
-            generation !==
-            currentInterim.generation
-          ) {
-            return;
-          }
-
-
-          if (
-            !translated
-          ) {
-            return;
-          }
-
-
-          if (
-            sequence <
-            currentInterim.appliedSequence
-          ) {
-            return;
-          }
-
-
-          currentInterim.appliedSequence =
-            sequence;
-
-
-          currentInterim.translation =
-            translated;
-
-
-          currentInterim.translatedOriginal =
-            text;
-
-
-          renderFinalHistory();
-
-
-          /*
-            Recognition has already moved
-            further -> translate latest copy.
-          */
-
-          if (
-            currentInterim.original !==
-            text
-          ) {
-
-            scheduleInterimTranslation(
-              INTERIM_TRANSLATE_DELAY
-            );
-
-          }
-
-        }
-      );
-
-    }
-
-
-    function updateLongInterim(
-      transcript
-    ) {
-
-      const text =
-        String(
-          transcript || ''
-        ).trim();
-
-
-      if (
-        !text ||
-        text ===
         currentInterim.original
       ) {
-        return;
-      }
-
-
-      const alreadyHasTranslation =
-        Boolean(
-          currentInterim.translation
+        scheduleInterimTranslation(
+          FIRST_INTERIM_TRANSLATE_DELAY
         );
-
-
-      currentInterim.original =
-        text;
-
-
-      /*
-        IMPORTANT:
-        old real translation remains visible.
-      */
-
-      renderFinalHistory();
-
-
-      scheduleInterimTranslation(
-        alreadyHasTranslation
-          ? INTERIM_TRANSLATE_DELAY
-          : FIRST_INTERIM_TRANSLATE_DELAY
-      );
-
+      }
     }
 
-
-    function appendFinalHistory(
-      transcript
-    ) {
-
-      const text =
-        String(
-          transcript || ''
-        ).trim();
-
-
-      if (
-        !text
-      ) {
-        return;
-      }
-
-
-      clearCurrentInterim();
-
-
-      const item = {
-
-        original:
-          text,
-
-        translation:
-          '',
-
-        targetLanguage:
-          translationLanguage
-
-      };
-
-
-      finalHistory.push(
-        item
-      );
-
-
-      trimFinalHistory();
-
-
-      renderFinalHistory();
-
-
-      saveAllState();
-
-
-      const target =
-        translationLanguage;
-
-
-      translateText(
-        text,
-        target
-      )
-
-      .then(
-        translated => {
-
-          if (
-            !finalHistory.includes(
-              item
-            )
-          ) {
-            return;
-          }
-
-
-          item.translation =
-            translated;
-
-
-          item.targetLanguage =
-            target;
-
-
-          renderFinalHistory();
-
-
-          saveAllState();
-
-        }
-      );
-
-    }
-
-
-    /* =========================================================
-       CREATE SLOTS
-    ========================================================= */
-
-    createStableSlots();
-
-
-    /* =========================================================
-       RESTORE STATE
-    ========================================================= */
-
-    const restoredState =
-      loadAllState();
-
-
-    if (
-      restoredState
-    ) {
-
-      if (
-        typeof restoredState.speechLanguage ===
-        'string'
-      ) {
-
-        speechLanguage =
-          restoredState.speechLanguage;
-
-      }
-
-
-      if (
-        typeof restoredState.translationLanguage ===
-        'string'
-      ) {
-
-        translationLanguage =
-          restoredState.translationLanguage;
-
-      }
-
-
-      if (
-        Array.isArray(
-          restoredState.liveHistory
-        )
-      ) {
-
-        liveHistory =
-          restoredState.liveHistory.slice(
-            0,
-            LIVE_LINE_LIMIT
-          );
-
-      }
-
-
-      if (
-        Array.isArray(
-          restoredState.savedWords
-        )
-      ) {
-
-        savedWords =
-          restoredState.savedWords.filter(
-            item =>
-              typeof item ===
-              'string'
-          );
-
-      }
-
-
-      if (
-        Array.isArray(
-          restoredState.finalHistory
-        )
-      ) {
-
-        if (
-          restoredState.finalHistory.length &&
-          typeof restoredState.finalHistory[0] ===
-          'string'
-        ) {
-
-          const text =
-            restoredState.finalHistory
-              .filter(
-                item =>
-                  typeof item ===
-                  'string'
-              )
-              .join(' ');
-
-
-          if (
-            text
-          ) {
-
-            finalHistory = [
-              {
-
-                original:
-                  text,
-
-                translation:
-                  '',
-
-                targetLanguage:
-                  translationLanguage
-
-              }
-            ];
-
-          }
-
-        } else {
-
-          finalHistory =
-            restoredState.finalHistory
-              .filter(
-                item =>
-                  item &&
-                  typeof item.original ===
-                  'string'
-              )
-              .map(
-                item => ({
-
-                  original:
-                    item.original,
-
-                  translation:
-                    typeof item.translation ===
-                    'string'
-                      ? item.translation
-                      : '',
-
-                  targetLanguage:
-                    item.targetLanguage ||
-                    translationLanguage
-
-                })
-              );
-
-        }
-
-
-        trimFinalHistory();
-
-      }
-
-
-      if (
-        Number.isInteger(
-          restoredState.slotCursor
-        )
-      ) {
-
-        slotCursor =
-          restoredState.slotCursor %
-          SLOT_COUNT;
-
-
-        if (
-          slotCursor < 0
-        ) {
-
-          slotCursor =
-            0;
-
-        }
-
-      }
-
-
-      if (
-        Array.isArray(
-          restoredState.slots
-        )
-      ) {
-
-        for (
-          let i = 0;
-          i < SLOT_COUNT;
-          i++
-        ) {
-
-          const stored =
-            restoredState.slots[i];
-
-
-          const slot =
-            slots[i];
-
-
-          if (
-            !stored
-          ) {
-            continue;
-          }
-
-
-          const word =
-            typeof stored.word ===
-            'string'
-              ? stored.word
-              : '';
-
-
-          const translation =
-            typeof stored.translation ===
-            'string'
-              ? stored.translation
-              : '';
-
-
-          slot.word =
-            word;
-
-
-          slot.key =
-            word
-              ? normalizeWord(
-                  word
-                )
-              : '';
-
-
-          slot.original.textContent =
-            word || '—';
-
-
-          slot.translation.textContent =
-            translation;
-
-        }
-
-      }
-
-
-      if (
-        Array.isArray(
-          restoredState.recentAcceptedKeys
-        )
-      ) {
-
-        recentAcceptedKeys =
-          restoredState.recentAcceptedKeys
-            .filter(
-              item =>
-                typeof item ===
-                'string' &&
-                item
-            )
-            .slice(
-              -DUPLICATE_WINDOW
-            );
-
-      } else {
-
-        /*
-          Migration from old versions.
-        */
-
-        const reconstructed =
-          [];
-
-
-        for (
-          let offset =
-            DUPLICATE_WINDOW;
-          offset >= 1;
-          offset--
-        ) {
-
-          const index =
-            (
-              slotCursor -
-              offset +
-              SLOT_COUNT
-            ) % SLOT_COUNT;
-
-
-          const key =
-            slots[index]?.key;
-
-
-          if (
-            key
-          ) {
-
-            reconstructed.push(
-              key
-            );
-
-          }
-
-        }
-
-
-        recentAcceptedKeys =
-          reconstructed;
-
-      }
-
-    }
-
-
-    fillLanguageSelects();
-
-    updateLanguageButton();
-
-    renderLiveHistory();
-
-    renderSavedWords();
 
     renderFinalHistory();
 
-    updateCursorUI();
+    saveAllState();
 
 
-    /* =========================================================
-       RESTORE MISSING FINAL TRANSLATIONS
-    ========================================================= */
+    languageModal.classList.remove(
+      'open'
+    );
+
+
+    if (
+      speechChanged
+    ) {
+      restartForLanguageChange();
+    }
+  }
+);
+
+
+/* =========================================================
+   DELETE HISTORY
+========================================================= */
+
+deleteHistoryButton.addEventListener(
+  'click',
+  () => {
+    const confirmed =
+      confirm(
+        'Delete Live, Last 12 words, Saved and Final history?'
+      );
+
+
+    if (
+      !confirmed
+    ) {
+      return;
+    }
+
+
+    liveHistory = [];
+
+    savedWords = [];
+
+    finalHistory = [];
+
+    previousLiveText = '';
+
+
+    clearCurrentInterim();
+
+    clearSlots();
+
+
+    newLineElement.replaceChildren();
+
+    savedLinesElement.replaceChildren();
+
+    finalTextElement.replaceChildren();
+
+
+    const keys = [
+      STORAGE_KEY,
+
+      'speechTranslationFullStateV8',
+      'speechTranslationFullStateV7',
+      'speechTranslationFullStateV6',
+      'speechTranslationFullStateV5',
+      'speechTranslationFullStateV4',
+      'speechTranslationFullStateV3'
+    ];
+
 
     for (
-      const item
-      of finalHistory
+      const key
+      of keys
     ) {
+      try {
+        localStorage.removeItem(
+          key
+        );
+      } catch (
+        error
+      ) {}
+    }
 
-      if (
-        item.original &&
-        !item.translation
-      ) {
 
+    /*
+      Preserve languages.
+    */
+    saveAllState();
+
+
+    languageModal.classList.remove(
+      'open'
+    );
+  }
+);
+
+
+/* =========================================================
+   MOBILE NAV
+========================================================= */
+
+const menuButtons =
+  document.querySelectorAll(
+    '.menu-button'
+  );
+
+const columns =
+  document.querySelectorAll(
+    '.column'
+  );
+
+
+menuButtons.forEach(
+  button => {
+    button.addEventListener(
+      'click',
+      () => {
         const target =
-          item.targetLanguage ||
-          translationLanguage;
+          button.dataset.target;
 
 
-        translateText(
-          item.original,
-          target
-        )
-
-        .then(
-          translated => {
-
-            if (
-              !finalHistory.includes(
-                item
-              )
-            ) {
-              return;
-            }
-
-
-            item.translation =
-              translated;
-
-
-            renderFinalHistory();
-
-
-            saveAllState();
-
-          }
-        );
-
-      }
-
-    }
-
-
-    /* =========================================================
-       SPEECH RECOGNITION
-    ========================================================= */
-
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-
-    let recognition =
-      null;
-
-
-    let recognitionRunning =
-      false;
-
-
-    let recognitionStarting =
-      false;
-
-
-    /*
-      IMPORTANT:
-      initially FALSE.
-
-      Mobile Chrome requires the first
-      real activation from user click.
-    */
-    let userActivatedRecognition =
-      false;
-
-
-    /*
-      If true: when recognition ends
-      unexpectedly, restart it.
-    */
-    let shouldRecognize =
-      false;
-
-
-    let microphonePermissionGranted =
-      false;
-
-
-    let restartTimer =
-      null;
-
-
-    let languageRestartPending =
-      false;
-
-
-    function createRecognition() {
-
-      if (
-        !SpeechRecognition
-      ) {
-
-        showError(
-          'Speech Recognition is not supported by this browser.'
-        );
-
-
-        setRecordStatus(
-          'error',
-          'Unsupported'
-        );
-
-
-        return false;
-
-      }
-
-
-      recognition =
-        new SpeechRecognition();
-
-
-      recognition.continuous =
-        true;
-
-
-      recognition.interimResults =
-        true;
-
-
-      recognition.maxAlternatives =
-        1;
-
-
-      recognition.lang =
-        speechLanguage;
-
-
-      recognition.onstart =
-        handleRecognitionStart;
-
-
-      recognition.onresult =
-        handleRecognitionResult;
-
-
-      recognition.onerror =
-        handleRecognitionError;
-
-
-      recognition.onend =
-        handleRecognitionEnd;
-
-
-      return true;
-
-    }
-
-
-    function clearRestartTimer() {
-
-      if (
-        restartTimer !== null
-      ) {
-
-        clearTimeout(
-          restartTimer
-        );
-
-
-        restartTimer =
-          null;
-
-      }
-
-    }
-
-
-    function scheduleRecognitionRestart(
-      delay = RESTART_DELAY
-    ) {
-
-      /*
-        CRITICAL:
-        never automatically initiate the
-        FIRST recognition session.
-      */
-
-      if (
-        !userActivatedRecognition ||
-        !shouldRecognize
-      ) {
-        return;
-      }
-
-
-      if (
-        document.visibilityState !==
-        'visible'
-      ) {
-        return;
-      }
-
-
-      if (
-        recognitionRunning ||
-        recognitionStarting
-      ) {
-        return;
-      }
-
-
-      clearRestartTimer();
-
-
-      setRecordStatus(
-        'starting',
-        'Restarting'
-      );
-
-
-      restartTimer =
-        setTimeout(
-          () => {
-
-            restartTimer =
-              null;
-
-
-            startRecognitionInternal();
-
-          },
-
-          delay
-        );
-
-    }
-
-
-    function startRecognitionInternal() {
-
-      if (
-        !userActivatedRecognition ||
-        !shouldRecognize
-      ) {
-        return;
-      }
-
-
-      if (
-        document.visibilityState !==
-        'visible'
-      ) {
-        return;
-      }
-
-
-      if (
-        recognitionRunning ||
-        recognitionStarting
-      ) {
-        return;
-      }
-
-
-      if (
-        !recognition
-      ) {
-
-        if (
-          !createRecognition()
-        ) {
-          return;
-        }
-
-      }
-
-
-      recognition.lang =
-        speechLanguage;
-
-
-      recognitionStarting =
-        true;
-
-
-      setRecordStatus(
-        'starting',
-        'Starting'
-      );
-
-
-      hideError();
-
-
-      try {
-
-        recognition.start();
-
-      } catch (
-        error
-      ) {
-
-        recognitionStarting =
-          false;
-
-
-        console.warn(
-          'recognition.start():',
-          error
-        );
-
-
-        scheduleRecognitionRestart(
-          RESTART_RETRY_DELAY
-        );
-
-      }
-
-    }
-
-
-    /* =========================================================
-       FIRST MOBILE START
-    ========================================================= */
-
-    async function activateRecognitionFromUserGesture() {
-
-      if (
-        !SpeechRecognition
-      ) {
-
-        showError(
-          'Speech Recognition is not supported by this Chrome version.'
-        );
-
-
-        setRecordStatus(
-          'error',
-          'Unsupported'
-        );
-
-
-        return;
-
-      }
-
-
-      /*
-        Microphone access on mobile
-        normally needs HTTPS or localhost.
-      */
-
-      if (
-        !window.isSecureContext
-      ) {
-
-        showError(
-          'Microphone requires HTTPS. Open this page through https:// instead of an insecure http:// address.'
-        );
-
-
-        setRecordStatus(
-          'error',
-          'HTTPS needed'
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia
-      ) {
-
-        showError(
-          'Microphone API is unavailable in this browser/context.'
-        );
-
-
-        setRecordStatus(
-          'error',
-          'No mic'
-        );
-
-
-        return;
-
-      }
-
-
-      setRecordStatus(
-        'starting',
-        'Allow mic'
-      );
-
-
-      hideError();
-
-
-      try {
-
-        /*
-          IMPORTANT:
-          requested directly inside
-          the button-click chain.
-        */
-
-        const permissionStream =
-          await navigator.mediaDevices
-            .getUserMedia({
-              audio: true
-            });
-
-
-        microphonePermissionGranted =
-          true;
-
-
-        /*
-          This stream is only used to
-          request/check permission.
-
-          SpeechRecognition itself manages
-          its own microphone capture.
-
-          Stop probe tracks so we don't keep
-          a second mic capture open.
-        */
-
-        permissionStream
-          .getTracks()
-          .forEach(
-            track =>
-              track.stop()
-          );
-
-
-        userActivatedRecognition =
-          true;
-
-
-        shouldRecognize =
-          true;
-
-
-        if (
-          !recognition
-        ) {
-
-          createRecognition();
-
-        }
-
-
-        startRecognitionInternal();
-
-      } catch (
-        error
-      ) {
-
-        microphonePermissionGranted =
-          false;
-
-
-        shouldRecognize =
-          false;
-
-
-        console.error(
-          'Microphone permission:',
-          error
-        );
-
-
-        setRecordStatus(
-          'error',
-          'Mic blocked'
-        );
-
-
-        showError(
-          `Microphone access failed: ${error.name || ''} ${error.message || ''}`
-        );
-
-      }
-
-    }
-
-
-    /* =========================================================
-       STOP / RESUME
-    ========================================================= */
-
-    function stopRecognitionManually() {
-
-      shouldRecognize =
-        false;
-
-
-      languageRestartPending =
-        false;
-
-
-      clearRestartTimer();
-
-
-      setRecordStatus(
-        'stopped',
-        'Stopped'
-      );
-
-
-      if (
-        recognition
-      ) {
-
-        try {
-
-          recognition.stop();
-
-        } catch (
-          error
-        ) {
-
-          console.warn(
-            'recognition.stop():',
-            error
-          );
-
-        }
-
-      }
-
-    }
-
-
-    function resumeRecognitionManually() {
-
-      if (
-        !userActivatedRecognition ||
-        !microphonePermissionGranted
-      ) {
-
-        activateRecognitionFromUserGesture();
-
-
-        return;
-
-      }
-
-
-      shouldRecognize =
-        true;
-
-
-      hideError();
-
-
-      startRecognitionInternal();
-
-    }
-
-
-    recordButton.addEventListener(
-      'click',
-      () => {
-
-        if (
-          shouldRecognize &&
-          (
-            recognitionRunning ||
-            recognitionStarting
-          )
-        ) {
-
-          stopRecognitionManually();
-
-
-          return;
-
-        }
-
-
-        /*
-          This function is called directly
-          from the physical user click.
-        */
-
-        resumeRecognitionManually();
-
-      }
-    );
-
-
-    /* =========================================================
-       SPEECH EVENTS
-    ========================================================= */
-
-    function handleRecognitionStart() {
-
-      recognitionRunning =
-        true;
-
-
-      recognitionStarting =
-        false;
-
-
-      languageRestartPending =
-        false;
-
-
-      clearRestartTimer();
-
-
-      hideError();
-
-
-      setRecordStatus(
-        'recording',
-        'Recording'
-      );
-
-    }
-
-
-    function handleRecognitionResult(
-      event
-    ) {
-
-      let longestInterim =
-        '';
-
-
-      /*
-        Process every changed result.
-      */
-
-      for (
-        let i = event.resultIndex;
-        i < event.results.length;
-        i++
-      ) {
-
-        const result =
-          event.results[i];
-
-
-        if (
-          !result ||
-          !result[0]
-        ) {
-          continue;
-        }
-
-
-        const transcript =
-          String(
-            result[0].transcript || ''
-          ).trim();
-
-
-        if (
-          !transcript
-        ) {
-          continue;
-        }
-
-
-        /*
-          FINAL
-        */
-
-        if (
-          result.isFinal
-        ) {
-
-          appendFinalHistory(
-            transcript
-          );
-
-
-          continue;
-
-        }
-
-
-        /*
-          LONG INTERIM -> Final screen
-        */
-
-        if (
-          transcript.length >
-          longestInterim.length
-        ) {
-
-          longestInterim =
-            transcript;
-
-        }
-
-
-        /*
-          SHORT INTERIM -> Live screen
-        */
-
-        const words =
-          transcript
-            .split(/\s+/)
-            .filter(Boolean);
-
-
-        const shortTail =
-          words.slice(
-            -LIVE_WORD_LIMIT
-          );
-
-
-        addRawLiveLine(
-          shortTail
-        );
-
-      }
-
-
-      if (
-        longestInterim
-      ) {
-
-        updateLongInterim(
-          longestInterim
-        );
-
-      }
-
-    }
-
-
-    function handleRecognitionError(
-      event
-    ) {
-
-      console.warn(
-        'Speech error:',
-        event.error
-      );
-
-
-      recognitionRunning =
-        false;
-
-
-      recognitionStarting =
-        false;
-
-
-      const error =
-        event.error;
-
-
-      if (
-        error ===
-          'not-allowed' ||
-        error ===
-          'service-not-allowed'
-      ) {
-
-        shouldRecognize =
-          false;
-
-
-        microphonePermissionGranted =
-          false;
-
-
-        clearRestartTimer();
-
-
-        setRecordStatus(
-          'error',
-          'Blocked'
-        );
-
-
-        showError(
-          'Microphone / speech recognition permission is blocked. Allow microphone access in Chrome site settings, then press the button again.'
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        error ===
-        'audio-capture'
-      ) {
-
-        shouldRecognize =
-          false;
-
-
-        clearRestartTimer();
-
-
-        setRecordStatus(
-          'error',
-          'No mic'
-        );
-
-
-        showError(
-          'Chrome cannot access the microphone.'
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        !shouldRecognize
-      ) {
-        return;
-      }
-
-
-      /*
-        no-speech is normal.
-        aborted/network can also recover.
-      */
-
-      if (
-        error ===
-        'no-speech'
-      ) {
-
-        setRecordStatus(
-          'starting',
-          'Listening'
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        error ===
-        'aborted'
-      ) {
-
-        setRecordStatus(
-          'starting',
-          'Restarting'
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        error ===
-        'network'
-      ) {
-
-        setRecordStatus(
-          'starting',
-          'Network'
-        );
-
-
-        scheduleRecognitionRestart(
-          RESTART_RETRY_DELAY
-        );
-
-
-        return;
-
-      }
-
-
-      setRecordStatus(
-        'starting',
-        'Retrying'
-      );
-
-
-      scheduleRecognitionRestart(
-        RESTART_RETRY_DELAY
-      );
-
-    }
-
-
-    function handleRecognitionEnd() {
-
-      recognitionRunning =
-        false;
-
-
-      recognitionStarting =
-        false;
-
-
-      if (
-        !shouldRecognize
-      ) {
-
-        setRecordStatus(
-          'stopped',
-          'Stopped'
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        document.visibilityState !==
-        'visible'
-      ) {
-
-        setRecordStatus(
-          'stopped',
-          'Paused'
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        languageRestartPending
-      ) {
-
-        languageRestartPending =
-          false;
-
-
-        scheduleRecognitionRestart(
-          RESTART_DELAY
-        );
-
-
-        return;
-
-      }
-
-
-      scheduleRecognitionRestart(
-        RESTART_DELAY
-      );
-
-    }
-
-
-    /* =========================================================
-       LANGUAGE APPLY
-    ========================================================= */
-
-    function restartForLanguageChange() {
-
-      if (
-        !userActivatedRecognition
-      ) {
-        return;
-      }
-
-
-      if (
-        !shouldRecognize
-      ) {
-        return;
-      }
-
-
-      if (
-        recognitionRunning ||
-        recognitionStarting
-      ) {
-
-        languageRestartPending =
-          true;
-
-
-        setRecordStatus(
-          'starting',
-          'Switching'
-        );
-
-
-        try {
-
-          recognition.stop();
-
-        } catch (
-          error
-        ) {
-
-          recognitionRunning =
-            false;
-
-
-          recognitionStarting =
-            false;
-
-
-          scheduleRecognitionRestart(
-            RESTART_DELAY
-          );
-
-        }
-
-
-        return;
-
-      }
-
-
-      scheduleRecognitionRestart(
-        RESTART_DELAY
-      );
-
-    }
-
-
-    applyLanguages.addEventListener(
-      'click',
-      () => {
-
-        const newSpeechLanguage =
-          speechLanguageSelect.value;
-
-
-        const newTranslationLanguage =
-          translationLanguageSelect.value;
-
-
-        const speechChanged =
-          newSpeechLanguage !==
-          speechLanguage;
-
-
-        const translationChanged =
-          newTranslationLanguage !==
-          translationLanguage;
-
-
-        speechLanguage =
-          newSpeechLanguage;
-
-
-        translationLanguage =
-          newTranslationLanguage;
-
-
-        if (
-          recognition
-        ) {
-
-          recognition.lang =
-            speechLanguage;
-
-        }
-
-
-        if (
-          translationChanged
-        ) {
-
-          currentInterim.translation =
-            '';
-
-
-          currentInterim.translatedOriginal =
-            '';
-
-
-          currentInterim.appliedSequence =
-            0;
-
-
-          if (
-            currentInterim.original
-          ) {
-
-            scheduleInterimTranslation(
-              FIRST_INTERIM_TRANSLATE_DELAY
-            );
-
-          }
-
-        }
-
-
-        updateLanguageButton();
-
-
-        renderFinalHistory();
-
-
-        saveAllState();
-
-
-        closeLanguageSelector();
-
-
-        if (
-          speechChanged
-        ) {
-
-          restartForLanguageChange();
-
-        }
-
-      }
-    );
-
-
-    /* =========================================================
-       DELETE
-    ========================================================= */
-
-    deleteHistoryButton.addEventListener(
-      'click',
-      () => {
-
-        const confirmed =
-          window.confirm(
-            'Delete Live, Last 12 words, Saved and Final history?'
-          );
-
-
-        if (
-          !confirmed
-        ) {
-          return;
-        }
-
-
-        liveHistory =
-          [];
-
-
-        savedWords =
-          [];
-
-
-        finalHistory =
-          [];
-
-
-        previousLiveText =
-          '';
-
-
-        clearCurrentInterim();
-
-
-        clearSlots();
-
-
-        newLineElement.replaceChildren();
-
-
-        savedLinesElement.replaceChildren();
-
-
-        finalTextElement.replaceChildren();
-
-
-        try {
-
-          const keys = [
-            STORAGE_KEY,
-
-            'speechTranslationFullStateV7',
-            'speechTranslationFullStateV6',
-            'speechTranslationFullStateV5',
-            'speechTranslationFullStateV4',
-            'speechTranslationFullStateV3'
-          ];
-
-
-          for (
-            const key
-            of keys
-          ) {
-
-            localStorage.removeItem(
-              key
-            );
-
-          }
-
-        } catch (
-          error
-        ) {
-
-          console.warn(
-            'Delete storage:',
-            error
-          );
-
-        }
-
-
-        /*
-          Keep selected languages
-          but save clean history.
-        */
-
-        saveAllState();
-
-
-        closeLanguageSelector();
-
-      }
-    );
-
-
-    /* =========================================================
-       SORT
-    ========================================================= */
-
-    sortButton.addEventListener(
-      'click',
-      () => {
-
-        savedWords.sort(
-          (
-            a,
-            b
-          ) =>
-            a.localeCompare(
-              b
+        columns.forEach(
+          column =>
+            column.classList.remove(
+              'active'
             )
         );
 
 
-        renderSavedWords();
-
-
-        saveAllState();
-
-      }
-    );
-
-
-    /* =========================================================
-       MOBILE MENU
-    ========================================================= */
-
-    const menuButtons =
-      document.querySelectorAll(
-        '.menu-button'
-      );
-
-
-    const columns =
-      document.querySelectorAll(
-        '.column'
-      );
-
-
-    menuButtons.forEach(
-      button => {
-
-        button.addEventListener(
-          'click',
-          () => {
-
-            const target =
-              button.dataset.target;
-
-
-            columns.forEach(
-              column => {
-
-                column.classList.remove(
-                  'active'
-                );
-
-              }
-            );
-
-
-            menuButtons.forEach(
-              item => {
-
-                item.classList.remove(
-                  'active'
-                );
-
-              }
-            );
-
-
-            document
-              .getElementById(
-                target
-              )
-              .classList.add(
-                'active'
-              );
-
-
-            button.classList.add(
+        menuButtons.forEach(
+          item =>
+            item.classList.remove(
               'active'
-            );
-
-          }
+            )
         );
 
-      }
-    );
 
-
-    /* =========================================================
-       MOBILE / TAB RESTORE
-    ========================================================= */
-
-    document.addEventListener(
-      'visibilitychange',
-      () => {
-
-        if (
-          document.visibilityState ===
-          'hidden'
-        ) {
-
-          saveAllState();
-
-
-          return;
-
-        }
-
-
-        /*
-          Never start before the user
-          has activated recognition once.
-        */
-
-        if (
-          userActivatedRecognition &&
-          shouldRecognize &&
-          !recognitionRunning &&
-          !recognitionStarting
-        ) {
-
-          scheduleRecognitionRestart(
-            RESTART_DELAY
+        document
+          .getElementById(
+            target
+          )
+          .classList.add(
+            'active'
           );
 
-        }
 
+        button.classList.add(
+          'active'
+        );
       }
     );
+  }
+);
 
 
-    window.addEventListener(
-      'pageshow',
-      () => {
+/* =========================================================
+   VISIBILITY
+========================================================= */
 
-        if (
-          userActivatedRecognition &&
-          shouldRecognize &&
-          document.visibilityState ===
-            'visible' &&
-          !recognitionRunning &&
-          !recognitionStarting
-        ) {
-
-          scheduleRecognitionRestart(
-            RESTART_DELAY
-          );
-
-        }
-
-      }
-    );
-
-
-    /* =========================================================
-       SAVE
-    ========================================================= */
-
-    window.addEventListener(
-      'pagehide',
-      () => {
-
-        saveAllState();
-
-      }
-    );
-
-
-    window.addEventListener(
-      'beforeunload',
-      () => {
-
-        saveAllState();
-
-
-        shouldRecognize =
-          false;
-
-
-        clearRestartTimer();
-
-
-        if (
-          interimTranslationTimer
-        ) {
-
-          clearTimeout(
-            interimTranslationTimer
-          );
-
-        }
-
-
-        if (
-          recognition
-        ) {
-
-          try {
-
-            recognition.abort();
-
-          } catch (
-            error
-          ) {
-          }
-
-        }
-
-      }
-    );
-
-
-    /* =========================================================
-       INITIAL STATUS
-    ========================================================= */
-
+document.addEventListener(
+  'visibilitychange',
+  () => {
     if (
-      !SpeechRecognition
+      document.visibilityState ===
+      'hidden'
     ) {
+      saveAllState();
 
-      setRecordStatus(
-        'error',
-        'Unsupported'
-      );
-
-
-      showError(
-        'This browser does not provide SpeechRecognition.'
-      );
-
-    } else if (
-      !window.isSecureContext
-    ) {
-
-      setRecordStatus(
-        'error',
-        'HTTPS needed'
-      );
-
-
-      showError(
-        'On mobile Chrome microphone access requires a secure HTTPS page. Open this app through https:// and press Start.'
-      );
-
-    } else {
-
-      /*
-        IMPORTANT:
-        no automatic microphone request.
-        no automatic recognition.start().
-
-        User must press Start.
-      */
-
-      setRecordStatus(
-        'ready',
-        'Start'
-      );
-
+      return;
     }
 
-  </script>
+
+    if (
+      shouldRecognize &&
+      userActivatedRecognition &&
+      !recognitionRunning &&
+      !recognitionStarting
+    ) {
+      scheduleRecognitionRestart(
+        RESTART_DELAY
+      );
+    }
+  }
+);
+
+
+window.addEventListener(
+  'pageshow',
+  () => {
+    if (
+      shouldRecognize &&
+      userActivatedRecognition &&
+      document.visibilityState ===
+        'visible' &&
+      !recognitionRunning &&
+      !recognitionStarting
+    ) {
+      scheduleRecognitionRestart(
+        RESTART_DELAY
+      );
+    }
+  }
+);
+
+
+/* =========================================================
+   SAVE / CLEANUP
+========================================================= */
+
+window.addEventListener(
+  'pagehide',
+  () => {
+    saveAllState();
+  }
+);
+
+
+window.addEventListener(
+  'beforeunload',
+  () => {
+    saveAllState();
+
+
+    shouldRecognize =
+      false;
+
+
+    recognitionGeneration++;
+
+
+    clearRestartTimer();
+
+
+    if (
+      interimTranslationTimer
+    ) {
+      clearTimeout(
+        interimTranslationTimer
+      );
+    }
+
+
+    if (
+      recognition
+    ) {
+      try {
+        recognition.abort();
+      } catch (
+        error
+      ) {}
+    }
+  }
+);
+
+
+/* =========================================================
+   INITIAL STATUS
+========================================================= */
+
+if (
+  !SpeechRecognition
+) {
+  setRecordStatus(
+    'error',
+    'Unsupported'
+  );
+
+
+  setSpeechState(
+    'SpeechRecognition API missing'
+  );
+
+
+  showError(
+    'SpeechRecognition / webkitSpeechRecognition is not available in this browser.'
+  );
+
+} else if (
+  !window.isSecureContext
+) {
+  setRecordStatus(
+    'error',
+    'HTTPS'
+  );
+
+
+  setSpeechState(
+    'insecure context'
+  );
+
+
+  showError(
+    'Open this page through HTTPS. If you are opening http://192.168.x.x/... from your phone, microphone/speech APIs may not work.'
+  );
+
+} else {
+  setRecordStatus(
+    'ready',
+    'Start'
+  );
+
+
+  setSpeechState(
+    IS_MOBILE
+      ? 'ready · mobile mode'
+      : 'ready · desktop mode'
+  );
+}
+</script>
 
 </body>
 </html>
