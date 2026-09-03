@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YOLOv12 WebGPU POC</title>
+  <style>
+    :root{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color-scheme:dark}
+    *{box-sizing:border-box} body{margin:0;background:#0b0d10;color:#eef2f7}
+    main{max-width:1080px;margin:auto;padding:24px}.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}
+    button,input{font:inherit;padding:10px 12px;border:1px solid #3b4350;border-radius:8px;background:#151922;color:#eef2f7}
+    button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.stage{position:relative;width:100%;background:#050607;border:1px solid #29303a;border-radius:12px;overflow:hidden;min-height:320px}
+    video,canvas{display:block;width:100%;height:auto}canvas{position:absolute;inset:0;pointer-events:none}.muted{color:#9aa6b2;font-size:14px}.ok{color:#8ee6a5}.err{color:#ff9b9b}
+    code{background:#151922;padding:2px 5px;border-radius:5px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>YOLOv12 ONNX Runtime Web — single-file POC</h1>
+  <p class="muted">One HTML file for UI, preprocessing, inference and rendering. Large model binary stays separate.</p>
+
+  <div class="bar">
+    <button id="initBtn">1. Load model</button>
+    <button id="camBtn" disabled>2. Start camera</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <label>Model URL <input id="modelUrl" size="34" value="./public/models/yolov12n.onnx" /></label>
+  </div>
+  <div id="status" class="muted">Idle</div>
+
+  <div class="stage" id="stage">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+  </div>
+
+  <p class="muted">Run from a local HTTP server, e.g. <code>python3 -m http.server 8000</code>, then open <code>http://localhost:8000/poc.html</code>. Camera access requires localhost or HTTPS.</p>
+</main>
+
+<script type="module">
+const ORT_VERSION = '1.23.0';
+const ORT_URL = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/ort.webgpu.min.mjs`;
+const WASM_BASE = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
+
+const META = {
+  inputSize: [640,640], confidenceThreshold: 0.5, nmsThreshold: 0.4,
+  classes: ['person','bicycle','car','motorcycle','airplane','bus','train','truck','boat','traffic light','fire hydrant','stop sign','parking meter','bench','bird','cat','dog','horse','sheep','cow','elephant','bear','zebra','giraffe','backpack','umbrella','handbag','tie','suitcase','frisbee','skis','snowboard','sports ball','kite','baseball bat','baseball glove','skateboard','surfboard','tennis racket','bottle','wine glass','cup','fork','knife','spoon','bowl','banana','apple','sandwich','orange','broccoli','carrot','hot dog','pizza','donut','cake','chair','couch','potted plant','bed','dining table','toilet','tv','laptop','mouse','remote','keyboard','cell phone','microwave','oven','toaster','sink','refrigerator','book','clock','vase','scissors','teddy bear','hair drier','toothbrush']
+};
+
+const $ = id => document.getElementById(id);
+const initBtn=$('initBtn'), camBtn=$('camBtn'), stopBtn=$('stopBtn'), status=$('status');
+const video=$('video'), overlay=$('overlay'), ctx=overlay.getContext('2d');
+const work=document.createElement('canvas'), wctx=work.getContext('2d',{willReadFrequently:true});
+let ort=null, session=null, stream=null, running=false, busy=false, lastRun=0;
+const TARGET_FPS=10;
+
+function setStatus(text, kind='') { status.textContent=text; status.className=`muted ${kind}`; }
+
+initBtn.onclick = async () => {
+  try {
+    initBtn.disabled=true; setStatus('Loading ONNX Runtime Web…');
+    ort = await import(ORT_URL);
+    ort.env.wasm.wasmPaths = WASM_BASE;
+    ort.env.wasm.simd = true;
+    const modelUrl = $('modelUrl').value.trim();
+    setStatus(`Loading model: ${modelUrl}`);
+    session = await ort.InferenceSession.create(modelUrl, {
+      executionProviders:['webgpu'], graphOptimizationLevel:'all'
+    });
+    console.log('inputs',session.inputNames,session.inputMetadata);
+    console.log('outputs',session.outputNames,session.outputMetadata);
+    setStatus(`Model ready · input ${session.inputNames[0]} · WebGPU`, 'ok');
+    camBtn.disabled=false;
+  } catch (e) {
+    console.error(e); setStatus(`Load failed: ${e.message || e}`, 'err'); initBtn.disabled=false;
+  }
+};
+
+camBtn.onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    video.srcObject=stream; await video.play();
+    overlay.width=video.videoWidth; overlay.height=video.videoHeight;
+    running=true; camBtn.disabled=true; stopBtn.disabled=false;
+    requestAnimationFrame(loop);
+  } catch(e) { console.error(e); setStatus(`Camera failed: ${e.message || e}`,'err'); }
+};
+
+stopBtn.onclick = () => {
+  running=false; stream?.getTracks().forEach(t=>t.stop()); stream=null; video.srcObject=null;
+  ctx.clearRect(0,0,overlay.width,overlay.height); camBtn.disabled=false; stopBtn.disabled=true;
+  setStatus('Stopped');
+};
+
+async function loop(t){
+  if(!running) return;
+  requestAnimationFrame(loop);
+  if(busy || t-lastRun < 1000/TARGET_FPS || !video.videoWidth) return;
+  lastRun=t; busy=true;
+  try {
+    const detections = await detectFrame();
+    draw(detections);
+    setStatus(`Running · ${detections.length} detections`, 'ok');
+  } catch(e){ console.error(e); setStatus(`Inference error: ${e.message || e}`,'err'); }
+  finally { busy=false; }
+}
+
+async function detectFrame(){
+  const [W,H]=META.inputSize;
+  const srcW=video.videoWidth, srcH=video.videoHeight;
+  work.width=W; work.height=H;
+  wctx.fillStyle='#000'; wctx.fillRect(0,0,W,H);
+
+  const scale=Math.min(W/srcW,H/srcH);
+  const drawW=srcW*scale, drawH=srcH*scale;
+  const offX=(W-drawW)/2, offY=(H-drawH)/2;
+  wctx.drawImage(video,0,0,srcW,srcH,offX,offY,drawW,drawH);
+
+  const rgba=wctx.getImageData(0,0,W,H).data;
+  const area=W*H, data=new Float32Array(area*3);
+  for(let p=0,i=0;p<area;p++,i+=4){
+    data[p]=rgba[i]/255; data[p+area]=rgba[i+1]/255; data[p+2*area]=rgba[i+2]/255;
+  }
+
+  const tensor=new ort.Tensor('float32',data,[1,3,H,W]);
+  const results=await session.run({[session.inputNames[0]]:tensor});
+  const out=results[session.outputNames[0]];
+  return decode(out,srcW,srcH,scale,offX,offY);
+}
+
+function decode(out,srcW,srcH,scale,offX,offY){
+  const a=out.data, dims=out.dims;
+  if(dims.length<2) throw new Error(`Unexpected output shape ${dims.join('x')}`);
+  const n=dims[dims.length-2];
+  const stride=dims[dims.length-1];
+  if(stride<6) throw new Error(`Expected >=6 values/detection, got ${stride}`);
+  const d=[];
+  for(let i=0;i<n;i++){
+    const k=i*stride, score=a[k+4]; if(score<META.confidenceThreshold) continue;
+    const cls=Math.round(a[k+5]);
+    let x1=(a[k]-offX)/scale, y1=(a[k+1]-offY)/scale;
+    let x2=(a[k+2]-offX)/scale, y2=(a[k+3]-offY)/scale;
+    x1=Math.max(0,Math.min(srcW,x1)); y1=Math.max(0,Math.min(srcH,y1));
+    x2=Math.max(0,Math.min(srcW,x2)); y2=Math.max(0,Math.min(srcH,y2));
+    if(x2<=x1||y2<=y1) continue;
+    d.push({x:x1,y:y1,w:x2-x1,h:y2-y1,score,cls,label:META.classes[cls]||`class_${cls}`});
+  }
+  return nms(d,META.nmsThreshold);
+}
+
+function nms(items,thr){
+  items.sort((a,b)=>b.score-a.score); const keep=[];
+  while(items.length){
+    const a=items.shift(); keep.push(a);
+    items=items.filter(b=>a.cls!==b.cls || iou(a,b)<=thr);
+  }
+  return keep;
+}
+function iou(a,b){
+  const x1=Math.max(a.x,b.x), y1=Math.max(a.y,b.y), x2=Math.min(a.x+a.w,b.x+b.w), y2=Math.min(a.y+a.h,b.y+b.h);
+  const inter=Math.max(0,x2-x1)*Math.max(0,y2-y1); if(!inter)return 0;
+  return inter/(a.w*a.h+b.w*b.h-inter);
+}
+
+function draw(dets){
+  if(overlay.width!==video.videoWidth||overlay.height!==video.videoHeight){overlay.width=video.videoWidth;overlay.height=video.videoHeight;}
+  ctx.clearRect(0,0,overlay.width,overlay.height); ctx.lineWidth=3; ctx.font='16px system-ui';
+  for(const d of dets){
+    ctx.strokeStyle='#00ff88'; ctx.fillStyle='#00ff88'; ctx.strokeRect(d.x,d.y,d.w,d.h);
+    const text=`${d.label} ${(d.score*100).toFixed(0)}%`, tw=ctx.measureText(text).width+10;
+    ctx.fillRect(d.x,Math.max(0,d.y-24),tw,24); ctx.fillStyle='#00140b'; ctx.fillText(text,d.x+5,Math.max(17,d.y-7));
+  }
+}
+</script>
+</body>
+</html>
