@@ -1,0 +1,321 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telegram Reader POC</title>
+<style>
+  :root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;background:#10151d;color:#e8eef7}
+  header{padding:18px 22px;border-bottom:1px solid #293342;display:flex;gap:12px;align-items:center;justify-content:space-between}
+  h1{font-size:18px;margin:0}
+  .status{font-size:12px;color:#9fb0c4}
+  .app{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 62px)}
+  aside{border-right:1px solid #293342;padding:14px;overflow:auto}
+  main{padding:18px;overflow:auto}
+  .card{background:#171f2a;border:1px solid #293342;border-radius:12px;padding:14px;margin-bottom:12px}
+  label{display:block;font-size:12px;color:#9fb0c4;margin:8px 0 5px}
+  input,button{width:100%;border-radius:9px;border:1px solid #344258;background:#0f1620;color:#edf4ff;padding:10px}
+  button{cursor:pointer;background:#2477e8;border-color:#2477e8;font-weight:650;margin-top:10px}
+  button.secondary{background:#1b2634;border-color:#344258}
+  button.danger{background:#7d2631;border-color:#9d3543}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .chat{padding:10px;border-radius:9px;cursor:pointer;border:1px solid transparent;margin:4px 0}
+  .chat:hover,.chat.active{background:#1c2938;border-color:#32455d}
+  .chat-title{font-weight:650;font-size:14px}
+  .chat-meta{font-size:11px;color:#8fa2b8;margin-top:3px}
+  .msg{padding:10px 12px;margin:7px 0;background:#172230;border:1px solid #2a3a4e;border-radius:11px;max-width:900px}
+  .msg .meta{font-size:11px;color:#8fa2b8;margin-bottom:5px}
+  .msg .text{white-space:pre-wrap;overflow-wrap:anywhere}
+  .muted{color:#8fa2b8;font-size:13px}
+  .error{color:#ff9a9a;white-space:pre-wrap;font-size:12px}
+  .ok{color:#8ee6ac}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1}
+  #dialogs{margin-top:10px}
+  #search{margin-bottom:8px}
+  pre{white-space:pre-wrap;word-break:break-word;font-size:11px;color:#b8c7da}
+  @media(max-width:760px){.app{grid-template-columns:1fr} aside{border-right:0;border-bottom:1px solid #293342}.app main{min-height:50vh}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Telegram Reader POC</h1>
+  <div class="status" id="topStatus">не подключено</div>
+</header>
+
+<div class="app">
+<aside>
+  <div class="card">
+    <strong>1. Telegram API</strong>
+    <label>api_id</label>
+    <input id="apiId" inputmode="numeric" placeholder="123456">
+    <label>api_hash</label>
+    <input id="apiHash" type="password" placeholder="0123456789abcdef…">
+    <div class="row">
+      <button id="connectBtn">Войти</button>
+      <button id="logoutBtn" class="secondary" disabled>Выйти</button>
+    </div>
+    <div id="authStatus" class="muted" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <strong>2. Диалоги</strong>
+    <input id="search" placeholder="Фильтр чатов" disabled>
+    <button id="loadChatsBtn" class="secondary" disabled>Загрузить чаты</button>
+    <div id="dialogs"></div>
+  </div>
+
+  <div class="card">
+    <strong>Локальные данные</strong>
+    <div class="muted" style="margin-top:7px">
+      Сессия хранится браузером в localStorage. api_hash в этот POC намеренно не сохраняется.
+    </div>
+    <button id="clearBtn" class="danger">Очистить локальную сессию</button>
+  </div>
+</aside>
+
+<main>
+  <div class="card">
+    <strong id="chatHeading">Сообщения</strong>
+    <div class="row" style="margin-top:8px">
+      <input id="limit" type="number" value="50" min="1" max="100" title="Количество сообщений">
+      <button id="reloadHistoryBtn" class="secondary" disabled>Обновить</button>
+    </div>
+  </div>
+  <div id="messages"><div class="muted">Сначала войдите и выберите чат.</div></div>
+  <div id="errorBox" class="error"></div>
+</main>
+</div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+let client = null;
+let chats = [];
+let selectedChat = null;
+
+// Browser-native MTProto client loaded from CDN.
+// This keeps the app as one HTML file, but first launch requires internet access to fetch the module.
+let MT;
+try {
+  MT = await import("https://cdn.jsdelivr.net/npm/@mtkruto/browser/esm/mod.js");
+} catch (e) {
+  showError("Не удалось загрузить MTKruto с CDN. Откройте страницу с интернетом или обслужите файл через локальный HTTP-сервер.\n\n" + errText(e));
+}
+
+function errText(e){
+  return e?.stack || e?.message || String(e);
+}
+function showError(msg=""){ $("errorBox").textContent = msg; }
+function setStatus(msg, good=false){
+  $("topStatus").textContent = msg;
+  $("topStatus").className = good ? "status ok" : "status";
+}
+function titleOf(chat){
+  return chat?.title || chat?.firstName || chat?.username || chat?.name ||
+    (chat?.chat?.title) || (chat?.chat?.firstName) || `Chat ${idOf(chat)}`;
+}
+function idOf(chat){
+  return chat?.id ?? chat?.chatId ?? chat?.chat?.id ?? chat?.peerId ?? "";
+}
+function chatObject(item){
+  return item?.chat || item;
+}
+function messageText(m){
+  if (typeof m?.text === "string") return m.text;
+  if (typeof m?.caption === "string") return m.caption;
+  if (typeof m?.message === "string") return m.message;
+  if (typeof m?.text?.text === "string") return m.text.text;
+  return m?.media ? "[медиа / вложение]" : "[без текста]";
+}
+function messageDate(m){
+  const raw = m?.date ?? m?.timestamp ?? m?.createdAt;
+  if (!raw) return "";
+  const ms = typeof raw === "number" && raw < 1e12 ? raw*1000 : raw;
+  try { return new Date(ms).toLocaleString(); } catch { return String(raw); }
+}
+function messageAuthor(m){
+  return m?.out ? "Вы" :
+    m?.sender?.firstName || m?.sender?.title || m?.authorSignature ||
+    m?.from?.firstName || (m?.senderId ? `sender ${m.senderId}` : "Собеседник");
+}
+
+async function connect(){
+  showError("");
+  if (!MT) throw new Error("MTKruto не загружен");
+  const apiId = Number($("apiId").value.trim());
+  const apiHash = $("apiHash").value.trim();
+  if (!apiId || !apiHash) {
+    showError("Введите api_id и api_hash с my.telegram.org/apps");
+    return;
+  }
+
+  $("connectBtn").disabled = true;
+  $("authStatus").textContent = "Подключение…";
+
+  try {
+    const { Client, StorageLocalStorage } = MT;
+    client = new Client({
+      storage: new StorageLocalStorage("telegram_reader_poc"),
+      apiId,
+      apiHash,
+    });
+
+    await client.start({
+      phone: async () => {
+        const v = prompt("Телефон Telegram в международном формате, например +381…");
+        if (!v) throw new Error("Авторизация отменена");
+        return v;
+      },
+      code: async () => {
+        const v = prompt("Код, который прислал Telegram:");
+        if (!v) throw new Error("Код не введён");
+        return v;
+      },
+      password: async () => {
+        const v = prompt("Пароль двухэтапной аутентификации (2FA):");
+        if (v === null) throw new Error("Авторизация отменена");
+        return v;
+      }
+    });
+
+    const me = await client.getMe();
+    const who = [me?.firstName, me?.lastName].filter(Boolean).join(" ") || me?.username || String(me?.id || "");
+    $("authStatus").textContent = `Вход выполнен: ${who}`;
+    setStatus("Telegram подключён", true);
+    $("logoutBtn").disabled = false;
+    $("loadChatsBtn").disabled = false;
+    $("search").disabled = false;
+    await loadChats();
+  } catch(e) {
+    client = null;
+    $("authStatus").textContent = "Ошибка входа";
+    showError(errText(e));
+    setStatus("ошибка подключения");
+  } finally {
+    $("connectBtn").disabled = false;
+  }
+}
+
+async function loadChats(){
+  if (!client) return;
+  showError("");
+  $("loadChatsBtn").disabled = true;
+  $("dialogs").innerHTML = '<div class="muted">Загрузка…</div>';
+  try {
+    // MTKruto getChats() accepts {limit: 1..100}; each item can contain the chat object.
+    chats = await client.getChats({ limit: 100 });
+    renderChats();
+  } catch(e) {
+    $("dialogs").innerHTML = "";
+    showError(errText(e));
+  } finally {
+    $("loadChatsBtn").disabled = false;
+  }
+}
+
+function renderChats(){
+  const q = $("search").value.trim().toLowerCase();
+  const filtered = chats.filter(x => titleOf(chatObject(x)).toLowerCase().includes(q));
+  $("dialogs").innerHTML = "";
+  if (!filtered.length){
+    $("dialogs").innerHTML = '<div class="muted">Чатов не найдено</div>';
+    return;
+  }
+  for (const item of filtered){
+    const chat = chatObject(item);
+    const el = document.createElement("div");
+    el.className = "chat" + (selectedChat && String(idOf(selectedChat)) === String(idOf(chat)) ? " active" : "");
+    const t = document.createElement("div");
+    t.className = "chat-title";
+    t.textContent = titleOf(chat);
+    const meta = document.createElement("div");
+    meta.className = "chat-meta";
+    meta.textContent = `id: ${idOf(chat)}`;
+    el.append(t, meta);
+    el.onclick = () => selectChat(chat);
+    $("dialogs").appendChild(el);
+  }
+}
+
+async function selectChat(chat){
+  selectedChat = chat;
+  renderChats();
+  $("chatHeading").textContent = titleOf(chat);
+  $("reloadHistoryBtn").disabled = false;
+  await loadHistory();
+}
+
+async function loadHistory(){
+  if (!client || !selectedChat) return;
+  showError("");
+  $("messages").innerHTML = '<div class="muted">Загрузка сообщений…</div>';
+  try {
+    const limit = Math.max(1, Math.min(100, Number($("limit").value) || 50));
+    const history = await client.getHistory(idOf(selectedChat), { limit });
+    $("messages").innerHTML = "";
+    if (!history?.length){
+      $("messages").innerHTML = '<div class="muted">Сообщений нет или история недоступна.</div>';
+      return;
+    }
+    for (const m of [...history].reverse()){
+      const el = document.createElement("div");
+      el.className = "msg";
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${messageAuthor(m)} · ${messageDate(m)} · #${m?.id ?? ""}`;
+      const text = document.createElement("div");
+      text.className = "text";
+      text.textContent = messageText(m);
+      el.append(meta, text);
+      $("messages").appendChild(el);
+    }
+  } catch(e) {
+    $("messages").innerHTML = "";
+    showError(errText(e));
+  }
+}
+
+async function logout(){
+  showError("");
+  try {
+    if (client) await client.signOut();
+  } catch(e) {
+    showError(errText(e));
+  }
+  client = null;
+  chats = [];
+  selectedChat = null;
+  $("dialogs").innerHTML = "";
+  $("messages").innerHTML = '<div class="muted">Сессия завершена.</div>';
+  $("authStatus").textContent = "";
+  $("logoutBtn").disabled = true;
+  $("loadChatsBtn").disabled = true;
+  $("reloadHistoryBtn").disabled = true;
+  $("search").disabled = true;
+  setStatus("не подключено");
+}
+
+function clearLocal(){
+  // StorageLocalStorage uses keys under the supplied prefix; remove matching keys.
+  const keys = [];
+  for(let i=0; i<localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k && k.includes("telegram_reader_poc")) keys.push(k);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+  alert(`Удалено локальных ключей: ${keys.length}. Перезагрузите страницу.`);
+}
+
+$("connectBtn").onclick = connect;
+$("logoutBtn").onclick = logout;
+$("loadChatsBtn").onclick = loadChats;
+$("reloadHistoryBtn").onclick = loadHistory;
+$("search").oninput = renderChats;
+$("clearBtn").onclick = clearLocal;
+</script>
+</body>
+</html>
+
