@@ -1,0 +1,6635 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>Subotica Bus Simulator</title>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
+
+<style>
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+#app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 380px 1fr;
+}
+
+#sidebar {
+  overflow-y: auto;
+  padding: 14px;
+  background: #fff;
+  border-right: 1px solid #ddd;
+}
+
+#map {
+  height: 100%;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+button {
+  border: 1px solid #bbb;
+  background: #fff;
+  border-radius: 7px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+button.active {
+  background: #111;
+  color: #fff;
+}
+
+.panel {
+  margin-top: 12px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 9px;
+}
+
+.panel-title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.time-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.metric {
+  padding: 8px;
+  background: #fff;
+  border-radius: 7px;
+}
+
+.metric-label {
+  color: #666;
+  font-size: 11px;
+}
+
+.metric-value {
+  margin-top: 3px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.load-track {
+  height: 10px;
+  margin-top: 9px;
+  overflow: hidden;
+  background: #ddd;
+  border-radius: 20px;
+}
+
+.load-bar {
+  width: 0%;
+  height: 100%;
+  background: #43a047;
+  transition: width .2s;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.route-card {
+  padding: 11px 0;
+  border-top: 1px solid #eee;
+}
+
+.route-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+}
+
+.route-color {
+  width: 20px;
+  height: 6px;
+  border-radius: 10px;
+}
+
+.field {
+  margin-top: 8px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+  color: #555;
+  font-size: 12px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 8px;
+  align-items: center;
+}
+
+input[type="number"],
+select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px;
+}
+
+input[type="range"] {
+  width: 100%;
+}
+
+.status {
+  margin: 12px 0;
+  color: #666;
+  font-size: 12px;
+}
+
+.bus-icon {
+  border: none;
+  background: none;
+}
+
+.bus-body {
+  width: 31px;
+  height: 19px;
+  border: 2px solid white;
+  border-radius: 5px;
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 1px 5px rgba(0,0,0,.55);
+}
+
+.stop-count-label {
+  border: none;
+  background: #111;
+  color: #fff;
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+
+.stop-count-label::before {
+  display: none;
+}
+
+@media
+(max-width: 700px) {
+
+  #app {
+    grid-template-columns: 1fr;
+    grid-template-rows:
+      auto 620px;
+  }
+
+  #sidebar {
+    max-height: 520px;
+    border-right: none;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+<aside id="sidebar">
+
+<h1>
+Subotica Bus Simulator
+</h1>
+
+<div
+  id="toolbarWidget"
+  class="toolbar"
+></div>
+
+<div
+  id="timeWidget"
+  class="panel"
+></div>
+
+<div
+  id="dashboardWidget"
+  class="panel"
+></div>
+
+<div
+  id="legendWidget"
+  class="panel"
+></div>
+
+<div
+  id="statusWidget"
+  class="status"
+></div>
+
+<div id="routesWidget"></div>
+
+</aside>
+
+<div id="map"></div>
+
+</div>
+
+<script
+src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+<script>
+
+
+/* =========================
+   DATA
+   ========================= */
+
+
+const APP_CONFIG = {
+
+  routesUrl:
+    "https://data.gov.rs/s/resources/gtfs-subotitsa/20220207-031116/subotica-gtfs-route-lin.geojson",
+
+  stopsUrl:
+    "https://data.gov.rs/s/resources/gtfs-subotitsa/20220207-031138/subotica-gtfs-stops-tac.geojson",
+
+  map: {
+
+    center: [
+      46.1004,
+      19.6676
+    ],
+
+    zoom: 13,
+
+    maxZoom: 19
+
+  },
+
+  city: {
+
+    center: [
+      46.1004,
+      19.6676
+    ],
+
+    centerRadiusMeters:
+      1800
+
+  },
+
+  timeMultipliers: [
+    1,
+    10,
+    100
+  ],
+
+  routes: [
+
+    {
+      id: "1A",
+      color: "#e53935"
+    },
+
+    {
+      id: "2",
+      color: "#8e24aa"
+    },
+
+    {
+      id: "3",
+      color: "#3949ab"
+    },
+
+    {
+      id: "4",
+      color: "#1e88e5"
+    },
+
+    {
+      id: "6",
+      color: "#00897b"
+    },
+
+    {
+      id: "7",
+      color: "#43a047"
+    },
+
+    {
+      id: "8",
+      color: "#7cb342"
+    },
+
+    {
+      id: "8A",
+      color: "#c0ca33"
+    },
+
+    {
+      id: "9",
+      color: "#f9a825"
+    },
+
+    {
+      id: "10",
+      color: "#fb8c00"
+    },
+
+    {
+      id: "16",
+      color: "#6d4c41"
+    }
+
+  ],
+
+  defaults: {
+
+    enabled: true,
+
+    buses: 2,
+
+    speed: 30,
+
+    direction:
+      "both",
+
+    dwellSeconds: 20,
+
+    capacity: 60
+
+  },
+
+  passengers: {
+
+    routeMatchMeters: 70,
+
+    centerFlowShare: .80,
+
+    initialWaitingMax: 8,
+
+    waitingLimit: 500,
+
+    maxSpawnPerTick: 30,
+
+    baseRatePerMinute: .025,
+
+    maxRatePerMinute: .30,
+
+    scheduleLeadSeconds: 420,
+
+    scheduleWarmSeconds: 900,
+
+    loadLevels: [
+
+      {
+        min: 0,
+        color: "#43a047"
+      },
+
+      {
+        min: 5,
+        color: "#f9a825"
+      },
+
+      {
+        min: 15,
+        color: "#ef6c00"
+      },
+
+      {
+        min: 30,
+        color: "#c62828"
+      }
+
+    ]
+
+  }
+
+};
+
+
+/* =========================
+   PURE FUNCTIONS
+   ========================= */
+
+
+function normalize(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
+  .trim()
+  .toUpperCase();
+
+}
+
+
+function clamp(
+  value,
+  min,
+  max
+) {
+
+  return Math.max(
+    min,
+    Math.min(
+      max,
+      value
+    )
+  );
+
+}
+
+
+function mod(
+  value,
+  modulo
+) {
+
+  return (
+    (
+      value % modulo
+    )
+    + modulo
+  )
+  % modulo;
+
+}
+
+
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    "\"",
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+
+}
+
+
+function formatTime(
+  seconds
+) {
+
+  const value =
+    mod(
+      Math.floor(seconds),
+      86400
+    );
+
+  const hours =
+    Math.floor(
+      value / 3600
+    );
+
+  const minutes =
+    Math.floor(
+      (
+        value % 3600
+      )
+      / 60
+    );
+
+  const secs =
+    value % 60;
+
+  return [
+    hours,
+    minutes,
+    secs
+  ]
+  .map(
+    value =>
+      String(value)
+      .padStart(
+        2,
+        "0"
+      )
+  )
+  .join(":");
+
+}
+
+
+function formatDuration(
+  seconds
+) {
+
+  if (
+    !Number.isFinite(
+      seconds
+    )
+  ) {
+
+    return "—";
+
+  }
+
+  if (
+    seconds < 60
+  ) {
+
+    return (
+      Math.ceil(seconds)
+      + " сек"
+    );
+
+  }
+
+  return (
+    (
+      seconds / 60
+    )
+    .toFixed(1)
+    + " мин"
+  );
+
+}
+
+
+function hashString(
+  value
+) {
+
+  let hash =
+    2166136261;
+
+  const text =
+    String(value);
+
+  for (
+    let index = 0;
+    index < text.length;
+    index++
+  ) {
+
+    hash ^=
+      text.charCodeAt(
+        index
+      );
+
+    hash =
+      Math.imul(
+        hash,
+        16777619
+      );
+
+  }
+
+  return hash >>> 0;
+
+}
+
+
+function randomItem(
+  items
+) {
+
+  if (
+    !items.length
+  ) {
+
+    return null;
+
+  }
+
+  return items[
+    Math.floor(
+      Math.random()
+      * items.length
+    )
+  ];
+
+}
+
+
+function haversineMeters(
+  left,
+  right
+) {
+
+  const earth =
+    6371000;
+
+  const lat1 =
+    left[0]
+    * Math.PI
+    / 180;
+
+  const lat2 =
+    right[0]
+    * Math.PI
+    / 180;
+
+  const dLat =
+    (
+      right[0]
+      - left[0]
+    )
+    * Math.PI
+    / 180;
+
+  const dLng =
+    (
+      right[1]
+      - left[1]
+    )
+    * Math.PI
+    / 180;
+
+  const a =
+    Math.sin(
+      dLat / 2
+    ) ** 2
+    +
+    Math.cos(lat1)
+    * Math.cos(lat2)
+    * Math.sin(
+      dLng / 2
+    ) ** 2;
+
+  return (
+    earth
+    * 2
+    * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(
+        1 - a
+      )
+    )
+  );
+
+}
+
+
+function detectRouteId(
+  properties,
+  routeIds
+) {
+
+  const keys = [
+
+    "route_short_name",
+
+    "route_id",
+
+    "line",
+
+    "linija",
+
+    "route",
+
+    "name"
+
+  ];
+
+  for (
+    const key
+    of keys
+  ) {
+
+    const value =
+      normalize(
+        properties[key]
+      );
+
+    if (
+      routeIds.includes(
+        value
+      )
+    ) {
+
+      return value;
+
+    }
+
+  }
+
+  for (
+    const raw
+    of Object.values(
+      properties
+    )
+  ) {
+
+    const value =
+      normalize(raw);
+
+    for (
+      const routeId
+      of routeIds
+    ) {
+
+      if (
+        value === routeId
+      ) {
+
+        return routeId;
+
+      }
+
+      if (
+        value.startsWith(
+          routeId + " "
+        )
+      ) {
+
+        return routeId;
+
+      }
+
+    }
+
+  }
+
+  return null;
+
+}
+
+
+function extractSegments(
+  geometry
+) {
+
+  if (!geometry) {
+
+    return [];
+
+  }
+
+  if (
+    geometry.type
+    === "LineString"
+  ) {
+
+    return [
+      geometry.coordinates
+    ];
+
+  }
+
+  if (
+    geometry.type
+    === "MultiLineString"
+  ) {
+
+    return geometry.coordinates;
+
+  }
+
+  return [];
+
+}
+
+
+function chooseLongestSegment(
+  features
+) {
+
+  const segments = [];
+
+  for (
+    const feature
+    of features
+  ) {
+
+    for (
+      const segment
+      of extractSegments(
+        feature.geometry
+      )
+    ) {
+
+      if (
+        segment.length > 1
+      ) {
+
+        segments.push(
+          segment
+        );
+
+      }
+
+    }
+
+  }
+
+  if (
+    !segments.length
+  ) {
+
+    return null;
+
+  }
+
+  return segments
+  .sort(
+    (
+      left,
+      right
+    ) =>
+      right.length
+      - left.length
+  )[0];
+
+}
+
+
+function buildPathModel(
+  points,
+  distanceFn
+) {
+
+  if (
+    !points
+    || points.length < 2
+  ) {
+
+    return null;
+
+  }
+
+  const cumulative = [0];
+
+  let length = 0;
+
+  for (
+    let index = 1;
+    index < points.length;
+    index++
+  ) {
+
+    length +=
+      distanceFn(
+        points[
+          index - 1
+        ],
+        points[index]
+      );
+
+    cumulative.push(
+      length
+    );
+
+  }
+
+  return {
+
+    points,
+
+    cumulative,
+
+    length
+
+  };
+
+}
+
+
+function findPosition(
+  path,
+  progress
+) {
+
+  if (
+    !path
+    || !path.length
+  ) {
+
+    return null;
+
+  }
+
+  const normalized =
+    mod(
+      progress,
+      1
+    );
+
+  const target =
+    normalized
+    * path.length;
+
+  const cumulative =
+    path.cumulative;
+
+  let low = 0;
+
+  let high =
+    cumulative.length - 1;
+
+  while (
+    low < high
+  ) {
+
+    const middle =
+      Math.floor(
+        (
+          low + high
+        )
+        / 2
+      );
+
+    if (
+      cumulative[middle]
+      < target
+    ) {
+
+      low =
+        middle + 1;
+
+    } else {
+
+      high =
+        middle;
+
+    }
+
+  }
+
+  const index = low;
+
+  if (
+    index === 0
+  ) {
+
+    const point =
+      path.points[0];
+
+    return [
+      point[1],
+      point[0]
+    ];
+
+  }
+
+  const previous =
+    cumulative[
+      index - 1
+    ];
+
+  const current =
+    cumulative[index];
+
+  const ratio =
+    (
+      target
+      - previous
+    )
+    /
+    (
+      current
+      - previous
+      || 1
+    );
+
+  const start =
+    path.points[
+      index - 1
+    ];
+
+  const end =
+    path.points[index];
+
+  return [
+
+    start[1]
+    + (
+      end[1]
+      - start[1]
+    )
+    * ratio,
+
+    start[0]
+    + (
+      end[0]
+      - start[0]
+    )
+    * ratio
+
+  ];
+
+}
+
+
+function projectStopToPath(
+  position,
+  path
+) {
+
+  if (
+    !path
+    || !path.points
+    || path.points.length < 2
+  ) {
+
+    return null;
+
+  }
+
+  const stopLat =
+    position[0];
+
+  const stopLng =
+    position[1];
+
+  const metersLat =
+    110540;
+
+  const metersLng =
+    111320
+    * Math.cos(
+      stopLat
+      * Math.PI
+      / 180
+    );
+
+  let bestDistance =
+    Infinity;
+
+  let bestProgress = 0;
+
+  for (
+    let index = 1;
+    index < path.points.length;
+    index++
+  ) {
+
+    const a =
+      path.points[
+        index - 1
+      ];
+
+    const b =
+      path.points[index];
+
+    const ax =
+      (
+        a[0]
+        - stopLng
+      )
+      * metersLng;
+
+    const ay =
+      (
+        a[1]
+        - stopLat
+      )
+      * metersLat;
+
+    const bx =
+      (
+        b[0]
+        - stopLng
+      )
+      * metersLng;
+
+    const by =
+      (
+        b[1]
+        - stopLat
+      )
+      * metersLat;
+
+    const dx =
+      bx - ax;
+
+    const dy =
+      by - ay;
+
+    const lengthSquared =
+      dx * dx
+      + dy * dy;
+
+    let t = 0;
+
+    if (
+      lengthSquared > 0
+    ) {
+
+      t =
+        clamp(
+          -(
+            ax * dx
+            + ay * dy
+          )
+          / lengthSquared,
+          0,
+          1
+        );
+
+    }
+
+    const px =
+      ax
+      + dx * t;
+
+    const py =
+      ay
+      + dy * t;
+
+    const distance =
+      Math.sqrt(
+        px * px
+        + py * py
+      );
+
+    if (
+      distance < bestDistance
+    ) {
+
+      bestDistance =
+        distance;
+
+      const before =
+        path.cumulative[
+          index - 1
+        ];
+
+      const segmentLength =
+        path.cumulative[index]
+        - before;
+
+      bestProgress =
+        (
+          before
+          + segmentLength * t
+        )
+        / path.length;
+
+    }
+
+  }
+
+  return {
+
+    distanceMeters:
+      bestDistance,
+
+    progress:
+      mod(
+        bestProgress,
+        1
+      )
+
+  };
+
+}
+
+
+function progressDistance(
+  from,
+  to,
+  direction
+) {
+
+  if (
+    direction > 0
+  ) {
+
+    return mod(
+      to - from,
+      1
+    );
+
+  }
+
+  return mod(
+    from - to,
+    1
+  );
+
+}
+
+
+function chooseDirection(
+  source,
+  destination,
+  mode
+) {
+
+  if (
+    mode === "forward"
+  ) {
+
+    return 1;
+
+  }
+
+  if (
+    mode === "reverse"
+  ) {
+
+    return -1;
+
+  }
+
+  const forward =
+    mod(
+      destination.progress
+      - source.progress,
+      1
+    );
+
+  const reverse =
+    mod(
+      source.progress
+      - destination.progress,
+      1
+    );
+
+  return (
+    forward <= reverse
+    ? 1
+    : -1
+  );
+
+}
+
+
+/* =========================
+   EVENTS
+   ========================= */
+
+
+class EventBus {
+
+  constructor() {
+
+    this.listeners =
+      new Map();
+
+  }
+
+
+  on(
+    event,
+    handler
+  ) {
+
+    if (
+      !this.listeners.has(
+        event
+      )
+    ) {
+
+      this.listeners.set(
+        event,
+        new Set()
+      );
+
+    }
+
+    this.listeners
+    .get(event)
+    .add(handler);
+
+    return () => {
+
+      this.listeners
+      .get(event)
+      ?.delete(handler);
+
+    };
+
+  }
+
+
+  emit(
+    event,
+    payload
+  ) {
+
+    const handlers =
+      this.listeners.get(
+        event
+      );
+
+    if (!handlers) {
+
+      return;
+
+    }
+
+    for (
+      const handler
+      of handlers
+    ) {
+
+      handler(
+        payload
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =========================
+   HTTP
+   ========================= */
+
+
+class FetchHttpClient {
+
+  constructor(
+    fetchFn
+  ) {
+
+    this.fetchFn =
+      fetchFn;
+
+  }
+
+
+  async getJson(
+    url
+  ) {
+
+    const response =
+      await this.fetchFn(
+        url
+      );
+
+    if (
+      !response.ok
+    ) {
+
+      throw new Error(
+        `HTTP ${response.status}`
+      );
+
+    }
+
+    return response.json();
+
+  }
+
+}
+
+
+/* =========================
+   REPOSITORIES
+   ========================= */
+
+
+class RoutesRepository {
+
+  constructor({
+    httpClient,
+    url
+  }) {
+
+    this.httpClient =
+      httpClient;
+
+    this.url = url;
+
+  }
+
+
+  getAll() {
+
+    return this.httpClient
+    .getJson(
+      this.url
+    );
+
+  }
+
+}
+
+
+class StopsRepository {
+
+  constructor({
+    httpClient,
+    url
+  }) {
+
+    this.httpClient =
+      httpClient;
+
+    this.url = url;
+
+  }
+
+
+  getAll() {
+
+    return this.httpClient
+    .getJson(
+      this.url
+    );
+
+  }
+
+}
+
+
+/* =========================
+   SETTINGS
+   ========================= */
+
+
+class RouteSettingsStore {
+
+  constructor({
+    routes,
+    defaults,
+    eventBus
+  }) {
+
+    this.routes =
+      routes;
+
+    this.defaults =
+      defaults;
+
+    this.eventBus =
+      eventBus;
+
+    this.state =
+      new Map();
+
+    this.reset(
+      false
+    );
+
+  }
+
+
+  reset(
+    emit = true
+  ) {
+
+    this.state.clear();
+
+    for (
+      const route
+      of this.routes
+    ) {
+
+      this.state.set(
+        route.id,
+        {
+          ...this.defaults
+        }
+      );
+
+    }
+
+    if (emit) {
+
+      this.eventBus.emit(
+        "settings:reset"
+      );
+
+    }
+
+  }
+
+
+  get(
+    routeId
+  ) {
+
+    const value =
+      this.state.get(
+        routeId
+      );
+
+    return value
+      ? { ...value }
+      : null;
+
+  }
+
+
+  getAll() {
+
+    const result = {};
+
+    for (
+      const [
+        routeId,
+        settings
+      ]
+      of this.state
+    ) {
+
+      result[routeId] = {
+        ...settings
+      };
+
+    }
+
+    return result;
+
+  }
+
+
+  update(
+    routeId,
+    patch
+  ) {
+
+    const current =
+      this.state.get(
+        routeId
+      );
+
+    if (!current) {
+
+      return;
+
+    }
+
+    const next = {
+
+      ...current,
+
+      ...patch
+
+    };
+
+    this.state.set(
+      routeId,
+      next
+    );
+
+    this.eventBus.emit(
+      "settings:changed",
+      {
+
+        routeId,
+
+        settings: {
+          ...next
+        }
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================
+   CLOCK
+   ========================= */
+
+
+class SimulationClock {
+
+  constructor({
+    eventBus
+  }) {
+
+    this.eventBus =
+      eventBus;
+
+    this.running = false;
+
+    this.multiplier = 1;
+
+    this.seconds = 0;
+
+  }
+
+
+  toggle() {
+
+    this.running =
+      !this.running;
+
+    this.emit();
+
+  }
+
+
+  reset() {
+
+    this.running = false;
+
+    this.multiplier = 1;
+
+    this.seconds = 0;
+
+    this.emit();
+
+  }
+
+
+  setMultiplier(
+    multiplier
+  ) {
+
+    this.multiplier =
+      Number(multiplier);
+
+    this.emit();
+
+  }
+
+
+  advance(
+    realDelta
+  ) {
+
+    if (
+      !this.running
+    ) {
+
+      return 0;
+
+    }
+
+    const simulatedDelta =
+      realDelta
+      * this.multiplier;
+
+    this.seconds +=
+      simulatedDelta;
+
+    this.eventBus.emit(
+      "clock:tick",
+      this.getState()
+    );
+
+    return simulatedDelta;
+
+  }
+
+
+  getState() {
+
+    return {
+
+      running:
+        this.running,
+
+      multiplier:
+        this.multiplier,
+
+      seconds:
+        this.seconds
+
+    };
+
+  }
+
+
+  emit() {
+
+    this.eventBus.emit(
+      "clock:changed",
+      this.getState()
+    );
+
+  }
+
+}
+
+
+/* =========================
+   MAP ADAPTER
+   ========================= */
+
+
+class LeafletMapAdapter {
+
+  constructor({
+    leaflet,
+    elementId,
+    config
+  }) {
+
+    this.L =
+      leaflet;
+
+    this.stopMarkers =
+      new Map();
+
+    this.map =
+      this.L.map(
+        elementId
+      )
+      .setView(
+        config.center,
+        config.zoom
+      );
+
+    this.L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+
+        maxZoom:
+          config.maxZoom,
+
+        attribution:
+          "&copy; OpenStreetMap"
+
+      }
+    )
+    .addTo(
+      this.map
+    );
+
+  }
+
+
+  distance(
+    left,
+    right
+  ) {
+
+    return this.map.distance(
+      [
+        left[1],
+        left[0]
+      ],
+      [
+        right[1],
+        right[0]
+      ]
+    );
+
+  }
+
+
+  createRouteLayer(
+    geoJson,
+    color
+  ) {
+
+    return this.L.geoJSON(
+      geoJson,
+      {
+
+        style: {
+
+          color,
+
+          weight: 5,
+
+          opacity: .75
+
+        }
+
+      }
+    )
+    .addTo(
+      this.map
+    );
+
+  }
+
+
+  createStops(
+    stops
+  ) {
+
+    for (
+      const stop
+      of stops
+    ) {
+
+      const marker =
+        this.L.circleMarker(
+          stop.position,
+          {
+
+            radius: 5,
+
+            color: "#fff",
+
+            weight: 2,
+
+            fillColor:
+              "#43a047",
+
+            fillOpacity: .95
+
+          }
+        )
+        .addTo(
+          this.map
+        );
+
+      marker.bindTooltip(
+        "0",
+        {
+
+          permanent: true,
+
+          direction: "top",
+
+          offset: [0, -4],
+
+          className:
+            "stop-count-label"
+
+        }
+      );
+
+      this.stopMarkers.set(
+        stop.id,
+        marker
+      );
+
+    }
+
+  }
+
+
+  updateStop(
+    stop,
+    model
+  ) {
+
+    const marker =
+      this.stopMarkers.get(
+        stop.id
+      );
+
+    if (!marker) {
+
+      return;
+
+    }
+
+    marker.setStyle({
+
+      fillColor:
+        model.color,
+
+      radius:
+        model.activeBuses
+        ? 8
+        : 5,
+
+      weight:
+        model.activeBuses
+        ? 4
+        : 2,
+
+      color:
+        model.activeBuses
+        ? "#111"
+        : "#fff"
+
+    });
+
+    marker.setTooltipContent(
+      String(
+        model.waiting
+      )
+    );
+
+    marker.setPopupContent(
+      `
+      <b>
+        ${escapeHtml(stop.name)}
+      </b>
+
+      <br>
+      ${
+        stop.isCenter
+        ? "Центр"
+        : "Район"
+      }
+
+      <br>
+      Ждут:
+      ${model.waiting}
+
+      <br>
+      Ближайший автобус:
+      ${formatDuration(
+        model.nextArrival
+      )}
+
+      <br>
+      Автобусов сейчас:
+      ${model.activeBuses}
+
+      ${
+        model.activeBuses
+        ? `
+          <br>
+          Стоянка:
+          ${Math.ceil(
+            model.dwellRemaining
+          )} сек.
+        `
+        : ""
+      }
+      `
+    );
+
+  }
+
+
+  createBus(
+    routeId,
+    color,
+    position
+  ) {
+
+    const icon =
+      this.L.divIcon(
+        {
+
+          className:
+            "bus-icon",
+
+          iconSize:
+            [35, 23],
+
+          iconAnchor:
+            [17, 11],
+
+          html:
+            `
+            <div
+              class="bus-body"
+              style="
+                background:${color}
+              "
+            >
+              ${routeId}
+            </div>
+            `
+
+        }
+      );
+
+    return this.L.marker(
+      position,
+      {
+
+        icon,
+
+        zIndexOffset:
+          1000
+
+      }
+    )
+    .addTo(
+      this.map
+    );
+
+  }
+
+
+  updateBus(
+    marker,
+    model
+  ) {
+
+    marker.bindPopup(
+      `
+      <b>
+        Автобус ${model.routeId}
+      </b>
+
+      <br>
+      Пассажиров:
+      ${model.onboard}
+      /
+      ${model.capacity}
+
+      <br>
+      Загрузка:
+      ${model.loadPercent}%
+
+      <br>
+      Скорость:
+      ${model.speed}
+      км/ч
+
+      ${
+        model.stopName
+        ? `
+          <br>
+          Остановка:
+          ${escapeHtml(
+            model.stopName
+          )}
+
+          <br>
+          Стоянка:
+          ${Math.ceil(
+            model.dwellRemaining
+          )} сек.
+        `
+        : ""
+      }
+      `
+    );
+
+  }
+
+
+  moveBus(
+    marker,
+    position
+  ) {
+
+    marker.setLatLng(
+      position
+    );
+
+  }
+
+
+  removeLayer(
+    layer
+  ) {
+
+    this.map.removeLayer(
+      layer
+    );
+
+  }
+
+
+  fitLayers(
+    layers
+  ) {
+
+    const group =
+      this.L.featureGroup(
+        layers
+      );
+
+    if (
+      !group.getLayers()
+      .length
+    ) {
+
+      return;
+
+    }
+
+    this.map.fitBounds(
+      group.getBounds(),
+      {
+        padding:
+          [20, 20]
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================
+   ROUTES
+   ========================= */
+
+
+class RouteService {
+
+  constructor({
+    repository,
+    mapAdapter,
+    routeDefinitions,
+    matchMeters
+  }) {
+
+    this.repository =
+      repository;
+
+    this.mapAdapter =
+      mapAdapter;
+
+    this.routeDefinitions =
+      routeDefinitions;
+
+    this.matchMeters =
+      matchMeters;
+
+    this.paths =
+      new Map();
+
+    this.stopsByRoute =
+      new Map();
+
+    this.routesByStop =
+      new Map();
+
+  }
+
+
+  async load() {
+
+    const data =
+      await this.repository
+      .getAll();
+
+    const routeIds =
+      this.routeDefinitions
+      .map(
+        route =>
+          route.id
+      );
+
+    const grouped =
+      new Map();
+
+    for (
+      const feature
+      of data.features || []
+    ) {
+
+      const routeId =
+        detectRouteId(
+          feature.properties
+          || {},
+          routeIds
+        );
+
+      if (!routeId) {
+
+        continue;
+
+      }
+
+      if (
+        !grouped.has(
+          routeId
+        )
+      ) {
+
+        grouped.set(
+          routeId,
+          []
+        );
+
+      }
+
+      grouped
+      .get(routeId)
+      .push(
+        feature
+      );
+
+    }
+
+    const layers = [];
+
+    for (
+      const definition
+      of this.routeDefinitions
+    ) {
+
+      const features =
+        grouped.get(
+          definition.id
+        )
+        || [];
+
+      if (
+        !features.length
+      ) {
+
+        continue;
+
+      }
+
+      const layer =
+        this.mapAdapter
+        .createRouteLayer(
+          {
+
+            type:
+              "FeatureCollection",
+
+            features
+
+          },
+          definition.color
+        );
+
+      layers.push(
+        layer
+      );
+
+      const segment =
+        chooseLongestSegment(
+          features
+        );
+
+      const path =
+        buildPathModel(
+          segment,
+          (
+            left,
+            right
+          ) =>
+            this.mapAdapter
+            .distance(
+              left,
+              right
+            )
+        );
+
+      this.paths.set(
+        definition.id,
+        path
+      );
+
+    }
+
+    this.mapAdapter.fitLayers(
+      layers
+    );
+
+    return this.paths.size;
+
+  }
+
+
+  attachStops(
+    stops
+  ) {
+
+    this.routesByStop.clear();
+
+    for (
+      const definition
+      of this.routeDefinitions
+    ) {
+
+      const path =
+        this.paths.get(
+          definition.id
+        );
+
+      if (!path) {
+
+        continue;
+
+      }
+
+      const matched = [];
+
+      for (
+        const stop
+        of stops
+      ) {
+
+        const projection =
+          projectStopToPath(
+            stop.position,
+            path
+          );
+
+        if (!projection) {
+
+          continue;
+
+        }
+
+        if (
+          projection.distanceMeters
+          > this.matchMeters
+        ) {
+
+          continue;
+
+        }
+
+        const routeStop = {
+
+          ...stop,
+
+          progress:
+            projection.progress
+
+        };
+
+        matched.push(
+          routeStop
+        );
+
+        if (
+          !this.routesByStop.has(
+            stop.id
+          )
+        ) {
+
+          this.routesByStop.set(
+            stop.id,
+            []
+          );
+
+        }
+
+        this.routesByStop
+        .get(stop.id)
+        .push(
+          definition.id
+        );
+
+      }
+
+      matched.sort(
+        (
+          left,
+          right
+        ) =>
+          left.progress
+          - right.progress
+      );
+
+      this.stopsByRoute.set(
+        definition.id,
+        matched
+      );
+
+    }
+
+  }
+
+
+  getPath(
+    routeId
+  ) {
+
+    return this.paths.get(
+      routeId
+    ) || null;
+
+  }
+
+
+  getStops(
+    routeId
+  ) {
+
+    return this.stopsByRoute.get(
+      routeId
+    ) || [];
+
+  }
+
+
+  getRoutesForStop(
+    stopId
+  ) {
+
+    return this.routesByStop.get(
+      stopId
+    ) || [];
+
+  }
+
+}
+
+
+/* =========================
+   STOPS
+   ========================= */
+
+
+class StopsService {
+
+  constructor({
+    repository,
+    mapAdapter,
+    cityConfig
+  }) {
+
+    this.repository =
+      repository;
+
+    this.mapAdapter =
+      mapAdapter;
+
+    this.cityConfig =
+      cityConfig;
+
+    this.stops = [];
+
+  }
+
+
+  async load() {
+
+    const data =
+      await this.repository
+      .getAll();
+
+    this.stops =
+      (
+        data.features || []
+      )
+      .filter(
+        feature =>
+          feature.geometry
+          ?.type
+          === "Point"
+      )
+      .map(
+        (
+          feature,
+          index
+        ) => {
+
+          const props =
+            feature.properties
+            || {};
+
+          const coordinates =
+            feature.geometry
+            .coordinates;
+
+          const position = [
+
+            coordinates[1],
+
+            coordinates[0]
+
+          ];
+
+          const id =
+            String(
+              props.stop_id
+              || props.id
+              || props.stop_code
+              || index
+            );
+
+          const name =
+            props.stop_name
+            || props.name
+            || props.naziv
+            || `Остановка ${id}`;
+
+          const distanceToCenter =
+            haversineMeters(
+              position,
+              this.cityConfig
+              .center
+            );
+
+          return {
+
+            id,
+
+            name,
+
+            position,
+
+            isCenter:
+              distanceToCenter
+              <=
+              this.cityConfig
+              .centerRadiusMeters
+
+          };
+
+        }
+      );
+
+    this.mapAdapter.createStops(
+      this.stops
+    );
+
+    return this.stops;
+
+  }
+
+}
+
+
+/* =========================
+   SCHEDULE
+   ========================= */
+
+
+class ScheduleService {
+
+  constructor({
+    routeService,
+    settingsStore
+  }) {
+
+    this.routeService =
+      routeService;
+
+    this.settingsStore =
+      settingsStore;
+
+  }
+
+
+  getCycleSeconds(
+    routeId
+  ) {
+
+    const settings =
+      this.settingsStore.get(
+        routeId
+      );
+
+    const path =
+      this.routeService.getPath(
+        routeId
+      );
+
+    const stops =
+      this.routeService.getStops(
+        routeId
+      );
+
+    if (
+      !settings
+      || !path
+    ) {
+
+      return Infinity;
+
+    }
+
+    const moving =
+      path.length
+      /
+      (
+        settings.speed
+        / 3.6
+      );
+
+    const dwell =
+      stops.length
+      * settings.dwellSeconds;
+
+    return (
+      moving
+      + dwell
+    );
+
+  }
+
+
+  getDirectionalCount(
+    routeId,
+    direction
+  ) {
+
+    const settings =
+      this.settingsStore.get(
+        routeId
+      );
+
+    if (!settings) {
+
+      return 0;
+
+    }
+
+    if (
+      settings.direction
+      === "forward"
+    ) {
+
+      return (
+        direction > 0
+        ? settings.buses
+        : 0
+      );
+
+    }
+
+    if (
+      settings.direction
+      === "reverse"
+    ) {
+
+      return (
+        direction < 0
+        ? settings.buses
+        : 0
+      );
+
+    }
+
+    if (
+      direction > 0
+    ) {
+
+      return Math.ceil(
+        settings.buses / 2
+      );
+
+    }
+
+    return Math.floor(
+      settings.buses / 2
+    );
+
+  }
+
+
+  getHeadwaySeconds(
+    routeId,
+    direction
+  ) {
+
+    const count =
+      this.getDirectionalCount(
+        routeId,
+        direction
+      );
+
+    if (
+      count <= 0
+    ) {
+
+      return Infinity;
+
+    }
+
+    return (
+      this.getCycleSeconds(
+        routeId
+      )
+      / count
+    );
+
+  }
+
+
+  getSecondsUntilArrival(
+    routeId,
+    stop,
+    direction,
+    simulationSeconds
+  ) {
+
+    const headway =
+      this.getHeadwaySeconds(
+        routeId,
+        direction
+      );
+
+    if (
+      !Number.isFinite(
+        headway
+      )
+      || headway <= 0
+    ) {
+
+      return Infinity;
+
+    }
+
+    const cycle =
+      this.getCycleSeconds(
+        routeId
+      );
+
+    const fraction =
+      direction > 0
+      ? stop.progress
+      : 1 - stop.progress;
+
+    const anchor =
+      mod(
+        fraction
+        * cycle,
+        headway
+      );
+
+    if (
+      simulationSeconds
+      <= anchor
+    ) {
+
+      return (
+        anchor
+        - simulationSeconds
+      );
+
+    }
+
+    const elapsed =
+      simulationSeconds
+      - anchor;
+
+    const remainder =
+      mod(
+        elapsed,
+        headway
+      );
+
+    return (
+      remainder === 0
+      ? 0
+      : headway
+        - remainder
+    );
+
+  }
+
+
+  getBestArrival(
+    routeId,
+    stop,
+    simulationSeconds
+  ) {
+
+    const settings =
+      this.settingsStore.get(
+        routeId
+      );
+
+    if (!settings) {
+
+      return Infinity;
+
+    }
+
+    const directions =
+      settings.direction
+      === "both"
+      ? [1, -1]
+      : [
+          settings.direction
+          === "reverse"
+          ? -1
+          : 1
+        ];
+
+    let result =
+      Infinity;
+
+    for (
+      const direction
+      of directions
+    ) {
+
+      result =
+        Math.min(
+          result,
+          this.getSecondsUntilArrival(
+            routeId,
+            stop,
+            direction,
+            simulationSeconds
+          )
+        );
+
+    }
+
+    return result;
+
+  }
+
+
+  getBestStopArrival(
+    stopId,
+    simulationSeconds
+  ) {
+
+    const routeIds =
+      this.routeService
+      .getRoutesForStop(
+        stopId
+      );
+
+    let best =
+      Infinity;
+
+    for (
+      const routeId
+      of routeIds
+    ) {
+
+      const stop =
+        this.routeService
+        .getStops(routeId)
+        .find(
+          stop =>
+            stop.id
+            === stopId
+        );
+
+      if (!stop) {
+
+        continue;
+
+      }
+
+      best =
+        Math.min(
+          best,
+          this.getBestArrival(
+            routeId,
+            stop,
+            simulationSeconds
+          )
+        );
+
+    }
+
+    return best;
+
+  }
+
+}
+
+
+/* =========================
+   PASSENGERS
+   ========================= */
+
+
+class PassengerService {
+
+  constructor({
+    eventBus,
+    config,
+    routeService,
+    settingsStore,
+    scheduleService
+  }) {
+
+    this.eventBus =
+      eventBus;
+
+    this.config =
+      config;
+
+    this.routeService =
+      routeService;
+
+    this.settingsStore =
+      settingsStore;
+
+    this.scheduleService =
+      scheduleService;
+
+    this.stops = [];
+
+    this.stopMap =
+      new Map();
+
+    this.queues =
+      new Map();
+
+    this.accumulators =
+      new Map();
+
+  }
+
+
+  registerStops(
+    stops
+  ) {
+
+    this.stops =
+      stops;
+
+    this.stopMap =
+      new Map(
+        stops.map(
+          stop => [
+            stop.id,
+            stop
+          ]
+        )
+      );
+
+    this.reset();
+
+  }
+
+
+  reset() {
+
+    this.queues.clear();
+
+    this.accumulators.clear();
+
+    for (
+      const stop
+      of this.stops
+    ) {
+
+      this.queues.set(
+        stop.id,
+        new Map()
+      );
+
+      const routes =
+        this.routeService
+        .getRoutesForStop(
+          stop.id
+        );
+
+      for (
+        const routeId
+        of routes
+      ) {
+
+        this.accumulators.set(
+          `${stop.id}|${routeId}`,
+          0
+        );
+
+      }
+
+    }
+
+    this.eventBus.emit(
+      "passengers:reset"
+    );
+
+  }
+
+
+  update(
+    delta,
+    simulationSeconds
+  ) {
+
+    for (
+      const routeId
+      of APP_CONFIG.routes
+      .map(
+        route =>
+          route.id
+      )
+    ) {
+
+      const settings =
+        this.settingsStore.get(
+          routeId
+        );
+
+      if (
+        !settings
+        || !settings.enabled
+        || settings.buses <= 0
+      ) {
+
+        continue;
+
+      }
+
+      const routeStops =
+        this.routeService
+        .getStops(
+          routeId
+        );
+
+      if (
+        routeStops.length < 2
+      ) {
+
+        continue;
+
+      }
+
+      for (
+        const source
+        of routeStops
+      ) {
+
+        this.updateStopDemand(
+          routeId,
+          routeStops,
+          source,
+          settings,
+          delta,
+          simulationSeconds
+        );
+
+      }
+
+    }
+
+  }
+
+
+  updateStopDemand(
+    routeId,
+    routeStops,
+    source,
+    settings,
+    delta,
+    simulationSeconds
+  ) {
+
+    const direction =
+      settings.direction
+      === "reverse"
+      ? -1
+      : 1;
+
+    const arrival =
+      settings.direction
+      === "both"
+      ? Math.min(
+          this.scheduleService
+          .getSecondsUntilArrival(
+            routeId,
+            source,
+            1,
+            simulationSeconds
+          ),
+          this.scheduleService
+          .getSecondsUntilArrival(
+            routeId,
+            source,
+            -1,
+            simulationSeconds
+          )
+        )
+      : this.scheduleService
+        .getSecondsUntilArrival(
+          routeId,
+          source,
+          direction,
+          simulationSeconds
+        );
+
+    const scheduleFactor =
+      this.getScheduleFactor(
+        arrival
+      );
+
+    const hash =
+      hashString(
+        `${routeId}|${source.id}`
+      );
+
+    const variation =
+      (
+        hash % 1000
+      )
+      / 999;
+
+    const ratePerMinute =
+      this.config
+      .baseRatePerMinute
+      +
+      (
+        this.config
+        .maxRatePerMinute
+        -
+        this.config
+        .baseRatePerMinute
+      )
+      * variation;
+
+    const demand =
+      ratePerMinute
+      * scheduleFactor
+      * delta
+      / 60;
+
+    const key =
+      `${source.id}|${routeId}`;
+
+    let accumulator =
+      (
+        this.accumulators.get(
+          key
+        )
+        || 0
+      )
+      + demand;
+
+    let spawnCount =
+      Math.floor(
+        accumulator
+      );
+
+    accumulator -=
+      spawnCount;
+
+    spawnCount =
+      Math.min(
+        spawnCount,
+        this.config
+        .maxSpawnPerTick
+      );
+
+    this.accumulators.set(
+      key,
+      accumulator
+    );
+
+    for (
+      let index = 0;
+      index < spawnCount;
+      index++
+    ) {
+
+      this.spawnPassenger(
+        routeId,
+        routeStops,
+        source,
+        settings
+      );
+
+    }
+
+  }
+
+
+  getScheduleFactor(
+    secondsUntilArrival
+  ) {
+
+    if (
+      !Number.isFinite(
+        secondsUntilArrival
+      )
+    ) {
+
+      return 0;
+    }
+
+    if (
+      secondsUntilArrival <= 60
+    ) {
+
+      return 1.2;
+    }
+
+    if (
+      secondsUntilArrival
+      <=
+      this.config
+      .scheduleLeadSeconds
+    ) {
+
+      return 4.5;
+    }
+
+    if (
+      secondsUntilArrival
+      <=
+      this.config
+      .scheduleWarmSeconds
+    ) {
+
+      return 1.2;
+    }
+
+    return .18;
+
+  }
+
+
+  spawnPassenger(
+    routeId,
+    routeStops,
+    source,
+    settings
+  ) {
+
+    const queue =
+      this.queues.get(
+        source.id
+      );
+
+    if (!queue) {
+
+      return;
+
+    }
+
+    if (
+      this.getWaiting(
+        source.id
+      )
+      >=
+      this.config
+      .waitingLimit
+    ) {
+
+      return;
+
+    }
+
+    const destination =
+      this.chooseDestination(
+        routeStops,
+        source
+      );
+
+    if (!destination) {
+
+      return;
+
+    }
+
+    const direction =
+      chooseDirection(
+        source,
+        destination,
+        settings.direction
+      );
+
+    const key =
+      [
+        routeId,
+        destination.id,
+        direction
+      ]
+      .join("|");
+
+    const group =
+      queue.get(key)
+      || {
+
+        routeId,
+
+        destinationStopId:
+          destination.id,
+
+        direction,
+
+        count: 0
+
+      };
+
+    group.count++;
+
+    queue.set(
+      key,
+      group
+    );
+
+    this.eventBus.emit(
+      "passengers:changed",
+      {
+        stopId:
+          source.id
+      }
+    );
+
+  }
+
+
+  chooseDestination(
+    routeStops,
+    source
+  ) {
+
+    const others =
+      routeStops.filter(
+        stop =>
+          stop.id
+          !== source.id
+      );
+
+    if (
+      !others.length
+    ) {
+
+      return null;
+
+    }
+
+    const opposite =
+      others.filter(
+        stop =>
+          stop.isCenter
+          !== source.isCenter
+      );
+
+    const preferOpposite =
+      Math.random()
+      <
+      this.config
+      .centerFlowShare;
+
+    if (
+      preferOpposite
+      && opposite.length
+    ) {
+
+      return randomItem(
+        opposite
+      );
+
+    }
+
+    return randomItem(
+      others
+    );
+
+  }
+
+
+  board(
+    stopId,
+    routeId,
+    direction,
+    available
+  ) {
+
+    const queue =
+      this.queues.get(
+        stopId
+      );
+
+    if (
+      !queue
+      || available <= 0
+    ) {
+
+      return [];
+
+    }
+
+    const boarded = [];
+
+    for (
+      const [
+        key,
+        group
+      ]
+      of queue
+    ) {
+
+      if (
+        available <= 0
+      ) {
+
+        break;
+
+      }
+
+      if (
+        group.routeId
+        !== routeId
+      ) {
+
+        continue;
+
+      }
+
+      if (
+        group.direction
+        !== direction
+      ) {
+
+        continue;
+
+      }
+
+      const count =
+        Math.min(
+          group.count,
+          available
+        );
+
+      if (
+        count <= 0
+      ) {
+
+        continue;
+
+      }
+
+      boarded.push({
+
+        destinationStopId:
+          group.destinationStopId,
+
+        count
+
+      });
+
+      group.count -=
+        count;
+
+      available -=
+        count;
+
+      if (
+        group.count <= 0
+      ) {
+
+        queue.delete(
+          key
+        );
+
+      } else {
+
+        queue.set(
+          key,
+          group
+        );
+
+      }
+
+    }
+
+    if (
+      boarded.length
+    ) {
+
+      this.eventBus.emit(
+        "passengers:changed",
+        {
+          stopId
+        }
+      );
+
+    }
+
+    return boarded;
+
+  }
+
+
+  getWaiting(
+    stopId
+  ) {
+
+    const queue =
+      this.queues.get(
+        stopId
+      );
+
+    if (!queue) {
+
+      return 0;
+
+    }
+
+    let total = 0;
+
+    for (
+      const group
+      of queue.values()
+    ) {
+
+      total +=
+        group.count;
+
+    }
+
+    return total;
+
+  }
+
+
+  getTotalWaiting() {
+
+    let total = 0;
+
+    for (
+      const stop
+      of this.stops
+    ) {
+
+      total +=
+        this.getWaiting(
+          stop.id
+        );
+
+    }
+
+    return total;
+
+  }
+
+
+  getCrowdedStops(
+    threshold = 30
+  ) {
+
+    let count = 0;
+
+    for (
+      const stop
+      of this.stops
+    ) {
+
+      if (
+        this.getWaiting(
+          stop.id
+        )
+        >= threshold
+      ) {
+
+        count++;
+
+      }
+
+    }
+
+    return count;
+
+  }
+
+}
+
+
+/* =========================
+   STOP LOAD POLICY
+   ========================= */
+
+
+class StopLoadPolicy {
+
+  constructor({
+    levels
+  }) {
+
+    this.levels =
+      [...levels]
+      .sort(
+        (
+          left,
+          right
+        ) =>
+          left.min
+          - right.min
+      );
+
+  }
+
+
+  getColor(
+    waiting
+  ) {
+
+    let color =
+      this.levels[0]
+      .color;
+
+    for (
+      const level
+      of this.levels
+    ) {
+
+      if (
+        waiting
+        >= level.min
+      ) {
+
+        color =
+          level.color;
+
+      }
+
+    }
+
+    return color;
+
+  }
+
+}
+
+
+/* =========================
+   STOP PRESENTER
+   ========================= */
+
+
+class StopPresenter {
+
+  constructor({
+    eventBus,
+    passengerService,
+    scheduleService,
+    mapAdapter,
+    loadPolicy,
+    clock
+  }) {
+
+    this.eventBus =
+      eventBus;
+
+    this.passengerService =
+      passengerService;
+
+    this.scheduleService =
+      scheduleService;
+
+    this.mapAdapter =
+      mapAdapter;
+
+    this.loadPolicy =
+      loadPolicy;
+
+    this.clock =
+      clock;
+
+    this.stops =
+      new Map();
+
+    this.active =
+      new Map();
+
+    this.bindEvents();
+
+  }
+
+
+  initialize(
+    stops
+  ) {
+
+    this.stops =
+      new Map(
+        stops.map(
+          stop => [
+            stop.id,
+            stop
+          ]
+        )
+      );
+
+    this.renderAll();
+
+  }
+
+
+  bindEvents() {
+
+    this.eventBus.on(
+      "passengers:changed",
+      payload =>
+        this.render(
+          payload.stopId
+        )
+    );
+
+    this.eventBus.on(
+      "passengers:reset",
+      () =>
+        this.renderAll()
+    );
+
+    this.eventBus.on(
+      "clock:tick",
+      () =>
+        this.renderSchedule()
+    );
+
+    this.eventBus.on(
+      "bus:arrived",
+      payload => {
+
+        if (
+          !this.active.has(
+            payload.stopId
+          )
+        ) {
+
+          this.active.set(
+            payload.stopId,
+            new Map()
+          );
+
+        }
+
+        this.active
+        .get(payload.stopId)
+        .set(
+          payload.busId,
+          payload.dwellRemaining
+        );
+
+        this.render(
+          payload.stopId
+        );
+
+      }
+    );
+
+    this.eventBus.on(
+      "bus:dwell",
+      payload => {
+
+        const active =
+          this.active.get(
+            payload.stopId
+          );
+
+        if (!active) {
+
+          return;
+
+        }
+
+        active.set(
+          payload.busId,
+          payload.dwellRemaining
+        );
+
+        this.render(
+          payload.stopId
+        );
+
+      }
+    );
+
+    this.eventBus.on(
+      "bus:departed",
+      payload => {
+
+        const active =
+          this.active.get(
+            payload.stopId
+          );
+
+        if (!active) {
+
+          return;
+
+        }
+
+        active.delete(
+          payload.busId
+        );
+
+        if (
+          !active.size
+        ) {
+
+          this.active.delete(
+            payload.stopId
+          );
+
+        }
+
+        this.render(
+          payload.stopId
+        );
+
+      }
+    );
+
+    this.eventBus.on(
+      "buses:cleared",
+      () => {
+
+        this.active.clear();
+
+        this.renderAll();
+
+      }
+    );
+
+  }
+
+
+  renderSchedule() {
+
+    for (
+      const stopId
+      of this.stops.keys()
+    ) {
+
+      this.render(
+        stopId
+      );
+
+    }
+
+  }
+
+
+  renderAll() {
+
+    for (
+      const stopId
+      of this.stops.keys()
+    ) {
+
+      this.render(
+        stopId
+      );
+
+    }
+
+  }
+
+
+  render(
+    stopId
+  ) {
+
+    const stop =
+      this.stops.get(
+        stopId
+      );
+
+    if (!stop) {
+
+      return;
+
+    }
+
+    const waiting =
+      this.passengerService
+      .getWaiting(
+        stopId
+      );
+
+    const active =
+      this.active.get(
+        stopId
+      );
+
+    let dwellRemaining = 0;
+
+    if (active) {
+
+      for (
+        const value
+        of active.values()
+      ) {
+
+        dwellRemaining =
+          Math.max(
+            dwellRemaining,
+            value
+          );
+
+      }
+
+    }
+
+    const nextArrival =
+      this.scheduleService
+      .getBestStopArrival(
+        stopId,
+        this.clock.seconds
+      );
+
+    this.mapAdapter.updateStop(
+      stop,
+      {
+
+        waiting,
+
+        color:
+          this.loadPolicy
+          .getColor(
+            waiting
+          ),
+
+        activeBuses:
+          active
+          ? active.size
+          : 0,
+
+        dwellRemaining,
+
+        nextArrival
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================
+   BUS FACTORY
+   ========================= */
+
+
+class BusFactory {
+
+  constructor({
+    mapAdapter,
+    routeDefinitions
+  }) {
+
+    this.mapAdapter =
+      mapAdapter;
+
+    this.counter = 0;
+
+    this.routes =
+      new Map(
+        routeDefinitions.map(
+          route => [
+            route.id,
+            route
+          ]
+        )
+      );
+
+  }
+
+
+  create({
+    routeId,
+    position,
+    progress,
+    direction
+  }) {
+
+    const definition =
+      this.routes.get(
+        routeId
+      );
+
+    const marker =
+      this.mapAdapter
+      .createBus(
+        routeId,
+        definition.color,
+        position
+      );
+
+    this.counter++;
+
+    return {
+
+      id:
+        `${routeId}-${this.counter}`,
+
+      routeId,
+
+      marker,
+
+      progress,
+
+      direction,
+
+      nextStopIndex: -1,
+
+      currentStopId: null,
+
+      dwellRemaining: 0,
+
+      onboard:
+        new Map()
+
+    };
+
+  }
+
+
+  destroy(
+    bus
+  ) {
+
+    this.mapAdapter.removeLayer(
+      bus.marker
+    );
+
+  }
+
+}
+
+
+/* =========================
+   BUS SIMULATION
+   ========================= */
+
+
+class BusSimulationService {
+
+  constructor({
+    routeService,
+    settingsStore,
+    passengerService,
+    busFactory,
+    mapAdapter,
+    eventBus
+  }) {
+
+    this.routeService =
+      routeService;
+
+    this.settingsStore =
+      settingsStore;
+
+    this.passengerService =
+      passengerService;
+
+    this.busFactory =
+      busFactory;
+
+    this.mapAdapter =
+      mapAdapter;
+
+    this.eventBus =
+      eventBus;
+
+    this.buses = [];
+
+    this.bindEvents();
+
+  }
+
+
+  bindEvents() {
+
+    this.eventBus.on(
+      "settings:changed",
+      () =>
+        this.rebuild()
+    );
+
+    this.eventBus.on(
+      "settings:reset",
+      () =>
+        this.rebuild()
+    );
+
+  }
+
+
+  clear() {
+
+    for (
+      const bus
+      of this.buses
+    ) {
+
+      this.busFactory.destroy(
+        bus
+      );
+
+    }
+
+    this.buses = [];
+
+    this.eventBus.emit(
+      "buses:cleared"
+    );
+
+  }
+
+
+  rebuild() {
+
+    this.clear();
+
+    for (
+      const [
+        routeId,
+        settings
+      ]
+      of Object.entries(
+        this.settingsStore
+        .getAll()
+      )
+    ) {
+
+      if (
+        !settings.enabled
+        || settings.buses <= 0
+      ) {
+
+        continue;
+
+      }
+
+      const path =
+        this.routeService.getPath(
+          routeId
+        );
+
+      if (!path) {
+
+        continue;
+
+      }
+
+      if (
+        settings.direction
+        === "both"
+      ) {
+
+        this.createBatch(
+          routeId,
+          path,
+          Math.ceil(
+            settings.buses / 2
+          ),
+          1
+        );
+
+        this.createBatch(
+          routeId,
+          path,
+          Math.floor(
+            settings.buses / 2
+          ),
+          -1
+        );
+
+      } else {
+
+        this.createBatch(
+          routeId,
+          path,
+          settings.buses,
+          settings.direction
+          === "reverse"
+          ? -1
+          : 1
+        );
+
+      }
+
+    }
+
+  }
+
+
+  createBatch(
+    routeId,
+    path,
+    count,
+    direction
+  ) {
+
+    if (
+      count <= 0
+    ) {
+
+      return;
+
+    }
+
+    const stops =
+      this.routeService.getStops(
+        routeId
+      );
+
+    for (
+      let index = 0;
+      index < count;
+      index++
+    ) {
+
+      const progress =
+        index / count;
+
+      const position =
+        findPosition(
+          path,
+          progress
+        );
+
+      if (!position) {
+
+        continue;
+
+      }
+
+      const bus =
+        this.busFactory.create(
+          {
+
+            routeId,
+
+            position,
+
+            progress,
+
+            direction
+
+          }
+        );
+
+      bus.nextStopIndex =
+        this.findNextStopIndex(
+          stops,
+          bus.progress,
+          direction
+        );
+
+      this.updatePopup(
+        bus
+      );
+
+      this.buses.push(
+        bus
+      );
+
+    }
+
+  }
+
+
+  findNextStopIndex(
+    stops,
+    progress,
+    direction
+  ) {
+
+    if (
+      !stops.length
+    ) {
+
+      return -1;
+
+    }
+
+    if (
+      direction > 0
+    ) {
+
+      const index =
+        stops.findIndex(
+          stop =>
+            stop.progress
+            > progress
+        );
+
+      return (
+        index >= 0
+        ? index
+        : 0
+      );
+
+    }
+
+    for (
+      let index =
+        stops.length - 1;
+      index >= 0;
+      index--
+    ) {
+
+      if (
+        stops[index]
+        .progress
+        < progress
+      ) {
+
+        return index;
+
+      }
+
+    }
+
+    return stops.length - 1;
+
+  }
+
+
+  update(
+    delta
+  ) {
+
+    for (
+      const bus
+      of this.buses
+    ) {
+
+      this.updateBus(
+        bus,
+        delta
+      );
+
+    }
+
+  }
+
+
+  updateBus(
+    bus,
+    delta
+  ) {
+
+    const settings =
+      this.settingsStore.get(
+        bus.routeId
+      );
+
+    const path =
+      this.routeService.getPath(
+        bus.routeId
+      );
+
+    if (
+      !settings
+      || !path
+    ) {
+
+      return;
+
+    }
+
+    if (
+      bus.currentStopId
+    ) {
+
+      this.updateDwell(
+        bus,
+        delta
+      );
+
+      return;
+
+    }
+
+    const stops =
+      this.routeService.getStops(
+        bus.routeId
+      );
+
+    const progressStep =
+      (
+        settings.speed
+        / 3.6
+        / path.length
+      )
+      * delta;
+
+    if (
+      stops.length
+      && bus.nextStopIndex >= 0
+    ) {
+
+      const nextStop =
+        stops[
+          bus.nextStopIndex
+        ];
+
+      const stopDistance =
+        progressDistance(
+          bus.progress,
+          nextStop.progress,
+          bus.direction
+        );
+
+      if (
+        progressStep
+        >= stopDistance
+      ) {
+
+        bus.progress =
+          nextStop.progress;
+
+        this.mapAdapter.moveBus(
+          bus.marker,
+          findPosition(
+            path,
+            bus.progress
+          )
+        );
+
+        this.arrive(
+          bus,
+          nextStop,
+          settings,
+          stops
+        );
+
+        return;
+
+      }
+
+    }
+
+    bus.progress =
+      mod(
+        bus.progress
+        + progressStep
+        * bus.direction,
+        1
+      );
+
+    this.mapAdapter.moveBus(
+      bus.marker,
+      findPosition(
+        path,
+        bus.progress
+      )
+    );
+
+  }
+
+
+  arrive(
+    bus,
+    stop,
+    settings,
+    stops
+  ) {
+
+    bus.onboard.delete(
+      stop.id
+    );
+
+    const available =
+      Math.max(
+        0,
+        settings.capacity
+        - this.getOnboard(
+          bus
+        )
+      );
+
+    const boarded =
+      this.passengerService
+      .board(
+        stop.id,
+        bus.routeId,
+        bus.direction,
+        available
+      );
+
+    for (
+      const group
+      of boarded
+    ) {
+
+      const current =
+        bus.onboard.get(
+          group.destinationStopId
+        )
+        || 0;
+
+      bus.onboard.set(
+        group.destinationStopId,
+        current + group.count
+      );
+
+    }
+
+    bus.currentStopId =
+      stop.id;
+
+    bus.dwellRemaining =
+      settings.dwellSeconds;
+
+    if (
+      bus.direction > 0
+    ) {
+
+      bus.nextStopIndex =
+        mod(
+          bus.nextStopIndex + 1,
+          stops.length
+        );
+
+    } else {
+
+      bus.nextStopIndex =
+        mod(
+          bus.nextStopIndex - 1,
+          stops.length
+        );
+
+    }
+
+    this.eventBus.emit(
+      "bus:arrived",
+      {
+
+        busId:
+          bus.id,
+
+        stopId:
+          stop.id,
+
+        dwellRemaining:
+          bus.dwellRemaining
+
+      }
+    );
+
+    this.updatePopup(
+      bus,
+      stop
+    );
+
+  }
+
+
+  updateDwell(
+    bus,
+    delta
+  ) {
+
+    bus.dwellRemaining =
+      Math.max(
+        0,
+        bus.dwellRemaining
+        - delta
+      );
+
+    this.eventBus.emit(
+      "bus:dwell",
+      {
+
+        busId:
+          bus.id,
+
+        stopId:
+          bus.currentStopId,
+
+        dwellRemaining:
+          bus.dwellRemaining
+
+      }
+    );
+
+    if (
+      bus.dwellRemaining > 0
+    ) {
+
+      return;
+
+    }
+
+    const stopId =
+      bus.currentStopId;
+
+    bus.currentStopId =
+      null;
+
+    this.eventBus.emit(
+      "bus:departed",
+      {
+
+        busId:
+          bus.id,
+
+        stopId
+
+      }
+    );
+
+    this.updatePopup(
+      bus
+    );
+
+  }
+
+
+  getOnboard(
+    bus
+  ) {
+
+    let total = 0;
+
+    for (
+      const count
+      of bus.onboard.values()
+    ) {
+
+      total +=
+        count;
+
+    }
+
+    return total;
+
+  }
+
+
+  getStats() {
+
+    let onboard = 0;
+
+    let capacity = 0;
+
+    for (
+      const bus
+      of this.buses
+    ) {
+
+      onboard +=
+        this.getOnboard(
+          bus
+        );
+
+      const settings =
+        this.settingsStore.get(
+          bus.routeId
+        );
+
+      capacity +=
+        settings
+        ? settings.capacity
+        : 0;
+
+    }
+
+    return {
+
+      buses:
+        this.buses.length,
+
+      onboard,
+
+      capacity,
+
+      loadPercent:
+        capacity > 0
+        ? onboard
+          / capacity
+          * 100
+        : 0
+
+    };
+
+  }
+
+
+  updatePopup(
+    bus,
+    stop = null
+  ) {
+
+    const settings =
+      this.settingsStore.get(
+        bus.routeId
+      );
+
+    if (!settings) {
+
+      return;
+
+    }
+
+    const onboard =
+      this.getOnboard(
+        bus
+      );
+
+    this.mapAdapter.updateBus(
+      bus.marker,
+      {
+
+        routeId:
+          bus.routeId,
+
+        onboard,
+
+        capacity:
+          settings.capacity,
+
+        loadPercent:
+          Math.round(
+            onboard
+            / settings.capacity
+            * 100
+          ),
+
+        speed:
+          settings.speed,
+
+        stopName:
+          stop
+          ? stop.name
+          : null,
+
+        dwellRemaining:
+          bus.dwellRemaining
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================
+   DASHBOARD SERVICE
+   ========================= */
+
+
+class DashboardService {
+
+  constructor({
+    eventBus,
+    passengerService,
+    busSimulation
+  }) {
+
+    this.eventBus =
+      eventBus;
+
+    this.passengerService =
+      passengerService;
+
+    this.busSimulation =
+      busSimulation;
+
+  }
+
+
+  update() {
+
+    const bus =
+      this.busSimulation
+      .getStats();
+
+    const waiting =
+      this.passengerService
+      .getTotalWaiting();
+
+    const crowdedStops =
+      this.passengerService
+      .getCrowdedStops();
+
+    this.eventBus.emit(
+      "dashboard:changed",
+      {
+
+        buses:
+          bus.buses,
+
+        onboard:
+          bus.onboard,
+
+        capacity:
+          bus.capacity,
+
+        loadPercent:
+          bus.loadPercent,
+
+        waiting,
+
+        crowdedStops,
+
+        totalPeople:
+          waiting
+          + bus.onboard
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================
+   ENGINE
+   ========================= */
+
+
+class SimulationEngine {
+
+  constructor({
+    clock,
+    passengerService,
+    busSimulation,
+    dashboardService
+  }) {
+
+    this.clock =
+      clock;
+
+    this.passengerService =
+      passengerService;
+
+    this.busSimulation =
+      busSimulation;
+
+    this.dashboardService =
+      dashboardService;
+
+    this.lastFrame = null;
+
+  }
+
+
+  start() {
+
+    const frame =
+      time => {
+
+        if (
+          this.lastFrame === null
+        ) {
+
+          this.lastFrame =
+            time;
+
+        }
+
+        const realDelta =
+          clamp(
+            (
+              time
+              - this.lastFrame
+            )
+            / 1000,
+            0,
+            .1
+          );
+
+        this.lastFrame =
+          time;
+
+        const simulatedDelta =
+          this.clock.advance(
+            realDelta
+          );
+
+        if (
+          simulatedDelta > 0
+        ) {
+
+          this.passengerService
+          .update(
+            simulatedDelta,
+            this.clock.seconds
+          );
+
+          this.busSimulation
+          .update(
+            simulatedDelta
+          );
+
+        }
+
+        this.dashboardService
+        .update();
+
+        requestAnimationFrame(
+          frame
+        );
+
+      };
+
+    requestAnimationFrame(
+      frame
+    );
+
+  }
+
+}
+
+
+/* =========================
+   WIDGET
+   ========================= */
+
+
+class Widget {
+
+  constructor({
+    root
+  }) {
+
+    this.root =
+      root;
+
+  }
+
+
+  clear() {
+
+    this.root
+    .replaceChildren();
+
+  }
+
+}
+
+
+/* =========================
+   TOOLBAR
+   ========================= */
+
+
+class ToolbarWidget
+extends Widget {
+
+  constructor({
+    root,
+    clock,
+    onReset
+  }) {
+
+    super({
+      root
+    });
+
+    this.clock =
+      clock;
+
+    this.onReset =
+      onReset;
+
+    this.render();
+
+    this.clock.eventBus.on(
+      "clock:changed",
+      state =>
+        this.update(
+          state
+        )
+    );
+
+  }
+
+
+  render() {
+
+    this.clear();
+
+    this.playButton =
+      document.createElement(
+        "button"
+      );
+
+    this.playButton.textContent =
+      "▶ Старт";
+
+    this.resetButton =
+      document.createElement(
+        "button"
+      );
+
+    this.resetButton.textContent =
+      "↺ Сброс";
+
+    this.playButton
+    .addEventListener(
+      "click",
+      () =>
+        this.clock.toggle()
+    );
+
+    this.resetButton
+    .addEventListener(
+      "click",
+      () =>
+        this.onReset()
+    );
+
+    this.root.append(
+      this.playButton,
+      this.resetButton
+    );
+
+  }
+
+
+  update(
+    state
+  ) {
+
+    this.playButton.textContent =
+      state.running
+      ? "⏸ Пауза"
+      : "▶ Старт";
+
+  }
+
+}
+
+
+/* =========================
+   TIME WIDGET
+   ========================= */
+
+
+class TimeWidget
+extends Widget {
+
+  constructor({
+    root,
+    clock,
+    multipliers
+  }) {
+
+    super({
+      root
+    });
+
+    this.clock =
+      clock;
+
+    this.multipliers =
+      multipliers;
+
+    this.buttons =
+      new Map();
+
+    this.render();
+
+    this.clock.eventBus.on(
+      "clock:changed",
+      state =>
+        this.update(
+          state
+        )
+    );
+
+    this.clock.eventBus.on(
+      "clock:tick",
+      state =>
+        this.update(
+          state
+        )
+    );
+
+  }
+
+
+  render() {
+
+    this.clear();
+
+    const title =
+      document.createElement(
+        "div"
+      );
+
+    title.className =
+      "panel-title";
+
+    title.textContent =
+      "Виртуальное время";
+
+    const buttons =
+      document.createElement(
+        "div"
+      );
+
+    buttons.className =
+      "time-buttons";
+
+    for (
+      const multiplier
+      of this.multipliers
+    ) {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.textContent =
+        `x${multiplier}`;
+
+      button.addEventListener(
+        "click",
+        () =>
+          this.clock
+          .setMultiplier(
+            multiplier
+          )
+      );
+
+      this.buttons.set(
+        multiplier,
+        button
+      );
+
+      buttons.append(
+        button
+      );
+
+    }
+
+    this.clockNode =
+      document.createElement(
+        "div"
+      );
+
+    this.clockNode
+    .style.marginTop =
+      "8px";
+
+    this.root.append(
+      title,
+      buttons,
+      this.clockNode
+    );
+
+    this.update(
+      this.clock.getState()
+    );
+
+  }
+
+
+  update(
+    state
+  ) {
+
+    this.clockNode.textContent =
+      formatTime(
+        state.seconds
+      );
+
+    for (
+      const [
+        multiplier,
+        button
+      ]
+      of this.buttons
+    ) {
+
+      button.classList.toggle(
+        "active",
+        multiplier
+        === state.multiplier
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =========================
+   DASHBOARD WIDGET
+   ========================= */
+
+
+class DashboardWidget
+extends Widget {
+
+  constructor({
+    root,
+    eventBus
+  }) {
+
+    super({
+      root
+    });
+
+    this.eventBus =
+      eventBus;
+
+    this.render();
+
+    this.eventBus.on(
+      "dashboard:changed",
+      model =>
+        this.update(
+          model
+        )
+    );
+
+  }
+
+
+  render() {
+
+    this.root.innerHTML =
+      `
+      <div class="panel-title">
+        Глобальная загрузка
+      </div>
+
+      <div class="dashboard-grid">
+
+        <div class="metric">
+          <div class="metric-label">
+            Загрузка автобусов
+          </div>
+          <div
+            class="metric-value"
+            id="dashLoad"
+          >
+            0%
+          </div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">
+            Ждут транспорт
+          </div>
+          <div
+            class="metric-value"
+            id="dashWaiting"
+          >
+            0
+          </div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">
+            В автобусах
+          </div>
+          <div
+            class="metric-value"
+            id="dashOnboard"
+          >
+            0
+          </div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">
+            Автобусы
+          </div>
+          <div
+            class="metric-value"
+            id="dashBuses"
+          >
+            0
+          </div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">
+            Перегруженные остановки
+          </div>
+          <div
+            class="metric-value"
+            id="dashCrowded"
+          >
+            0
+          </div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">
+            Людей в системе
+          </div>
+          <div
+            class="metric-value"
+            id="dashPeople"
+          >
+            0
+          </div>
+        </div>
+
+      </div>
+
+      <div class="load-track">
+        <div
+          id="dashBar"
+          class="load-bar"
+        ></div>
+      </div>
+      `;
+
+  }
+
+
+  update(
+    model
+  ) {
+
+    const load =
+      clamp(
+        Math.round(
+          model.loadPercent
+        ),
+        0,
+        100
+      );
+
+    document.getElementById(
+      "dashLoad"
+    ).textContent =
+      `${load}%`;
+
+    document.getElementById(
+      "dashWaiting"
+    ).textContent =
+      model.waiting;
+
+    document.getElementById(
+      "dashOnboard"
+    ).textContent =
+      model.onboard;
+
+    document.getElementById(
+      "dashBuses"
+    ).textContent =
+      model.buses;
+
+    document.getElementById(
+      "dashCrowded"
+    ).textContent =
+      model.crowdedStops;
+
+    document.getElementById(
+      "dashPeople"
+    ).textContent =
+      model.totalPeople;
+
+    const bar =
+      document.getElementById(
+        "dashBar"
+      );
+
+    bar.style.width =
+      `${load}%`;
+
+    if (
+      load < 50
+    ) {
+
+      bar.style.background =
+        "#43a047";
+
+    } else if (
+      load < 80
+    ) {
+
+      bar.style.background =
+        "#f9a825";
+
+    } else {
+
+      bar.style.background =
+        "#c62828";
+
+    }
+
+  }
+
+}
+
+
+/* =========================
+   LEGEND
+   ========================= */
+
+
+class LegendWidget
+extends Widget {
+
+  constructor({
+    root
+  }) {
+
+    super({
+      root
+    });
+
+    this.render();
+
+  }
+
+
+  render() {
+
+    this.root.innerHTML =
+      `
+      <div class="panel-title">
+        Ожидающие пассажиры
+      </div>
+
+      <div class="legend-row">
+        <span
+          class="legend-dot"
+          style="background:#43a047"
+        ></span>
+        0–4
+      </div>
+
+      <div class="legend-row">
+        <span
+          class="legend-dot"
+          style="background:#f9a825"
+        ></span>
+        5–14
+      </div>
+
+      <div class="legend-row">
+        <span
+          class="legend-dot"
+          style="background:#ef6c00"
+        ></span>
+        15–29
+      </div>
+
+      <div class="legend-row">
+        <span
+          class="legend-dot"
+          style="background:#c62828"
+        ></span>
+        30+
+      </div>
+      `;
+
+  }
+
+}
+
+
+/* =========================
+   STATUS
+   ========================= */
+
+
+class StatusWidget
+extends Widget {
+
+  set(
+    value
+  ) {
+
+    this.root.textContent =
+      value;
+
+  }
+
+}
+
+
+/* =========================
+   ROUTES WIDGET
+   ========================= */
+
+
+class RoutesWidget
+extends Widget {
+
+  constructor({
+    root,
+    routes,
+    settingsStore,
+    scheduleService
+  }) {
+
+    super({
+      root
+    });
+
+    this.routes =
+      routes;
+
+    this.settingsStore =
+      settingsStore;
+
+    this.scheduleService =
+      scheduleService;
+
+    this.render();
+
+    this.settingsStore
+    .eventBus
+    .on(
+      "settings:reset",
+      () =>
+        this.render()
+    );
+
+  }
+
+
+  render() {
+
+    this.clear();
+
+    for (
+      const route
+      of this.routes
+    ) {
+
+      this.root.append(
+        this.createCard(
+          route
+        )
+      );
+
+    }
+
+  }
+
+
+  createCard(
+    route
+  ) {
+
+    const settings =
+      this.settingsStore.get(
+        route.id
+      );
+
+    const card =
+      document.createElement(
+        "div"
+      );
+
+    card.className =
+      "route-card";
+
+    const title =
+      document.createElement(
+        "div"
+      );
+
+    title.className =
+      "route-title";
+
+    title.innerHTML =
+      `
+      <span
+        class="route-color"
+        style="
+          background:${route.color}
+        "
+      ></span>
+
+      <span>
+        Линия ${route.id}
+      </span>
+      `;
+
+    card.append(
+      title
+    );
+
+    card.append(
+      this.checkbox(
+        "Активна",
+        settings.enabled,
+        value =>
+          this.settingsStore.update(
+            route.id,
+            {
+              enabled:
+                value
+            }
+          )
+      )
+    );
+
+    card.append(
+      this.number(
+        "Автобусы",
+        settings.buses,
+        0,
+        30,
+        value =>
+          this.settingsStore.update(
+            route.id,
+            {
+              buses:
+                value
+            }
+          )
+      )
+    );
+
+    card.append(
+      this.range(
+        "Скорость",
+        settings.speed,
+        5,
+        100,
+        5,
+        "км/ч",
+        value =>
+          this.settingsStore.update(
+            route.id,
+            {
+              speed:
+                value
+            }
+          )
+      )
+    );
+
+    card.append(
+      this.range(
+        "Стоянка",
+        settings.dwellSeconds,
+        0,
+        120,
+        5,
+        "сек",
+        value =>
+          this.settingsStore.update(
+            route.id,
+            {
+              dwellSeconds:
+                value
+            }
+          )
+      )
+    );
+
+    card.append(
+      this.number(
+        "Вместимость",
+        settings.capacity,
+        10,
+        200,
+        value =>
+          this.settingsStore.update(
+            route.id,
+            {
+              capacity:
+                value
+            }
+          )
+      )
+    );
+
+    card.append(
+      this.select(
+        "Направление",
+        settings.direction,
+        [
+
+          [
+            "forward",
+            "Вперёд"
+          ],
+
+          [
+            "reverse",
+            "Назад"
+          ],
+
+          [
+            "both",
+            "Оба"
+          ]
+
+        ],
+        value =>
+          this.settingsStore.update(
+            route.id,
+            {
+              direction:
+                value
+            }
+          )
+      )
+    );
+
+    return card;
+
+  }
+
+
+  field(
+    title
+  ) {
+
+    const root =
+      document.createElement(
+        "div"
+      );
+
+    root.className =
+      "field";
+
+    if (title) {
+
+      const label =
+        document.createElement(
+          "label"
+        );
+
+      label.textContent =
+        title;
+
+      root.append(
+        label
+      );
+
+    }
+
+    return root;
+
+  }
+
+
+  checkbox(
+    title,
+    value,
+    callback
+  ) {
+
+    const root =
+      this.field("");
+
+    const label =
+      document.createElement(
+        "label"
+      );
+
+    const input =
+      document.createElement(
+        "input"
+      );
+
+    input.type =
+      "checkbox";
+
+    input.checked =
+      value;
+
+    input.addEventListener(
+      "change",
+      () =>
+        callback(
+          input.checked
+        )
+    );
+
+    label.append(
+      input,
+      " ",
+      title
+    );
+
+    root.append(
+      label
+    );
+
+    return root;
+
+  }
+
+
+  number(
+    title,
+    value,
+    min,
+    max,
+    callback
+  ) {
+
+    const root =
+      this.field(
+        title
+      );
+
+    const input =
+      document.createElement(
+        "input"
+      );
+
+    input.type =
+      "number";
+
+    input.min =
+      min;
+
+    input.max =
+      max;
+
+    input.value =
+      value;
+
+    input.addEventListener(
+      "change",
+      () => {
+
+        const next =
+          clamp(
+            Math.round(
+              Number(
+                input.value
+              )
+            ),
+            min,
+            max
+          );
+
+        input.value =
+          next;
+
+        callback(
+          next
+        );
+
+      }
+    );
+
+    root.append(
+      input
+    );
+
+    return root;
+
+  }
+
+
+  range(
+    title,
+    value,
+    min,
+    max,
+    step,
+    suffix,
+    callback
+  ) {
+
+    const root =
+      this.field(
+        title
+      );
+
+    const row =
+      document.createElement(
+        "div"
+      );
+
+    row.className =
+      "field-row";
+
+    const input =
+      document.createElement(
+        "input"
+      );
+
+    input.type =
+      "range";
+
+    input.min =
+      min;
+
+    input.max =
+      max;
+
+    input.step =
+      step;
+
+    input.value =
+      value;
+
+    const output =
+      document.createElement(
+        "span"
+      );
+
+    output.textContent =
+      `${value} ${suffix}`;
+
+    input.addEventListener(
+      "input",
+      () => {
+
+        const next =
+          Number(
+            input.value
+          );
+
+        output.textContent =
+          `${next} ${suffix}`;
+
+        callback(
+          next
+        );
+
+      }
+    );
+
+    row.append(
+      input,
+      output
+    );
+
+    root.append(
+      row
+    );
+
+    return root;
+
+  }
+
+
+  select(
+    title,
+    value,
+    options,
+    callback
+  ) {
+
+    const root =
+      this.field(
+        title
+      );
+
+    const select =
+      document.createElement(
+        "select"
+      );
+
+    for (
+      const [
+        key,
+        label
+      ]
+      of options
+    ) {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        key;
+
+      option.textContent =
+        label;
+
+      option.selected =
+        key === value;
+
+      select.append(
+        option
+      );
+
+    }
+
+    select.addEventListener(
+      "change",
+      () =>
+        callback(
+          select.value
+        )
+    );
+
+    root.append(
+      select
+    );
+
+    return root;
+
+  }
+
+}
+
+
+/* =========================
+   APPLICATION
+   ========================= */
+
+
+class Application {
+
+  constructor({
+    routeService,
+    stopsService,
+    passengerService,
+    stopPresenter,
+    busSimulation,
+    dashboardService,
+    settingsStore,
+    clock,
+    engine,
+    statusWidget
+  }) {
+
+    Object.assign(
+      this,
+      {
+
+        routeService,
+
+        stopsService,
+
+        passengerService,
+
+        stopPresenter,
+
+        busSimulation,
+
+        dashboardService,
+
+        settingsStore,
+
+        clock,
+
+        engine,
+
+        statusWidget
+
+      }
+    );
+
+  }
+
+
+  async start() {
+
+    this.statusWidget.set(
+      "Загрузка..."
+    );
+
+    try {
+
+      const [
+        routeCount,
+        stops
+      ] =
+        await Promise.all([
+
+          this.routeService.load(),
+
+          this.stopsService.load()
+
+        ]);
+
+      this.routeService
+      .attachStops(
+        stops
+      );
+
+      this.passengerService
+      .registerStops(
+        stops
+      );
+
+      this.stopPresenter
+      .initialize(
+        stops
+      );
+
+      this.busSimulation
+      .rebuild();
+
+      this.dashboardService
+      .update();
+
+      this.engine
+      .start();
+
+      this.statusWidget.set(
+        `Линий: ${routeCount}. `
+        + `Остановок: ${stops.length}.`
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+
+      this.statusWidget.set(
+        "Ошибка загрузки."
+      );
+
+    }
+
+  }
+
+
+  reset() {
+
+    this.clock.reset();
+
+    this.passengerService
+    .reset();
+
+    this.settingsStore
+    .reset();
+
+    this.dashboardService
+    .update();
+
+  }
+
+}
+
+
+/* =========================
+   DI CONTAINER
+   ========================= */
+
+
+function createContainer({
+  config,
+  leaflet,
+  fetchFn,
+  documentRef
+}) {
+
+  const eventBus =
+    new EventBus();
+
+
+  const httpClient =
+    new FetchHttpClient(
+      fetchFn
+    );
+
+
+  const routesRepository =
+    new RoutesRepository(
+      {
+
+        httpClient,
+
+        url:
+          config.routesUrl
+
+      }
+    );
+
+
+  const stopsRepository =
+    new StopsRepository(
+      {
+
+        httpClient,
+
+        url:
+          config.stopsUrl
+
+      }
+    );
+
+
+  const mapAdapter =
+    new LeafletMapAdapter(
+      {
+
+        leaflet,
+
+        elementId:
+          "map",
+
+        config:
+          config.map
+
+      }
+    );
+
+
+  const settingsStore =
+    new RouteSettingsStore(
+      {
+
+        routes:
+          config.routes,
+
+        defaults:
+          config.defaults,
+
+        eventBus
+
+      }
+    );
+
+
+  const clock =
+    new SimulationClock(
+      {
+        eventBus
+      }
+    );
+
+
+  const routeService =
+    new RouteService(
+      {
+
+        repository:
+          routesRepository,
+
+        mapAdapter,
+
+        routeDefinitions:
+          config.routes,
+
+        matchMeters:
+          config.passengers
+          .routeMatchMeters
+
+      }
+    );
+
+
+  const stopsService =
+    new StopsService(
+      {
+
+        repository:
+          stopsRepository,
+
+        mapAdapter,
+
+        cityConfig:
+          config.city
+
+      }
+    );
+
+
+  const scheduleService =
+    new ScheduleService(
+      {
+
+        routeService,
+
+        settingsStore
+
+      }
+    );
+
+
+  const passengerService =
+    new PassengerService(
+      {
+
+        eventBus,
+
+        config:
+          config.passengers,
+
+        routeService,
+
+        settingsStore,
+
+        scheduleService
+
+      }
+    );
+
+
+  const loadPolicy =
+    new StopLoadPolicy(
+      {
+
+        levels:
+          config.passengers
+          .loadLevels
+
+      }
+    );
+
+
+  const stopPresenter =
+    new StopPresenter(
+      {
+
+        eventBus,
+
+        passengerService,
+
+        scheduleService,
+
+        mapAdapter,
+
+        loadPolicy,
+
+        clock
+
+      }
+    );
+
+
+  const busFactory =
+    new BusFactory(
+      {
+
+        mapAdapter,
+
+        routeDefinitions:
+          config.routes
+
+      }
+    );
+
+
+  const busSimulation =
+    new BusSimulationService(
+      {
+
+        routeService,
+
+        settingsStore,
+
+        passengerService,
+
+        busFactory,
+
+        mapAdapter,
+
+        eventBus
+
+      }
+    );
+
+
+  const dashboardService =
+    new DashboardService(
+      {
+
+        eventBus,
+
+        passengerService,
+
+        busSimulation
+
+      }
+    );
+
+
+  const engine =
+    new SimulationEngine(
+      {
+
+        clock,
+
+        passengerService,
+
+        busSimulation,
+
+        dashboardService
+
+      }
+    );
+
+
+  const statusWidget =
+    new StatusWidget(
+      {
+
+        root:
+          documentRef
+          .getElementById(
+            "statusWidget"
+          )
+
+      }
+    );
+
+
+  const application =
+    new Application(
+      {
+
+        routeService,
+
+        stopsService,
+
+        passengerService,
+
+        stopPresenter,
+
+        busSimulation,
+
+        dashboardService,
+
+        settingsStore,
+
+        clock,
+
+        engine,
+
+        statusWidget
+
+      }
+    );
+
+
+  new ToolbarWidget(
+    {
+
+      root:
+        documentRef
+        .getElementById(
+          "toolbarWidget"
+        ),
+
+      clock,
+
+      onReset:
+        () =>
+          application.reset()
+
+    }
+  );
+
+
+  new TimeWidget(
+    {
+
+      root:
+        documentRef
+        .getElementById(
+          "timeWidget"
+        ),
+
+      clock,
+
+      multipliers:
+        config.timeMultipliers
+
+    }
+  );
+
+
+  new DashboardWidget(
+    {
+
+      root:
+        documentRef
+        .getElementById(
+          "dashboardWidget"
+        ),
+
+      eventBus
+
+    }
+  );
+
+
+  new LegendWidget(
+    {
+
+      root:
+        documentRef
+        .getElementById(
+          "legendWidget"
+        )
+
+    }
+  );
+
+
+  new RoutesWidget(
+    {
+
+      root:
+        documentRef
+        .getElementById(
+          "routesWidget"
+        ),
+
+      routes:
+        config.routes,
+
+      settingsStore,
+
+      scheduleService
+
+    }
+  );
+
+
+  return {
+
+    eventBus,
+
+    httpClient,
+
+    routesRepository,
+
+    stopsRepository,
+
+    mapAdapter,
+
+    settingsStore,
+
+    clock,
+
+    routeService,
+
+    stopsService,
+
+    scheduleService,
+
+    passengerService,
+
+    loadPolicy,
+
+    stopPresenter,
+
+    busFactory,
+
+    busSimulation,
+
+    dashboardService,
+
+    engine,
+
+    statusWidget,
+
+    application
+
+  };
+
+}
+
+
+/* =========================
+   BOOTSTRAP
+   ========================= */
+
+
+const container =
+  createContainer(
+    {
+
+      config:
+        APP_CONFIG,
+
+      leaflet:
+        window.L,
+
+      fetchFn:
+        window.fetch.bind(
+          window
+        ),
+
+      documentRef:
+        document
+
+    }
+  );
+
+
+container.application
+.start();
+
+</script>
+
+</body>
+</html>
