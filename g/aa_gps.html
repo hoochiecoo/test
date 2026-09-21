@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ride G-Meter + GPS</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+ integrity="sha256-p4NxAoJBhIINfQ3jgL0PuQuIerMZVPoQmvbrO0PEtXE="
+ crossorigin=""/>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071018;color:#eef4fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.app{max-width:860px;margin:auto;padding:14px}
+h1{margin:0 0 4px;font-size:26px}
+.sub{color:#8da0b5;font-size:13px;margin-bottom:12px}
+.panel{background:#0f1b27;border:1px solid #22384d;border-radius:18px;padding:14px;margin-bottom:12px}
+.section-title{font-weight:800;margin-bottom:10px}
+.big{text-align:center}
+.big .label{font-size:12px;color:#8da0b5;text-transform:uppercase;letter-spacing:.08em}
+#gValue{font-size:72px;line-height:1.05;font-weight:800;font-variant-numeric:tabular-nums;margin:8px 0}
+.unit{color:#8da0b5;font-size:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.card{background:#0b1620;border:1px solid #22384d;border-radius:14px;padding:11px;text-align:center}
+.k{font-size:11px;color:#8da0b5;margin-bottom:5px}
+.v{font-size:20px;font-weight:750;font-variant-numeric:tabular-nums}
+select,input,button{font:inherit}
+select,input[type="number"]{width:100%;padding:10px 11px;border-radius:10px;border:1px solid #2d455d;background:#0a1420;color:#eef4fb}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.axis-row{display:grid;grid-template-columns:1.2fr 1fr .8fr;gap:8px;align-items:center;margin-bottom:8px}
+.axis-name{font-size:13px;color:#bdd0df}
+button{width:100%;padding:14px;border:0;border-radius:13px;font-weight:800;cursor:pointer}
+.primary{background:#fff;color:#081018}
+.secondary{background:#22384d;color:#fff}
+.dangerbtn{background:#56212b;color:#fff}
+#map{height:320px;border-radius:14px;overflow:hidden}
+.status{font-size:13px;line-height:1.45}
+.ok{color:#63e6a6}.warn{color:#ffd166}.bad{color:#ff6b6b}
+.small{font-size:12px;color:#8da0b5;line-height:1.45}
+.metric{font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1b2a39;font-size:11px;margin-left:6px}
+hr{border:0;border-top:1px solid #22384d;margin:12px 0}
+@media(max-width:640px){
+  .row,.axis-row{grid-template-columns:1fr}
+  .grid3{grid-template-columns:repeat(3,1fr)}
+  #gValue{font-size:60px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Ride G‑Meter + GPS</h1>
+  <div class="sub">Перегрузки пассажира, трек поездки и точки сильных воздействий</div>
+
+  <div class="panel big">
+    <div class="label">Результирующая динамическая перегрузка</div>
+    <div id="gValue">0.00</div>
+    <div class="unit">g</div>
+  </div>
+
+  <div class="grid3" style="margin-bottom:12px">
+    <div class="card"><div class="k">ВПЕРЁД / НАЗАД</div><div class="v" id="longG">0.00 g</div></div>
+    <div class="card"><div class="k">ЛЕВО / ПРАВО</div><div class="v" id="latG">0.00 g</div></div>
+    <div class="card"><div class="k">ВВЕРХ / ВНИЗ</div><div class="v" id="vertG">0.00 g</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">1. Как лежит телефон</div>
+    <div class="small" style="margin-bottom:10px">
+      Для каждого направления выберите физическую ось телефона X/Y/Z и знак.
+      Если показания идут «наоборот», переключите знак.
+    </div>
+
+    <div class="axis-row">
+      <div class="axis-name">Вперёд / назад</div>
+      <select id="longAxis">
+        <option value="x">X</option>
+        <option value="y" selected>Y</option>
+        <option value="z">Z</option>
+      </select>
+      <select id="longSign">
+        <option value="1">+ обычный</option>
+        <option value="-1">− инвертировать</option>
+      </select>
+    </div>
+
+    <div class="axis-row">
+      <div class="axis-name">Лево / право</div>
+      <select id="latAxis">
+        <option value="x" selected>X</option>
+        <option value="y">Y</option>
+        <option value="z">Z</option>
+      </select>
+      <select id="latSign">
+        <option value="1">+ обычный</option>
+        <option value="-1">− инвертировать</option>
+      </select>
+    </div>
+
+    <div class="axis-row">
+      <div class="axis-name">Вверх / вниз</div>
+      <select id="vertAxis">
+        <option value="x">X</option>
+        <option value="y">Y</option>
+        <option value="z" selected>Z</option>
+      </select>
+      <select id="vertSign">
+        <option value="1">+ обычный</option>
+        <option value="-1">− инвертировать</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">2. GPS <span class="badge" id="gpsBadge">не запущен</span></div>
+
+    <div class="grid3">
+      <div class="card"><div class="k">ТОЧНОСТЬ</div><div class="v metric" id="gpsAcc">—</div></div>
+      <div class="card"><div class="k">СКОРОСТЬ</div><div class="v metric" id="speed">—</div></div>
+      <div class="card"><div class="k">СПУТНИКОВЫЙ FIX</div><div class="v metric" id="gpsFixes">0</div></div>
+    </div>
+
+    <div id="gpsStatus" class="status warn" style="margin-top:10px">
+      GPS ещё не включён.
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" id="warmGpsBtn">Прогреть GPS</button>
+      <button class="secondary" id="centerBtn">Центрировать карту</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">3. Запись поездки</div>
+
+    <div class="row">
+      <div>
+        <div class="small">Порог отметки перегрузки, g</div>
+        <input id="threshold" type="number" min="0.05" max="3" step="0.05" value="0.35">
+      </div>
+      <div>
+        <div class="small">Минимальный интервал между отметками, сек</div>
+        <input id="cooldown" type="number" min="0.2" max="30" step="0.5" value="2">
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="primary" id="startRideBtn">▶ Начать поездку</button>
+      <button class="dangerbtn" id="stopRideBtn" disabled>■ Остановить</button>
+    </div>
+
+    <div class="row">
+      <button class="secondary" id="exportBtn">Экспорт CSV</button>
+      <button class="secondary" id="clearBtn">Очистить поездку</button>
+    </div>
+
+    <div id="rideStatus" class="status">Запись не идёт.</div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Карта поездки</div>
+    <div id="map"></div>
+    <div class="small" style="margin-top:8px">
+      Линия — GPS‑трек. Красные маркеры — точки, где динамическая перегрузка превысила выбранный порог.
+      Карта загружается из OpenStreetMap и требует интернет.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Диагностика датчиков</div>
+    <div class="small">
+      Датчик движения: <b id="motionState">не запущен</b><br>
+      Событий движения: <b id="motionEvents">0</b><br>
+      HTTPS / secure context: <b id="secureState">—</b><br>
+      GPS: <b id="geoState">не запущен</b>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+ crossorigin=""></script>
+
+<script>
+(() => {
+"use strict";
+
+const G = 9.80665;
+const $ = id => document.getElementById(id);
+
+let motionStarted = false;
+let motionEvents = 0;
+let gpsWatchId = null;
+let gpsFixCount = 0;
+let gpsReady = false;
+let lastPosition = null;
+let recording = false;
+
+let track = [];
+let samples = [];
+let overloads = [];
+let lastOverloadTs = 0;
+
+// Если acceleration недоступен, используем accelerationIncludingGravity
+// и медленно оцениваем вектор гравитации low-pass фильтром.
+let gravity = {x:0,y:0,z:0};
+let gravityInit = false;
+const GRAVITY_ALPHA = 0.94;
+
+let lastDyn = {x:0,y:0,z:0};
+let currentMapped = {long:0,lat:0,vert:0,total:0};
+
+$("secureState").textContent = window.isSecureContext ? "да ✓" : "нет ✗";
+$("secureState").className = window.isSecureContext ? "ok" : "bad";
+
+const map = L.map("map").setView([44.0, 20.9], 6);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: "&copy; OpenStreetMap"
+}).addTo(map);
+
+const trackLine = L.polyline([], {weight:4}).addTo(map);
+const overloadLayer = L.layerGroup().addTo(map);
+let currentMarker = null;
+
+function axisValue(obj, axis) {
+  return Number(obj[axis] || 0);
+}
+
+function readMapping() {
+  return {
+    longAxis: $("longAxis").value,
+    longSign: Number($("longSign").value),
+    latAxis: $("latAxis").value,
+    latSign: Number($("latSign").value),
+    vertAxis: $("vertAxis").value,
+    vertSign: Number($("vertSign").value)
+  };
+}
+
+function mapAxes(v) {
+  const m = readMapping();
+  const long = axisValue(v,m.longAxis) * m.longSign;
+  const lat = axisValue(v,m.latAxis) * m.latSign;
+  const vert = axisValue(v,m.vertAxis) * m.vertSign;
+  return {long,lat,vert,total:Math.sqrt(long*long+lat*lat+vert*vert)};
+}
+
+function updateMotionUI(mapped) {
+  currentMapped = mapped;
+  $("longG").textContent = mapped.long.toFixed(2)+" g";
+  $("latG").textContent = mapped.lat.toFixed(2)+" g";
+  $("vertG").textContent = mapped.vert.toFixed(2)+" g";
+  $("gValue").textContent = mapped.total.toFixed(2);
+
+  if (mapped.total >= Number($("threshold").value || 0.35)) {
+    $("gValue").className = "bad";
+  } else {
+    $("gValue").className = "";
+  }
+}
+
+function processAccelerationMs2(x,y,z) {
+  const gVec = {x:x/G,y:y/G,z:z/G};
+  lastDyn = gVec;
+  const mapped = mapAxes(gVec);
+  updateMotionUI(mapped);
+  motionEvents++;
+  $("motionEvents").textContent = motionEvents;
+
+  if (recording) {
+    const now = Date.now();
+
+    samples.push({
+      ts: now,
+      longG: mapped.long,
+      latG: mapped.lat,
+      vertG: mapped.vert,
+      totalG: mapped.total,
+      lat: lastPosition ? lastPosition.coords.latitude : null,
+      lon: lastPosition ? lastPosition.coords.longitude : null,
+      accuracy: lastPosition ? lastPosition.coords.accuracy : null,
+      speed: lastPosition ? lastPosition.coords.speed : null
+    });
+
+    const threshold = Number($("threshold").value || 0.35);
+    const cooldownMs = Number($("cooldown").value || 2) * 1000;
+
+    if (mapped.total >= threshold && lastPosition && (now - lastOverloadTs >= cooldownMs)) {
+      lastOverloadTs = now;
+      addOverloadMarker(mapped, lastPosition, now);
+    }
+  }
+}
+
+async function startMotion() {
+  if (motionStarted) return true;
+
+  if (!window.isSecureContext) {
+    $("motionState").textContent = "нужен HTTPS";
+    $("motionState").className = "bad";
+  }
+
+  if (!("DeviceMotionEvent" in window)) {
+    $("motionState").textContent = "не поддерживается";
+    $("motionState").className = "bad";
+    return false;
+  }
+
+  if (typeof DeviceMotionEvent.requestPermission === "function") {
+    try {
+      const p = await DeviceMotionEvent.requestPermission();
+      if (p !== "granted") {
+        $("motionState").textContent = "доступ запрещён";
+        $("motionState").className = "bad";
+        return false;
+      }
+    } catch(e) {
+      $("motionState").textContent = "ошибка разрешения";
+      $("motionState").className = "bad";
+      return false;
+    }
+  }
+
+  window.addEventListener("devicemotion", e => {
+    let a = e.acceleration;
+
+    if (a && [a.x,a.y,a.z].some(v => typeof v === "number")) {
+      processAccelerationMs2(a.x || 0, a.y || 0, a.z || 0);
+      return;
+    }
+
+    const ag = e.accelerationIncludingGravity;
+    if (!ag) return;
+
+    const x = ag.x || 0, y = ag.y || 0, z = ag.z || 0;
+
+    if (!gravityInit) {
+      gravity = {x,y,z};
+      gravityInit = true;
+    } else {
+      gravity.x = GRAVITY_ALPHA * gravity.x + (1-GRAVITY_ALPHA) * x;
+      gravity.y = GRAVITY_ALPHA * gravity.y + (1-GRAVITY_ALPHA) * y;
+      gravity.z = GRAVITY_ALPHA * gravity.z + (1-GRAVITY_ALPHA) * z;
+    }
+
+    processAccelerationMs2(x-gravity.x, y-gravity.y, z-gravity.z);
+  }, {passive:true});
+
+  motionStarted = true;
+  $("motionState").textContent = "активен ✓";
+  $("motionState").className = "ok";
+  return true;
+}
+
+function gpsStatus(text, cls="warn") {
+  $("gpsStatus").textContent = text;
+  $("gpsStatus").className = "status " + cls;
+}
+
+function startGpsWarmup() {
+  if (!("geolocation" in navigator)) {
+    gpsStatus("Geolocation API не поддерживается этим браузером.", "bad");
+    $("geoState").textContent = "не поддерживается";
+    $("geoState").className = "bad";
+    return;
+  }
+
+  if (gpsWatchId !== null) return;
+
+  gpsStatus("Идёт прогрев GPS: ждём несколько стабильных координат и хорошую точность…", "warn");
+  $("gpsBadge").textContent = "прогрев";
+  $("geoState").textContent = "запущен";
+  $("geoState").className = "warn";
+
+  gpsWatchId = navigator.geolocation.watchPosition(pos => {
+    lastPosition = pos;
+    gpsFixCount++;
+    $("gpsFixes").textContent = gpsFixCount;
+
+    const acc = pos.coords.accuracy;
+    $("gpsAcc").textContent = Math.round(acc) + " м";
+
+    const kmh = (typeof pos.coords.speed === "number" && pos.coords.speed >= 0)
+      ? pos.coords.speed * 3.6
+      : null;
+    $("speed").textContent = kmh === null ? "—" : kmh.toFixed(1) + " км/ч";
+
+    // Условие "прогрева": минимум 4 фикса и точность <= 25 м.
+    if (!gpsReady && gpsFixCount >= 4 && acc <= 25) {
+      gpsReady = true;
+      $("gpsBadge").textContent = "готов";
+      $("gpsBadge").className = "badge ok";
+      $("geoState").textContent = "GPS готов ✓";
+      $("geoState").className = "ok";
+      gpsStatus("GPS прогрет: точность " + Math.round(acc) + " м. Можно начинать запись.", "ok");
+    } else if (!gpsReady) {
+      gpsStatus("Прогрев GPS… текущая точность " + Math.round(acc) + " м. Желательно дождаться ≤ 25 м.", "warn");
+    }
+
+    updateCurrentPosition(pos);
+
+    if (recording) {
+      const p = [pos.coords.latitude, pos.coords.longitude];
+      track.push(p);
+      trackLine.setLatLngs(track);
+    }
+  }, err => {
+    let msg = "Ошибка GPS.";
+    if (err.code === 1) msg = "Доступ к геолокации запрещён.";
+    if (err.code === 2) msg = "Позиция сейчас недоступна.";
+    if (err.code === 3) msg = "GPS не успел получить позицию.";
+    gpsStatus(msg + " Для мобильного браузера обычно нужен HTTPS.", "bad");
+    $("geoState").textContent = "ошибка";
+    $("geoState").className = "bad";
+  }, {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 15000
+  });
+}
+
+function updateCurrentPosition(pos) {
+  const p = [pos.coords.latitude, pos.coords.longitude];
+  if (!currentMarker) {
+    currentMarker = L.circleMarker(p, {
+      radius:7,
+      weight:2,
+      fillOpacity:0.9
+    }).addTo(map);
+    map.setView(p, 16);
+  } else {
+    currentMarker.setLatLng(p);
+  }
+}
+
+function addOverloadMarker(mapped, pos, ts) {
+  const lat = pos.coords.latitude;
+  const lon = pos.coords.longitude;
+
+  overloads.push({
+    ts,
+    lat,
+    lon,
+    accuracy: pos.coords.accuracy,
+    speed: pos.coords.speed,
+    longG: mapped.long,
+    latG: mapped.lat,
+    vertG: mapped.vert,
+    totalG: mapped.total
+  });
+
+  const marker = L.circleMarker([lat, lon], {
+    radius: 8,
+    weight: 2,
+    fillOpacity: .9
+  }).addTo(overloadLayer);
+
+  marker.bindPopup(
+    "<b>Перегрузка " + mapped.total.toFixed(2) + " g</b><br>" +
+    "Вперёд/назад: " + mapped.long.toFixed(2) + " g<br>" +
+    "Лево/право: " + mapped.lat.toFixed(2) + " g<br>" +
+    "Вверх/вниз: " + mapped.vert.toFixed(2) + " g<br>" +
+    "GPS ±" + Math.round(pos.coords.accuracy) + " м"
+  );
+}
+
+async function startRide() {
+  startGpsWarmup();
+  const motionOk = await startMotion();
+
+  if (!motionOk) {
+    $("rideStatus").textContent = "Запись не начата: нет данных акселерометра.";
+    $("rideStatus").className = "status bad";
+    return;
+  }
+
+  recording = true;
+  $("startRideBtn").disabled = true;
+  $("stopRideBtn").disabled = false;
+
+  $("rideStatus").textContent = gpsReady
+    ? "Запись идёт. GPS прогрет."
+    : "Запись идёт, но GPS ещё прогревается. Первые координаты могут быть менее точными.";
+  $("rideStatus").className = "status " + (gpsReady ? "ok" : "warn");
+}
+
+function stopRide() {
+  recording = false;
+  $("startRideBtn").disabled = false;
+  $("stopRideBtn").disabled = true;
+  $("rideStatus").textContent =
+    "Запись остановлена. Точек трека: " + track.length +
+    ", отметок перегрузки: " + overloads.length + ".";
+  $("rideStatus").className = "status";
+}
+
+function clearRide() {
+  recording = false;
+  track = [];
+  samples = [];
+  overloads = [];
+  lastOverloadTs = 0;
+  trackLine.setLatLngs([]);
+  overloadLayer.clearLayers();
+  $("startRideBtn").disabled = false;
+  $("stopRideBtn").disabled = true;
+  $("rideStatus").textContent = "Данные поездки очищены.";
+}
+
+function centerMap() {
+  if (lastPosition) {
+    map.setView([lastPosition.coords.latitude, lastPosition.coords.longitude], 17);
+  }
+}
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return '"' + s.replaceAll('"','""') + '"';
+}
+
+function exportCsv() {
+  if (!samples.length) {
+    alert("Пока нет записанных данных.");
+    return;
+  }
+
+  const rows = [[
+    "timestamp_iso","lat","lon","gps_accuracy_m","speed_m_s",
+    "forward_back_g","left_right_g","up_down_g","total_dynamic_g"
+  ]];
+
+  for (const s of samples) {
+    rows.push([
+      new Date(s.ts).toISOString(),
+      s.lat,s.lon,s.accuracy,s.speed,
+      s.longG,s.latG,s.vertG,s.totalG
+    ]);
+  }
+
+  const csv = rows.map(r => r.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ride-gmeter-" + new Date().toISOString().replace(/[:.]/g,"-") + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("warmGpsBtn").addEventListener("click", startGpsWarmup);
+$("centerBtn").addEventListener("click", centerMap);
+$("startRideBtn").addEventListener("click", startRide);
+$("stopRideBtn").addEventListener("click", stopRide);
+$("clearBtn").addEventListener("click", clearRide);
+$("exportBtn").addEventListener("click", exportCsv);
+
+["longAxis","longSign","latAxis","latSign","vertAxis","vertSign"].forEach(id=>{
+  $(id).addEventListener("change", ()=>updateMotionUI(mapAxes(lastDyn)));
+});
+
+// Пытаемся заранее прогреть GPS только после пользовательского клика.
+// Браузеры часто блокируют permission prompt без gesture.
+})();
+</script>
+</body>
+</html>
