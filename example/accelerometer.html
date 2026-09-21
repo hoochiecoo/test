@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>G-Meter — перегрузки пассажира</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080b10;color:#f4f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;min-height:100vh;padding:18px}
+.app{width:min(700px,100%);margin:0 auto}
+h1{margin:5px 0 2px;font-size:28px}
+.subtitle{color:#8d99aa;font-size:14px;margin-bottom:20px}
+.main-g{background:#111722;border:1px solid #253044;border-radius:20px;padding:25px;text-align:center;margin-bottom:14px}
+.main-g .label{color:#8d99aa;font-size:14px;text-transform:uppercase;letter-spacing:1px}
+#gValue{font-size:76px;font-weight:800;line-height:1;margin:12px 0;font-variant-numeric:tabular-nums}
+.unit{color:#8d99aa;font-size:20px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.card{background:#111722;border:1px solid #253044;border-radius:15px;padding:15px 10px;text-align:center}
+.card .name{color:#8d99aa;font-size:12px;margin-bottom:6px}
+.card .value{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.chart-box{background:#111722;border:1px solid #253044;border-radius:18px;padding:12px;margin-bottom:14px}
+canvas{width:100%;height:180px;display:block}
+.buttons{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+button{border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;cursor:pointer}
+#startBtn{background:#fff;color:#05080c}
+#resetBtn{background:#242d3b;color:#fff}
+#status{margin-top:14px;text-align:center;color:#7f8c9d;font-size:13px;min-height:35px}
+.danger{color:#ff5555!important}.warning{color:#ffca55!important}.normal{color:#62e59b!important}
+.small{margin-top:16px;padding:12px 14px;border-radius:12px;background:#0d121b;color:#778497;font-size:12px;line-height:1.45}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>G-Meter</h1>
+<div class="subtitle">Регистратор перегрузок пассажира</div>
+
+<div class="main-g">
+<div class="label">Полная перегрузка</div>
+<div id="gValue">0.00</div>
+<div class="unit">g</div>
+</div>
+
+<div class="grid">
+<div class="card"><div class="name">X</div><div class="value" id="gx">0.00 g</div></div>
+<div class="card"><div class="name">Y</div><div class="value" id="gy">0.00 g</div></div>
+<div class="card"><div class="name">Z</div><div class="value" id="gz">0.00 g</div></div>
+</div>
+
+<div class="grid">
+<div class="card"><div class="name">MAX</div><div class="value" id="maxG">0.00 g</div></div>
+<div class="card"><div class="name">MIN</div><div class="value" id="minG">0.00 g</div></div>
+<div class="card"><div class="name">Частота</div><div class="value" id="hz">0 Hz</div></div>
+</div>
+
+<div class="chart-box"><canvas id="chart"></canvas></div>
+
+<div class="buttons">
+<button id="startBtn">▶ Начать измерение</button>
+<button id="resetBtn">Сброс</button>
+</div>
+
+<div id="status">Нажмите «Начать измерение»</div>
+
+<div class="small">
+В покое прибор должен показывать примерно <b>1.00 g</b>.
+Телефон необходимо жёстко закрепить на подголовнике.
+</div>
+</div>
+
+<script>
+(() => {
+const G = 9.80665;
+const gValue = document.getElementById("gValue");
+const gxEl = document.getElementById("gx");
+const gyEl = document.getElementById("gy");
+const gzEl = document.getElementById("gz");
+const maxEl = document.getElementById("maxG");
+const minEl = document.getElementById("minG");
+const hzEl = document.getElementById("hz");
+const statusEl = document.getElementById("status");
+const startBtn = document.getElementById("startBtn");
+const resetBtn = document.getElementById("resetBtn");
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+
+let running=false,maxG=0,minG=Infinity,history=[];
+const MAX_HISTORY=300;
+let eventCounter=0,lastHzTime=performance.now();
+let filteredX=0,filteredY=0,filteredZ=0;
+const FILTER=0.72;
+
+function resizeCanvas(){
+const rect=canvas.getBoundingClientRect();
+const dpr=window.devicePixelRatio||1;
+canvas.width=rect.width*dpr;
+canvas.height=rect.height*dpr;
+ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+function setGColor(g){
+gValue.classList.remove("normal","warning","danger");
+if(g<1.15)gValue.classList.add("normal");
+else if(g<1.5)gValue.classList.add("warning");
+else gValue.classList.add("danger");
+}
+
+function handleMotion(event){
+const a=event.accelerationIncludingGravity;
+if(!a){statusEl.textContent="Браузер не передаёт данные акселерометра.";return;}
+const rawX=a.x??0,rawY=a.y??0,rawZ=a.z??0;
+filteredX=FILTER*filteredX+(1-FILTER)*rawX;
+filteredY=FILTER*filteredY+(1-FILTER)*rawY;
+filteredZ=FILTER*filteredZ+(1-FILTER)*rawZ;
+
+const gx=filteredX/G,gy=filteredY/G,gz=filteredZ/G;
+const totalG=Math.sqrt(gx*gx+gy*gy+gz*gz);
+
+gValue.textContent=totalG.toFixed(2);
+gxEl.textContent=gx.toFixed(2)+" g";
+gyEl.textContent=gy.toFixed(2)+" g";
+gzEl.textContent=gz.toFixed(2)+" g";
+
+if(totalG>maxG){maxG=totalG;maxEl.textContent=maxG.toFixed(2)+" g";}
+if(totalG<minG){minG=totalG;minEl.textContent=minG.toFixed(2)+" g";}
+setGColor(totalG);
+
+history.push(totalG);
+if(history.length>MAX_HISTORY)history.shift();
+
+eventCounter++;
+const now=performance.now();
+if(now-lastHzTime>=1000){
+const seconds=(now-lastHzTime)/1000;
+hzEl.textContent=Math.round(eventCounter/seconds)+" Hz";
+eventCounter=0;lastHzTime=now;
+}
+}
+
+function drawChart(){
+const width=canvas.clientWidth,height=canvas.clientHeight;
+ctx.clearRect(0,0,width,height);
+
+ctx.strokeStyle="#263143";ctx.lineWidth=1;
+[0.5,1.0,1.5,2.0].forEach(g=>{
+const maxScale=2.5;
+const y=height-(g/maxScale)*height;
+ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();
+ctx.fillStyle="#657286";ctx.font="11px sans-serif";
+ctx.fillText(g.toFixed(1)+"g",5,y-4);
+});
+
+if(history.length>1){
+const maxScale=Math.max(2.5,Math.max(...history)*1.1);
+ctx.strokeStyle="#e6edf6";ctx.lineWidth=2;ctx.beginPath();
+history.forEach((value,i)=>{
+const x=(i/(MAX_HISTORY-1))*width;
+const y=height-Math.min(value/maxScale,1)*height;
+if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+});
+ctx.stroke();
+}
+requestAnimationFrame(drawChart);
+}
+
+async function startMeasurement(){
+if(running)return;
+
+if(typeof DeviceMotionEvent!=="undefined" &&
+typeof DeviceMotionEvent.requestPermission==="function"){
+try{
+const permission=await DeviceMotionEvent.requestPermission();
+if(permission!=="granted"){statusEl.textContent="Доступ к датчикам не разрешён.";return;}
+}catch(err){
+statusEl.textContent="Ошибка доступа к датчикам: "+err.message;
+return;
+}
+}
+
+if(!window.DeviceMotionEvent){
+statusEl.textContent="DeviceMotion не поддерживается этим браузером.";
+return;
+}
+
+window.addEventListener("devicemotion",handleMotion,true);
+running=true;
+startBtn.textContent="● Измерение идёт";
+statusEl.textContent="Датчик активен. Зафиксируйте телефон неподвижно.";
+lastHzTime=performance.now();
+}
+
+function resetMeasurements(){
+maxG=0;minG=Infinity;history=[];
+maxEl.textContent="0.00 g";
+minEl.textContent="0.00 g";
+gValue.textContent="0.00";
+gxEl.textContent="0.00 g";
+gyEl.textContent="0.00 g";
+gzEl.textContent="0.00 g";
+}
+
+startBtn.addEventListener("click",startMeasurement);
+resetBtn.addEventListener("click",resetMeasurements);
+window.addEventListener("resize",resizeCanvas);
+
+resizeCanvas();
+drawChart();
+})();
+</script>
+</body>
+</html>
