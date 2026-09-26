@@ -1,0 +1,2546 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Street View — Subotica</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 12px;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      background: #f4f6f8;
+      color: #17202a;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #dfe4e8;
+    }
+
+    .app-shell {
+      width: 390px;
+      height: 844px;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+      margin: 0 auto;
+      padding: 0 0 92px;
+      border: 0;
+      border-radius: 0;
+      background: #f4f6f8;
+      box-shadow: none;
+      scrollbar-width: thin;
+    }
+
+    .app-shell::before {
+      display: none;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 10px;
+    }
+
+    h2 {
+      font-size: 15px;
+      margin: 0 0 8px;
+    }
+
+    .hint {
+      margin: 0 0 8px;
+      color: #68737d;
+      font-size: 13px;
+    }
+
+    .screen-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 0;
+
+      box-shadow:
+        0 3px 16px rgba(20, 30, 40, 0.10);
+    }
+
+    #map-card {
+      display: block;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    #map-card h2,
+    #map-card > .hint {
+      display: none;
+    }
+
+    #panorama-card {
+      display: none;
+    }
+
+    #map-toggle {
+      display: none;
+    }
+
+    .bottom-dock {
+      position: sticky;
+      bottom: 10px;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 12px 10px 0;
+      padding: 7px;
+      border: 1px solid rgba(255, 255, 255, .75);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .88);
+      box-shadow: 0 10px 28px rgba(20, 30, 40, .22);
+      backdrop-filter: blur(16px);
+    }
+
+    .bottom-dock button {
+      min-height: 52px;
+      padding: 5px 2px;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      color: #68737d;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .bottom-dock button span {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    .bottom-dock button:active,
+    .bottom-dock button:hover {
+      background: #e9f0eb;
+      color: #245c48;
+    }
+
+    #coordinate-map {
+      width: 100%;
+      height: 210px;
+
+      border-radius: 12px;
+      overflow: hidden;
+
+      background: #ddd;
+    }
+
+    .map-collage {
+      overflow: hidden;
+      border-radius: 12px;
+      background: #e9edf0;
+    }
+
+    .map-collage-placeholder {
+      min-height: 210px;
+      display: grid;
+      place-items: center;
+      background: #e9edf0;
+      color: #7b8790;
+      font-size: 13px;
+    }
+
+    #selected-coordinates {
+      margin-top: 7px;
+      font-size: 12px;
+      color: #68737d;
+    }
+
+    .coordinates,
+    #subotica-panoid,
+    #subotica-street-view {
+      display: none;
+    }
+
+    #panorama-image {
+      width: 100%;
+      max-width: 100%;
+
+      margin-top: 0;
+
+      min-height: 210px;
+
+      border-radius: 12px;
+
+      background: #111;
+
+      overflow: hidden;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    #panorama-image:empty::before {
+      content: "Выбери точку на карте";
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    #panorama-image img {
+      display: block;
+
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+
+      opacity: 1;
+
+      transition:
+        opacity 0.15s ease,
+        filter 0.8s ease;
+    }
+
+    #panorama-image img.loading {
+      opacity: 0.75;
+    }
+
+    #panorama-image {
+      position: relative;
+    }
+
+    .comparison-after {
+      position: static;
+      width: 100%;
+      min-height: 210px;
+      overflow: visible;
+      display: block;
+      border-right: 0;
+      border-top: 0;
+    }
+
+    .comparison-after::after {
+      content: 'Здесь появится улучшенная версия';
+      display: none;
+      min-height: 210px;
+      place-items: center;
+      background: #e9edf0;
+      color: #7b8790;
+      font-size: 13px;
+    }
+
+    .comparison-after img {
+      width: 100%;
+      max-width: none !important;
+      height: auto;
+      object-fit: cover;
+      filter: grayscale(1);
+      cursor: pointer;
+    }
+
+    #panorama-image.comparison-mode .comparison-after img {
+      filter: none;
+    }
+
+    .comparison-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 4px;
+      display: none;
+      z-index: 3;
+      background: #fff;
+      cursor: ew-resize;
+    }
+
+    .comparison-handle::after {
+      content: '↔';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #245c48;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    #panorama-image.comparison-mode .comparison-after,
+    #panorama-image.comparison-mode .comparison-handle {
+      display: block;
+    }
+
+    /* Вертикальный collage: было сверху, стало снизу. */
+    #panorama-image.comparison-mode .comparison-after {
+      position: static;
+      width: 100%;
+      border-right: 0;
+      border-top: 0;
+      overflow: visible;
+    }
+
+    #panorama-image.comparison-mode .comparison-after::after {
+      display: none;
+    }
+
+    #panorama-image.comparison-mode .comparison-after img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    #panorama-image.comparison-mode .comparison-handle {
+      display: none;
+    }
+
+    .app-shell > h1 {
+      display: none;
+    }
+
+    .urban-panel button.export {
+      margin-top: 8px;
+      background: #4d5963;
+    }
+
+    .panorama-stage {
+      position: relative;
+      margin-left: -12px;
+      margin-right: -12px;
+    }
+
+    #panorama-image {
+      border-radius: 0;
+    }
+
+    .edge-nav {
+      position: absolute;
+
+      top: 50%;
+      transform: translateY(-50%);
+
+      width: 44px;
+      height: 76px;
+
+      border: 0;
+      border-radius: 0;
+
+      background: transparent;
+      color: #fff;
+
+      font-size: 34px;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, .8);
+
+      z-index: 2;
+
+      cursor: pointer;
+    }
+
+    .edge-nav.left {
+      left: 8px;
+    }
+
+    .edge-nav.right {
+      right: 8px;
+    }
+
+    .edge-nav.up,
+    .edge-nav.down {
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      width: 76px;
+      height: 44px;
+
+      font-size: 28px;
+    }
+
+    .edge-nav.up {
+      top: 8px;
+    }
+
+    .edge-nav.down {
+      top: auto;
+      bottom: 8px;
+    }
+
+    .bottom-nav-group {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      z-index: 2;
+      display: flex;
+      gap: 4px;
+      transform: translateX(-50%);
+    }
+
+    .bottom-nav-group .edge-nav {
+      position: static;
+      transform: none;
+      width: 48px;
+      height: 44px;
+    }
+
+    .bottom-nav-group .edge-nav.down {
+      width: 56px;
+    }
+
+    .comparison-handle {
+      width: 44px;
+      margin-left: -22px;
+      background: transparent;
+      touch-action: none;
+      cursor: ew-resize;
+    }
+
+    .comparison-handle::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 20px;
+      width: 4px;
+      background: #fff;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, .2);
+    }
+
+    .comparison-handle::after {
+      z-index: 1;
+    }
+
+    #panorama-controls {
+      margin-top: 9px;
+    }
+
+    #panorama-controls > div:first-child,
+    #panorama-controls > div:nth-child(2),
+    #panorama-controls > div:nth-child(3) {
+      display: none;
+    }
+
+    #panorama-controls > div:nth-child(4) {
+      text-align: center;
+    }
+
+    #panorama-controls button {
+      margin: 2px;
+
+      min-width: 42px;
+      min-height: 36px;
+
+      cursor: pointer;
+    }
+
+    .urban-panel {
+      position: sticky;
+      bottom: 10px;
+      z-index: 20;
+      margin: 12px 10px 0;
+      padding: 12px;
+
+      border-radius: 14px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #f7f1e8,
+          #e9f0eb
+        );
+      box-shadow: 0 8px 24px rgba(20, 30, 40, .22);
+    }
+
+    .urban-panel.collapsed > :not(.menu-toggle):not(#urban-result) {
+      display: none;
+    }
+
+    .urban-panel.collapsed {
+      display: none;
+    }
+
+    .urban-panel .menu-toggle {
+      background: #17202a;
+    }
+
+    .urban-panel button {
+      width: 100%;
+      min-height: 42px;
+
+      border: 0;
+      border-radius: 10px;
+
+      background: #245c48;
+      color: #fff;
+
+      font-weight: 700;
+
+      cursor: pointer;
+    }
+
+    .urban-panel button.secondary {
+      margin-top: 8px;
+      background: #d96f45;
+    }
+
+    .ai-editor {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #dce5df;
+    }
+
+    .ai-editor input {
+      width: 100%;
+      min-height: 40px;
+      margin: 4px 0;
+      padding: 9px;
+      border: 1px solid #c9d3ce;
+      border-radius: 9px;
+    }
+
+    #openrouter-key,
+    #image-model {
+      display: none;
+    }
+
+    .ai-editor select {
+      width: 100%;
+      min-height: 40px;
+      margin: 4px 0;
+      padding: 9px;
+      border: 1px solid #c9d3ce;
+      border-radius: 9px;
+      background: #fff;
+    }
+
+    .ai-editor button {
+      background: #633f88;
+    }
+
+    .prompt-picker {
+      display: none;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .prompt-picker.visible {
+      display: grid;
+    }
+
+    .prompt-picker button {
+      min-height: 38px;
+      padding: 6px 9px;
+      background: #fff;
+      color: #315347;
+      border: 1px solid #b9c9c1;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .urban-result {
+      display: none;
+
+      margin-top: 9px;
+
+      color: #315347;
+
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .urban-result.visible {
+      display: block;
+
+      animation:
+        urbanIn 0.45s ease both;
+    }
+
+    #panorama-image.urban-mode img {
+      filter:
+        saturate(0.78)
+        sepia(0.14)
+        contrast(1.05);
+    }
+
+    @keyframes urbanIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .error-message {
+      padding: 12px;
+      margin-bottom: 10px;
+
+      border-radius: 10px;
+
+      background: #ffe8e8;
+      color: #8c2525;
+
+      font-size: 13px;
+
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0;
+        display: block;
+      }
+
+      .app-shell {
+        width: 100%;
+        height: 100vh;
+        max-height: none;
+        border: 0;
+        border-radius: 0;
+      }
+
+      #coordinate-map {
+        height: 210px;
+      }
+
+      .edge-nav {
+        width: 44px;
+        height: 65px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main class="app-shell">
+
+  <h1>Street View вокруг Суботицы</h1>
+
+  <div
+    id="error-message"
+    class="error-message"
+  ></div>
+
+  <button
+    id="map-toggle"
+    type="button"
+    onclick="toggleMap()"
+  >
+    Скрыть карту
+  </button>
+
+
+  <!-- ======================================
+       КАРТА
+       ====================================== -->
+
+  <div
+    id="map-card"
+    class="screen-card"
+  >
+
+    <h2>
+      Выбери точку — панорама загрузится автоматически
+    </h2>
+
+    <p class="hint">
+      Нажми на нужное место на карте
+    </p>
+
+    <div class="map-collage">
+      <div id="coordinate-map"></div>
+      <div class="map-collage-placeholder">
+        Здесь появится улучшенная версия улицы
+      </div>
+    </div>
+
+
+    <div
+      class="coordinates"
+      style="margin-top: 10px;"
+    >
+
+      <label>
+        Latitude:
+
+        <input
+          type="number"
+          id="latitude"
+          step="any"
+          value="46.1005"
+          readonly
+        >
+      </label>
+
+      <label style="margin-left: 10px;">
+        Longitude:
+
+        <input
+          type="number"
+          id="longitude"
+          step="any"
+          value="19.6676"
+          readonly
+        >
+      </label>
+
+    </div>
+
+
+    <div id="selected-coordinates">
+      Выбрано: 46.1005000, 19.6676000
+    </div>
+
+  </div>
+
+
+  <!-- ======================================
+       ПАНОРАМА
+       ====================================== -->
+
+  <div
+    id="panorama-card"
+    class="screen-card"
+    style="margin-top: 10px;"
+  >
+
+    <h2>Панорама</h2>
+
+    <p
+      id="loading-status"
+      class="hint"
+    >
+      Выбери точку на карте, чтобы начать
+    </p>
+
+
+    <div id="subotica-panoid"></div>
+
+
+    <!--
+      Оставляем, потому что он был
+      в твоей реализации.
+    -->
+    <div
+      id="subotica-street-view"
+      style="
+        width: 600px;
+        height: 400px;
+        margin-top: 10px;
+      "
+    ></div>
+
+
+    <!-- ======================================
+         ФИНАЛЬНОЕ ИЗОБРАЖЕНИЕ
+         ====================================== -->
+
+    <div class="panorama-stage">
+
+      <button
+        class="edge-nav up"
+        type="button"
+        onclick="movePanoramaDown()"
+        aria-label="Вниз"
+      >
+        ⌃
+      </button>
+
+
+      <button
+        class="edge-nav left"
+        type="button"
+        onclick="movePanoramaLeft()"
+        aria-label="Влево"
+      >
+        ‹
+      </button>
+
+
+      <div id="panorama-image"></div>
+
+
+      <button
+        class="edge-nav right"
+        type="button"
+        onclick="movePanoramaRight()"
+        aria-label="Вправо"
+      >
+        ›
+      </button>
+
+
+      <div class="bottom-nav-group">
+        <button
+          class="edge-nav zoom-out"
+          type="button"
+          onclick="zoomPanoramaOut()"
+          aria-label="Отдалить"
+        >
+          −
+        </button>
+
+        <button
+          class="edge-nav down"
+          type="button"
+          onclick="movePanoramaUp()"
+          aria-label="Вверх"
+        >
+          ⌄
+        </button>
+
+        <button
+          class="edge-nav zoom-in"
+          type="button"
+          onclick="zoomPanoramaIn()"
+          aria-label="Приблизить"
+        >
+          ＋
+        </button>
+      </div>
+
+    </div>
+
+
+    <!-- ======================================
+         УПРАВЛЕНИЕ
+         ====================================== -->
+
+    <div
+      id="panorama-controls"
+      style="display: none;"
+    >
+
+      <div>
+        <button
+          type="button"
+          onclick="movePanoramaUp()"
+        >
+          ↑
+        </button>
+      </div>
+
+
+      <div>
+
+        <button
+          type="button"
+          onclick="movePanoramaLeft()"
+        >
+          ←
+        </button>
+
+        <button
+          type="button"
+          onclick="resetPanoramaView()"
+        >
+          Сброс
+        </button>
+
+        <button
+          type="button"
+          onclick="movePanoramaRight()"
+        >
+          →
+        </button>
+
+      </div>
+
+
+      <div>
+        <button
+          type="button"
+          onclick="movePanoramaDown()"
+        >
+          ↓
+        </button>
+      </div>
+
+
+      <div style="margin-top: 10px;">
+
+        <button
+          type="button"
+          onclick="zoomPanoramaIn()"
+        >
+          ＋
+        </button>
+
+        <button
+          type="button"
+          onclick="zoomPanoramaOut()"
+        >
+          −
+        </button>
+
+      </div>
+
+
+      <div
+        id="panorama-values"
+        style="
+          margin-top: 8px;
+          font-family: monospace;
+        "
+      ></div>
+
+    </div>
+
+
+    <!-- ======================================
+         URBAN
+         ====================================== -->
+
+    <div id="urban-panel" class="urban-panel collapsed">
+
+      <button
+        type="button"
+        class="menu-toggle"
+        onclick="toggleActionMenu()"
+      >
+        Открыть меню действий
+      </button>
+
+      <button
+        type="button"
+        onclick="applyUrbanAdvice()"
+      >
+        Применить урбанистический совет
+      </button>
+
+      <button
+        type="button"
+        class="secondary"
+        onclick="showAustriaVision()"
+      >
+        Как выглядела бы улица в Австрии?
+      </button>
+
+      <div class="ai-editor">
+        <div id="prompt-picker" class="prompt-picker">
+          <button type="button" onclick="selectPromptPreset('austria')">Австрийская улица</button>
+          <button type="button" onclick="selectPromptPreset('greenery')">Больше зелени</button>
+          <button type="button" onclick="selectPromptPreset('pedestrian')">Удобнее для пешеходов</button>
+          <button type="button" onclick="selectPromptPreset('cycling')">Безопасная велосреда</button>
+          <button type="button" onclick="selectPromptPreset('calm')">Спокойный фасад и свет</button>
+        </div>
+
+        <select id="image-model" aria-label="Модель изображения">
+          <option value="openai/gpt-image-2">GPT Image 2</option>
+          <option value="google/gemini-3.1-flash-image">Nano Banana 2</option>
+          <option value="google/gemini-3.1-flash-lite-image">Nano Banana 2 Lite</option>
+        </select>
+
+        <input
+          id="openrouter-key"
+          type="password"
+          autocomplete="off"
+          placeholder="OpenRouter API key (только для этого теста)"
+        >
+
+        <input
+          id="ai-prompt"
+          value="Сделай эту улицу более красивой и удобной для пешеходов в стиле австрийского города"
+          aria-label="Запрос для изображения"
+        >
+
+        <button
+          type="button"
+          onclick="applyAiUrbanEffect()"
+        >
+          Применить эффект по запросу
+        </button>
+
+        <button
+          type="button"
+          class="export"
+          onclick="exportUrbanAnimation()"
+        >
+          Сохранить анимацию
+        </button>
+
+        <button
+          type="button"
+          class="export"
+          onclick="saveVerticalCollage()"
+        >
+          Сохранить коллаж сверху вниз
+        </button>
+      </div>
+
+      <div
+        id="urban-result"
+        class="urban-result"
+      ></div>
+
+    </div>
+
+</div>
+
+  <nav class="bottom-dock" aria-label="Основные действия">
+    <button type="button" onclick="toggleMap()">
+      <span>⌖</span>Карта
+    </button>
+    <button type="button" onclick="applyUrbanAdvice()">
+      <span>✦</span>Совет
+    </button>
+    <button type="button" onclick="showAustriaVision()">
+      <span>⌂</span>Австрия
+    </button>
+    <button type="button" onclick="toggleActionMenu()">
+      <span>•••</span>Ещё
+    </button>
+  </nav>
+
+</main>
+
+
+<!-- ==========================================
+     LEAFLET JS
+     ВАЖНО: здесь должен быть обычный URL,
+     БЕЗ [url](url)
+     ========================================== -->
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY">
+</script>
+
+
+<!-- ==========================================
+     ОСНОВНОЙ JAVASCRIPT
+     ========================================== -->
+
+<script>
+
+(function () {
+
+  'use strict';
+
+
+  /* =========================================
+     ОБЩИЕ ПЕРЕМЕННЫЕ
+     ========================================= */
+
+  const defaultLat = 46.1005;
+  const defaultLng = 19.6676;
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxfRN__ZahuCL-w3errRyaTkGKPfrby4mhuRNQgw39No2zrD9jlkIPIaOtzEZX05pdjKg/exec';
+
+  let coordinateMap = null;
+  let coordinateMarker = null;
+
+  let currentPanoId = '';
+  let streetViewToken = '';
+  let selectedPromptKey = 'austria';
+
+  let panoramaYaw = 178;
+  let panoramaPitch = 0;
+  let panoramaFov = 90;
+
+  let panoramaRequestId = 0;
+
+
+  /* =========================================
+     ОШИБКА
+     ========================================= */
+
+  function showError(message) {
+
+    console.error(message);
+
+    const box =
+      document.getElementById('error-message');
+
+    if (!box) {
+      return;
+    }
+
+    box.textContent = message;
+    box.style.display = 'block';
+  }
+
+
+  function hideError() {
+
+    const box =
+      document.getElementById('error-message');
+
+    if (!box) {
+      return;
+    }
+
+    box.textContent = '';
+    box.style.display = 'none';
+  }
+
+
+  /* =========================================
+     ИНИЦИАЛИЗАЦИЯ LEAFLET
+     ========================================= */
+
+  function initializeMap() {
+
+    if (typeof L === 'undefined') {
+
+      showError(
+        'Leaflet не загрузился. Проверь подключение unpkg.com.'
+      );
+
+      return;
+    }
+
+
+    coordinateMap =
+      L.map(
+        'coordinate-map'
+      ).setView(
+        [
+          defaultLat,
+          defaultLng
+        ],
+        13
+      );
+
+
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        maxZoom: 19,
+
+        attribution:
+          '© OpenStreetMap contributors'
+      }
+    ).addTo(
+      coordinateMap
+    );
+
+
+    coordinateMarker =
+      L.marker(
+        [
+          defaultLat,
+          defaultLng
+        ]
+      ).addTo(
+        coordinateMap
+      );
+
+
+    coordinateMap.on(
+      'click',
+      function (event) {
+
+        const lat =
+          event.latlng.lat;
+
+        const lng =
+          event.latlng.lng;
+
+        selectCoordinates(
+          lat,
+          lng
+        );
+      }
+    );
+  }
+
+
+  /* =========================================
+     ВЫБОР КООРДИНАТ
+     ========================================= */
+
+  function selectCoordinates(
+    lat,
+    lng
+  ) {
+
+    hideError();
+
+
+    document.getElementById(
+      'latitude'
+    ).value =
+      lat.toFixed(7);
+
+
+    document.getElementById(
+      'longitude'
+    ).value =
+      lng.toFixed(7);
+
+
+    document.getElementById(
+      'selected-coordinates'
+    ).textContent =
+      `Выбрано: ${lat.toFixed(7)}, ${lng.toFixed(7)}`;
+
+
+    if (coordinateMarker) {
+
+      coordinateMarker.setLatLng(
+        [
+          lat,
+          lng
+        ]
+      );
+    }
+
+
+    document.getElementById(
+      'loading-status'
+    ).textContent =
+      'Ищу ближайшую панораму…';
+
+
+    generateStreetViews();
+  }
+
+
+  /* =========================================
+     ПОКАЗАТЬ / СКРЫТЬ КАРТУ
+     ========================================= */
+
+  function toggleMap() {
+
+    const mapCard =
+      document.getElementById(
+        'map-card'
+      );
+
+    const button =
+      document.getElementById(
+        'map-toggle'
+      );
+
+
+    const currentlyVisible =
+      window.getComputedStyle(
+        mapCard
+      ).display !== 'none';
+
+
+    if (currentlyVisible) {
+
+      mapCard.style.display =
+        'none';
+
+      button.textContent =
+        'Показать карту';
+
+      return;
+    }
+
+
+    mapCard.style.display =
+      'block';
+
+    button.textContent =
+      'Скрыть карту';
+
+
+    /*
+      Leaflet был создан, когда контейнер
+      был скрыт.
+
+      Поэтому после его показа обязательно
+      вызываем invalidateSize().
+    */
+    if (coordinateMap) {
+
+      setTimeout(
+        function () {
+
+          coordinateMap.invalidateSize();
+
+          coordinateMap.setView(
+            [
+              parseFloat(
+                document.getElementById(
+                  'latitude'
+                ).value
+              ),
+
+              parseFloat(
+                document.getElementById(
+                  'longitude'
+                ).value
+              )
+            ],
+            coordinateMap.getZoom()
+          );
+
+        },
+        100
+      );
+    }
+  }
+
+
+  /* =========================================
+     STREET VIEW
+     ========================================= */
+
+  function generateStreetViews() {
+
+    const lat =
+      parseFloat(
+        document.getElementById(
+          'latitude'
+        ).value
+      );
+
+
+    const lng =
+      parseFloat(
+        document.getElementById(
+          'longitude'
+        ).value
+      );
+
+
+    if (
+      Number.isNaN(lat) ||
+      Number.isNaN(lng)
+    ) {
+
+      alert(
+        'Сначала выбери точку на карте'
+      );
+
+      return;
+    }
+
+
+    generateStreetView('subotica', lat, lng);
+  }
+
+
+  function generateStreetView(
+    city,
+    lat,
+    lng
+  ) {
+
+    hideError();
+
+
+    /*
+      Проверяем Google Maps.
+    */
+    if (
+      typeof google === 'undefined' ||
+      !google.maps ||
+      !google.maps.StreetViewService
+    ) {
+
+      document.getElementById(
+        'loading-status'
+      ).textContent =
+        'Google Maps API не загрузился';
+
+
+      showError(
+        'Google Maps API не загрузился. Проверь YOUR_API_KEY и настройки ключа.'
+      );
+
+      return;
+    }
+
+
+    /*
+      Оставляем тот же принцип,
+      который был у тебя.
+    */
+    function getRandomCoordinates() {
+
+      return {
+        randomLat: lat,
+        randomLng: lng
+      };
+    }
+
+
+    function checkStreetViewAvailable(
+      coordinates
+    ) {
+
+      const randomLat =
+        coordinates.randomLat;
+
+      const randomLng =
+        coordinates.randomLng;
+
+
+      const svService =
+        new google.maps.StreetViewService();
+
+
+      const latLng =
+        new google.maps.LatLng(
+          randomLat,
+          randomLng
+        );
+
+
+      svService.getPanorama(
+        {
+          location: latLng,
+          radius: 50
+        },
+
+        function (
+          data,
+          status
+        ) {
+
+          console.log(
+            'StreetView status:',
+            status
+          );
+
+
+          if (
+            status ===
+            google.maps.StreetViewStatus.OK
+          ) {
+
+            const panoId =
+              data &&
+              data.location &&
+              data.location.pano;
+
+
+            if (!panoId) {
+
+              showError(
+                'Google вернул Street View, но pano ID отсутствует.'
+              );
+
+              return;
+            }
+
+
+            /*
+              ВАЖНО:
+              сохраняем pano ID напрямую.
+
+              Не обязательно потом получать
+              его обратно из текста DOM.
+            */
+            currentPanoId =
+              panoId;
+
+
+            document.getElementById(
+              'loading-status'
+            ).textContent =
+              'Панорама готова — используй стрелки';
+
+
+            document.getElementById(
+              `${city}-panoid`
+            ).textContent =
+              `panoid: ${panoId}`;
+
+
+            /*
+              Оставляем твою iframe-логику.
+            */
+            const iframeSrc =
+              'https://www.google.com/maps/embed' +
+              '?pb=' +
+              '!4v1' +
+              '!6m8' +
+              '!1m7' +
+              '!1s' +
+              encodeURIComponent(panoId) +
+              '!2m2' +
+              '!1d' +
+              randomLat +
+              '!2d' +
+              randomLng +
+              '!3f0' +
+              '!4f0' +
+              '!5f0.7820865974627469';
+
+
+            document.getElementById(
+              `${city}-street-view`
+            ).innerHTML =
+              `
+                <iframe
+                  width="600"
+                  height="400"
+                  src="${iframeSrc}"
+                  frameborder="0"
+                  style="border:0;"
+                  allowfullscreen>
+                </iframe>
+              `;
+
+
+            showPanoramaImage();
+
+          } else {
+
+            document.getElementById(
+              'loading-status'
+            ).textContent =
+              'Панорама рядом не найдена';
+
+
+            alert(
+              'Street View рядом с выбранной точкой не найден. Выбери другую точку на карте.'
+            );
+          }
+        }
+      );
+    }
+
+
+    const coordinates =
+      getRandomCoordinates();
+
+
+    checkStreetViewAvailable(
+      coordinates
+    );
+  }
+
+
+  function callBackendJsonp(params) {
+    return new Promise(function (resolve, reject) {
+      const callbackName = 'suboticaCallback_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      const script = document.createElement('script');
+      const query = Object.keys(params).map(function (key) {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+      }).join('&');
+      const timer = setTimeout(function () {
+        cleanup();
+        reject(new Error('Backend timeout'));
+      }, 90000);
+
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[callbackName];
+        script.remove();
+      }
+
+      window[callbackName] = function (result) {
+        cleanup();
+        resolve(result);
+      };
+      script.onerror = function () {
+        cleanup();
+        reject(new Error('Не удалось связаться с Apps Script backend.'));
+      };
+      script.src = BACKEND_URL + '?callback=' + callbackName + '&' + query;
+      document.body.appendChild(script);
+    });
+  }
+
+
+  /* =========================================
+     ПОКАЗАТЬ ФИНАЛЬНОЕ ИЗОБРАЖЕНИЕ
+     ========================================= */
+
+  function showPanoramaImage() {
+
+    if (!currentPanoId) {
+
+      alert(
+        'Сначала получи Street View'
+      );
+
+      return;
+    }
+
+
+    /*
+      Скрываем карту.
+    */
+    document.getElementById(
+      'map-card'
+    ).style.display =
+      'none';
+
+
+    document.getElementById(
+      'map-toggle'
+    ).textContent =
+      'Показать карту';
+
+    document.getElementById(
+      'panorama-card'
+    ).style.display =
+      'block';
+
+
+    /*
+      Начальное положение.
+    */
+    panoramaYaw = 178;
+    panoramaPitch = 0;
+    panoramaFov = 90;
+
+
+    const panoramaContainer =
+      document.getElementById(
+        'panorama-image'
+      );
+
+
+    /*
+      IMG создаём только один раз.
+    */
+    let image =
+      document.getElementById(
+        'panorama-final-image'
+      );
+
+
+    if (!image) {
+
+      panoramaContainer.innerHTML =
+        `
+          <img
+            id="panorama-final-image"
+            width="1200"
+            height="800"
+            alt="Street View panorama"
+          >
+
+          <div class="comparison-after" onclick="openPromptPicker()">
+            <img
+              id="panorama-after-image"
+              alt="Изображение после изменения"
+            >
+          </div>
+
+          <div
+            class="comparison-handle"
+            aria-label="Перетащить разделитель"
+          ></div>
+        `;
+
+      initComparisonSlider();
+    }
+
+
+    document.getElementById(
+      'panorama-controls'
+    ).style.display =
+      'block';
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     URL THUMBNAIL
+
+     Тип API здесь НЕ меняем.
+     ========================================= */
+
+  function getPanoramaImageUrl() {
+
+    return (
+      'https://streetviewpixels-pa.googleapis.com/v1/thumbnail' +
+
+      '?cb_client=maps_sv.tactile' +
+
+      '&w=1200' +
+
+      '&h=800' +
+
+      '&pitch=' +
+      encodeURIComponent(
+        panoramaPitch
+      ) +
+
+      '&panoid=' +
+      encodeURIComponent(
+        currentPanoId
+      ) +
+
+      '&yaw=' +
+      encodeURIComponent(
+        panoramaYaw
+      ) +
+
+      '&thumbfov=' +
+      encodeURIComponent(
+        panoramaFov
+      ) +
+
+      '&_=' +
+      Date.now()
+    );
+  }
+
+
+  /* =========================================
+     ОБНОВЛЕНИЕ КАРТИНКИ
+     ========================================= */
+
+  function updatePanoramaImage() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    const panoramaImage =
+      document.getElementById(
+        'panorama-final-image'
+      );
+
+
+    if (!panoramaImage) {
+      return;
+    }
+
+
+    panoramaRequestId++;
+
+
+    const thisRequestId =
+      panoramaRequestId;
+
+
+    const newImageUrl =
+      getPanoramaImageUrl();
+
+
+    const preloadImage =
+      new Image();
+
+
+    panoramaImage.classList.add(
+      'loading'
+    );
+
+
+    preloadImage.onload =
+      function () {
+
+        /*
+          Если пользователь уже нажал
+          другую стрелку, старый запрос
+          игнорируем.
+        */
+        if (
+          thisRequestId !==
+          panoramaRequestId
+        ) {
+          return;
+        }
+
+
+        panoramaImage.src =
+          newImageUrl;
+
+        const previewImage =
+          document.getElementById('panorama-after-image');
+
+        if (
+          previewImage &&
+          !document.getElementById('panorama-image').classList.contains('comparison-mode')
+        ) {
+          previewImage.src = newImageUrl;
+        }
+
+
+        requestAnimationFrame(
+          function () {
+
+            panoramaImage.classList.remove(
+              'loading'
+            );
+          }
+        );
+      };
+
+
+    preloadImage.onerror =
+      function () {
+
+        /*
+          Игнорируем старую ошибку,
+          если уже был новый запрос.
+        */
+        if (
+          thisRequestId !==
+          panoramaRequestId
+        ) {
+          return;
+        }
+
+
+        panoramaImage.classList.remove(
+          'loading'
+        );
+
+
+        document.getElementById(
+          'loading-status'
+        ).textContent =
+          'Не удалось загрузить изображение панорамы';
+
+
+        console.error(
+          'Не удалось загрузить:',
+          newImageUrl
+        );
+      };
+
+
+    preloadImage.src =
+      newImageUrl;
+
+
+    updatePanoramaValues();
+  }
+
+
+  /* =========================================
+     ТЕКУЩИЕ ПАРАМЕТРЫ
+     ========================================= */
+
+  function updatePanoramaValues() {
+
+    document.getElementById(
+      'panorama-values'
+    ).textContent =
+      `yaw: ${panoramaYaw}° | ` +
+      `pitch: ${panoramaPitch}° | ` +
+      `fov: ${panoramaFov}°`;
+  }
+
+
+  /* =========================================
+     ВЛЕВО
+     ========================================= */
+
+  function movePanoramaLeft() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    panoramaYaw -= 15;
+
+
+    if (panoramaYaw < 0) {
+      panoramaYaw += 360;
+    }
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     ВПРАВО
+     ========================================= */
+
+  function movePanoramaRight() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    panoramaYaw += 15;
+
+
+    if (panoramaYaw >= 360) {
+      panoramaYaw -= 360;
+    }
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     ВВЕРХ
+     ========================================= */
+
+  function movePanoramaUp() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    panoramaPitch += 10;
+
+
+    if (panoramaPitch > 90) {
+      panoramaPitch = 90;
+    }
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     ВНИЗ
+     ========================================= */
+
+  function movePanoramaDown() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    panoramaPitch -= 10;
+
+
+    if (panoramaPitch < -90) {
+      panoramaPitch = -90;
+    }
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     ZOOM IN
+     ========================================= */
+
+  function zoomPanoramaIn() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    panoramaFov -= 10;
+
+
+    if (panoramaFov < 20) {
+      panoramaFov = 20;
+    }
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     ZOOM OUT
+     ========================================= */
+
+  function zoomPanoramaOut() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    panoramaFov += 10;
+
+
+    if (panoramaFov > 120) {
+      panoramaFov = 120;
+    }
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     RESET
+     ========================================= */
+
+  function resetPanoramaView() {
+
+    if (!currentPanoId) {
+      return;
+    }
+
+
+    panoramaYaw = 178;
+    panoramaPitch = 0;
+    panoramaFov = 90;
+
+
+    updatePanoramaImage();
+  }
+
+
+  /* =========================================
+     URBAN
+     ========================================= */
+
+  function showUrbanResult(
+    message
+  ) {
+
+    const result =
+      document.getElementById(
+        'urban-result'
+      );
+
+
+    result.textContent =
+      message;
+
+
+    result.classList.remove(
+      'visible'
+    );
+
+
+    /*
+      Перезапускаем CSS animation.
+    */
+    void result.offsetWidth;
+
+
+    result.classList.add(
+      'visible'
+    );
+  }
+
+
+  function applyUrbanAdvice() {
+
+    document.getElementById(
+      'panorama-image'
+    ).classList.add(
+      'urban-mode'
+    );
+
+
+    showUrbanResult(
+      'Совет применён: больше зелени, спокойнее фасады и безопаснее пространство для пешеходов.'
+    );
+  }
+
+
+  function showAustriaVision() {
+
+    document.getElementById(
+      'panorama-image'
+    ).classList.add(
+      'urban-mode'
+    );
+
+
+    showUrbanResult(
+      'MVP-вид: представь аккуратную улицу с велополосой, тёплым светом и активным первым этажом — как в австрийском городе.'
+    );
+  }
+
+
+  function initComparisonSlider() {
+    const stage = document.getElementById('panorama-image');
+    const handle = stage.querySelector('.comparison-handle');
+    const overlay = stage.querySelector('.comparison-after');
+    const afterImage = stage.querySelector('#panorama-after-image');
+
+    afterImage.style.width = `${stage.clientWidth}px`;
+
+    let dragging = false;
+
+    function move(event) {
+      if (!dragging) return;
+
+      const point = event.touches ? event.touches[0] : event;
+      const rect = stage.getBoundingClientRect();
+      const percent = Math.max(
+        4,
+        Math.min(96, ((point.clientX - rect.left) / rect.width) * 100)
+      );
+
+      overlay.style.width = `${percent}%`;
+      handle.style.left = `${percent}%`;
+    }
+
+    handle.onpointerdown = function (event) {
+      dragging = true;
+      if (handle.setPointerCapture) {
+        handle.setPointerCapture(event.pointerId);
+      }
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', function () {
+      dragging = false;
+    });
+  }
+
+
+  function openPromptPicker() {
+    if (!currentPanoId) return;
+    document.getElementById('prompt-picker').classList.toggle('visible');
+  }
+
+
+  function toggleActionMenu() {
+    const panel = document.getElementById('urban-panel');
+    const collapsed = panel.classList.toggle('collapsed');
+    panel.style.display = collapsed ? 'none' : 'block';
+    panel.querySelector('.menu-toggle').textContent = collapsed
+      ? 'Открыть меню действий'
+      : 'Свернуть меню';
+  }
+
+
+  function selectPromptPreset(key) {
+    selectedPromptKey = key;
+    document.getElementById('prompt-picker').classList.remove('visible');
+    applyAiUrbanEffect();
+  }
+
+
+  async function applyAiUrbanEffect() {
+
+    if (BACKEND_URL.indexOf('PASTE_') === 0) {
+      showUrbanResult('Укажи URL Apps Script backend в BACKEND_URL.');
+      return;
+    }
+
+    const backendPrompt =
+      document.getElementById('ai-prompt').value.trim();
+
+    if (!currentPanoId || !backendPrompt) {
+      showUrbanResult('Сначала выбери точку и введи запрос.');
+      return;
+    }
+
+    showUrbanResult('Генерирую изображение через Apps Script…');
+
+    try {
+      const clientId = localStorage.getItem('subotica_client_id') ||
+        (function () {
+          const id = 'client_' + Math.random().toString(36).slice(2);
+          localStorage.setItem('subotica_client_id', id);
+          return id;
+        }());
+
+      const authorization = await callBackendJsonp({
+        action: 'authorize',
+        lat: document.getElementById('latitude').value,
+        lng: document.getElementById('longitude').value,
+        clientId: clientId
+      });
+
+      if (!authorization.ok) throw new Error(authorization.error);
+      streetViewToken = authorization.token;
+
+      const result = await callBackendJsonp({
+        action: 'generate',
+        panoId: currentPanoId,
+        token: streetViewToken,
+        yaw: panoramaYaw,
+        pitch: panoramaPitch,
+        fov: panoramaFov,
+        promptKey: selectedPromptKey,
+        detail: backendPrompt.slice(0, 180),
+        clientId: clientId
+      });
+
+      if (!result.ok) throw new Error(result.error);
+      const generated = document.getElementById('panorama-after-image');
+      if (!generated) throw new Error('Панорама ещё не готова.');
+      generated.src = 'data:' +
+        (result.image.media_type || 'image/png') +
+        ';base64,' + result.image.b64_json;
+      document.getElementById('panorama-image').classList.add('comparison-mode');
+      showUrbanResult('Готово — результат создан сервером.');
+    } catch (error) {
+      showUrbanResult('Ошибка backend: ' + error.message);
+    }
+
+    return;
+
+    const key =
+      document.getElementById('openrouter-key').value.trim();
+
+    const prompt =
+      document.getElementById('ai-prompt').value.trim();
+
+    const source =
+      document.getElementById('panorama-final-image');
+
+    if (!key || !prompt) {
+      showUrbanResult('Введи ключ и текстовый запрос.');
+      return;
+    }
+
+    if (!source || !source.src) {
+      showUrbanResult('Сначала выбери точку и дождись панорамы.');
+      return;
+    }
+
+    showUrbanResult('Генерирую австрийский вариант…');
+
+    try {
+      const response = await fetch(
+        'https://openrouter.ai/api/v1/images',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: document.getElementById('image-model').value,
+            prompt: prompt,
+            input_references: [
+              {
+                type: 'image_url',
+                image_url: { url: source.src }
+              }
+            ],
+            aspect_ratio: '3:2',
+            quality: 'auto',
+            n: 1
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          (result.error && result.error.message) ||
+          `HTTP ${response.status}`
+        );
+      }
+
+      const image = result.data && result.data[0];
+
+      if (!image || !image.b64_json) {
+        throw new Error('OpenRouter не вернул изображение');
+      }
+
+      const generated =
+        document.getElementById('panorama-after-image');
+
+      if (!generated) {
+        throw new Error('Сначала выбери точку и дождись панорамы');
+      }
+
+      generated.src =
+        `data:${image.media_type || 'image/png'};base64,${image.b64_json}`;
+
+      document.getElementById('panorama-image').classList.add('comparison-mode');
+
+      showUrbanResult('Готово — австрийский вариант создан.');
+
+    } catch (error) {
+      showUrbanResult(`Ошибка OpenRouter: ${error.message}`);
+    }
+  }
+
+
+  function saveVerticalCollage() {
+    const before = document.getElementById('panorama-final-image');
+    const after = document.getElementById('panorama-after-image');
+
+    if (!before || !before.src || !after || !after.src) {
+      showUrbanResult('Сначала создай изображение после изменения.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 1600;
+    const context = canvas.getContext('2d');
+    const first = new Image();
+    const second = new Image();
+    let loaded = 0;
+
+    function drawCollage() {
+      loaded += 1;
+      if (loaded < 2) return;
+
+      context.fillStyle = '#17202a';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(first, 0, 0, canvas.width, 800);
+      context.drawImage(second, 0, 800, canvas.width, 800);
+
+      const link = document.createElement('a');
+      try {
+        link.download = 'urban-before-after-collage.jpg';
+        link.href = canvas.toDataURL('image/jpeg', 0.92);
+      } catch (error) {
+        showUrbanResult('JPEG заблокирован браузером: Street View не разрешил чтение внешней картинки.');
+        return;
+      }
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showUrbanResult('Коллаж скачан: было сверху, стало снизу.');
+    }
+
+    first.crossOrigin = 'anonymous';
+    second.crossOrigin = 'anonymous';
+    first.onload = drawCollage;
+    second.onload = drawCollage;
+    first.onerror = second.onerror = function () {
+      showUrbanResult('Не удалось собрать коллаж.');
+    };
+    first.src = before.src;
+    second.src = after.src;
+  }
+
+
+  function exportUrbanAnimation() {
+    const source = document.getElementById('panorama-final-image');
+    const effect = document.getElementById('panorama-after-image');
+    const button = document.querySelector('.urban-panel button.export');
+
+    if (!source || !source.src || !effect || !effect.src) {
+      showUrbanResult('Сначала создай изображение после изменения.');
+      return;
+    }
+
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      showUrbanResult('Этот браузер не поддерживает экспорт видео.');
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Готовлю видео…';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 480;
+
+    const ctx = canvas.getContext('2d');
+    const before = new Image();
+    const after = new Image();
+    before.crossOrigin = 'anonymous';
+    after.crossOrigin = 'anonymous';
+
+    let loaded = 0;
+    const start = function () {
+      loaded += 1;
+      if (loaded < 2) return;
+
+      const stream = canvas.captureStream(30);
+      const type = MediaRecorder.isTypeSupported('video/mp4')
+        ? 'video/mp4'
+        : 'video/webm';
+      const recorder = new MediaRecorder(stream, { mimeType: type });
+      const chunks = [];
+
+      recorder.ondataavailable = function (event) {
+        if (event.data.size) chunks.push(event.data);
+      };
+
+      recorder.onstop = function () {
+        const blob = new Blob(chunks, { type: type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = type === 'video/mp4'
+          ? 'urban-before-after.mp4'
+          : 'urban-before-after.webm';
+        link.click();
+        URL.revokeObjectURL(url);
+        button.disabled = false;
+        button.textContent = 'Сохранить анимацию';
+        showUrbanResult('Анимация скачана.');
+      };
+
+      const started = performance.now();
+      const duration = 6000;
+      recorder.start();
+
+      function draw(now) {
+        const phase = Math.min((now - started) / duration, 1);
+        const wave = (Math.sin(phase * Math.PI * 4 - Math.PI / 2) + 1) / 2;
+        const split = 0.08 + wave * 0.84;
+
+        ctx.filter = 'none';
+        ctx.drawImage(before, 0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width * split, canvas.height);
+        ctx.clip();
+        ctx.drawImage(after, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(canvas.width * split - 2, 0, 4, canvas.height);
+
+        if (phase < 1) requestAnimationFrame(draw);
+        else recorder.stop();
+      }
+
+      requestAnimationFrame(draw);
+    };
+
+    before.onload = start;
+    after.onload = start;
+    before.onerror = after.onerror = function () {
+      button.disabled = false;
+      button.textContent = 'Сохранить анимацию';
+      showUrbanResult('Не удалось подготовить видео.');
+    };
+    before.src = source.src;
+    after.src = effect.src;
+  }
+
+
+  /* =========================================
+     КРИТИЧЕСКИ ВАЖНО ДЛЯ
+     GOOGLE APPS SCRIPT HTML SERVICE
+
+     onclick="toggleMap()" ищет функцию
+     в глобальном window.
+
+     Поэтому явно помещаем функции туда.
+     ========================================= */
+
+  window.toggleMap =
+    toggleMap;
+
+  window.generateStreetViews =
+    generateStreetViews;
+
+  window.showPanoramaImage =
+    showPanoramaImage;
+
+  window.movePanoramaLeft =
+    movePanoramaLeft;
+
+  window.movePanoramaRight =
+    movePanoramaRight;
+
+  window.movePanoramaUp =
+    movePanoramaUp;
+
+  window.movePanoramaDown =
+    movePanoramaDown;
+
+  window.zoomPanoramaIn =
+    zoomPanoramaIn;
+
+  window.zoomPanoramaOut =
+    zoomPanoramaOut;
+
+  window.resetPanoramaView =
+    resetPanoramaView;
+
+  window.applyUrbanAdvice =
+    applyUrbanAdvice;
+
+  window.showAustriaVision =
+    showAustriaVision;
+
+  window.applyAiUrbanEffect =
+    applyAiUrbanEffect;
+
+  window.openPromptPicker =
+    openPromptPicker;
+
+  window.selectPromptPreset =
+    selectPromptPreset;
+
+  window.toggleActionMenu =
+    toggleActionMenu;
+
+  window.exportUrbanAnimation =
+    exportUrbanAnimation;
+
+  window.saveVerticalCollage =
+    saveVerticalCollage;
+
+
+  /* =========================================
+     ЗАПУСК
+     ========================================= */
+
+  function initialize() {
+
+    console.log(
+      'App initialization...'
+    );
+
+
+    console.log(
+      'Leaflet:',
+      typeof L !== 'undefined'
+    );
+
+
+    console.log(
+      'Google Maps:',
+      typeof google !== 'undefined' &&
+      !!google.maps
+    );
+
+
+    initializeMap();
+  }
+
+
+  /*
+    HTML находится выше скрипта,
+    поэтому DOM уже существует.
+
+    Но DOMContentLoaded оставляем
+    как дополнительную страховку.
+  */
+  if (
+    document.readyState === 'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      initialize
+    );
+
+  } else {
+
+    initialize();
+  }
+
+})();
+
+</script>
+
+</body>
+</html>
