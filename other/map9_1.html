@@ -555,9 +555,9 @@
   const animationWidth = 960;
   const animationHeight = 660;
   const animationExportWidth = 1200;
-  const animationExportHeight = 824;
+  const animationExportHeight = 800;
   const animationFrameWidth = 600;
-  const animationFrameHeight = 412;
+  const animationFrameHeight = 400;
   const animationFps = 25;
   const animationFrameCount = 125;
   const animationDuration = 5000;
@@ -663,7 +663,7 @@
       prepareNext();
     });
   }
-  async function encodeAnimationWithWebCodecs(frames) {
+  async function encodeAnimationWithWebCodecs(images) {
     if (!window.VideoEncoder || !window.VideoFrame) throw new Error('WebCodecs nije dostupan.');
     const muxerModule = await import('https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/+esm');
     const Muxer = muxerModule.Muxer;
@@ -696,8 +696,9 @@
     canvas.height = animationExportHeight;
     const context = canvas.getContext('2d');
     const frameDuration = 1_000_000 / animationFps;
-    for (let index = 0; index < frames.length; index += 1) {
-      context.drawImage(frames[index], 0, 0, animationExportWidth, animationExportHeight);
+    for (let index = 0; index < animationFrameCount; index += 1) {
+      const split = animationSplit(index / (animationFrameCount - 1) * animationDuration);
+      drawAnimationFrameAt(context, images, split, animationExportWidth, animationExportHeight);
       const videoFrame = new VideoFrame(canvas, {
         timestamp: Math.round(index * frameDuration),
         duration: Math.round(frameDuration)
@@ -705,7 +706,7 @@
       encoder.encode(videoFrame, { keyFrame: index === 0 });
       videoFrame.close();
       if (encoder.encodeQueueSize > 4) await new Promise(function (resolve) { encoder.addEventListener('dequeue', resolve, { once: true }); });
-      setVideoExportProgress(index + 1, frames.length, true);
+      setVideoExportProgress(index + 1, animationFrameCount, true);
     }
     await encoder.flush();
     encoder.close();
@@ -734,14 +735,14 @@
     button.textContent = 'Pripremam video…';
     cancelAnimationFrame(animationPreviewFrame);
     setVideoExportBusy(true);
-    loadAnimationImages().then(prepareAnimationFrames).then(function (frames) {
-      setVideoExportProgress(0, frames.length, true);
-      return encodeAnimationWithWebCodecs(frames).then(function (blob) {
+    loadAnimationImages().then(function (images) {
+      setVideoExportProgress(0, animationFrameCount, true);
+      return encodeAnimationWithWebCodecs(images).then(function (blob) {
         downloadAnimationBlob(blob);
         return true;
       }).catch(function (error) {
         console.warn('WebCodecs MP4 export failed, using MediaRecorder fallback:', error);
-        return saveAnimationWithMediaRecorder(frames);
+        return prepareAnimationFrames(images).then(saveAnimationWithMediaRecorder);
       });
     }).then(function () {
       setVideoExportBusy(false);
