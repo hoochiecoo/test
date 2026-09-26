@@ -142,21 +142,6 @@
     .share-actions button { min-height: 52px; border-radius: 17px; background: var(--soft); font-weight: 650; }
     .share-actions .save, .share-actions .save-video { grid-column: 1 / -1; background: var(--accent); color: var(--accent-dark); }
     .share-actions .save-video { background: #dcecff; color: #17375e; }
-    .edit-button { width: 100%; min-height: 48px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--soft); font-weight: 600; }
-    .editor-modal { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; padding: 16px; background: rgba(22,22,22,.52); backdrop-filter: blur(8px); }
-    .editor-modal.visible { display: grid; }
-    .editor-dialog { width: min(100%, 420px); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 20px 14px 14px; border-radius: 26px; background: var(--card); box-shadow: 0 18px 60px rgba(0,0,0,.22); }
-    .editor-dialog h2 { margin: 0 0 5px; font-size: 20px; font-weight: 650; }
-    .editor-dialog p { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.35; }
-    .editor-stage { position: relative; overflow: hidden; border-radius: 18px; background: #ddd; touch-action: none; }
-    .editor-stage img, .editor-stage canvas { display: block; width: 100%; aspect-ratio: 1200 / 825; }
-    .editor-stage canvas { position: absolute; inset: 0; height: 100%; cursor: crosshair; }
-    .editor-tools { display: grid; grid-template-columns: 1fr 42px 42px; gap: 7px; margin-top: 10px; }
-    .editor-tools button { min-height: 42px; border-radius: 14px; background: var(--soft); font-size: 13px; font-weight: 600; }
-    .editor-tools .active { background: var(--accent); color: var(--accent-dark); }
-    .editor-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 10px; }
-    .editor-actions button { min-height: 50px; border-radius: 16px; background: var(--soft); font-weight: 650; }
-    .editor-actions .apply { background: var(--accent); color: var(--accent-dark); }
     @media (max-width: 360px) { .app { padding-left: 12px; padding-right: 12px; } .mode-row { padding-left: 10px; padding-right: 10px; } }
   </style>
 </head>
@@ -228,26 +213,6 @@
   </section>
 </div>
 
-<div id="editor-modal" class="editor-modal" aria-hidden="true">
-  <section class="editor-dialog" role="dialog" aria-modal="true" aria-labelledby="editor-title">
-    <h2 id="editor-title">Označite šta treba promeniti</h2>
-    <p>Obiđite deo koji želite da unapredimo ili ga označite slobodnim potezom.</p>
-    <div id="editor-stage" class="editor-stage">
-      <img id="editor-image" alt="Panorama za označavanje">
-      <canvas id="editor-canvas" width="1200" height="825" aria-label="Platno za označavanje"></canvas>
-    </div>
-    <div class="editor-tools">
-      <button type="button" class="active">✏️ Crtaj</button>
-      <button type="button" onclick="undoEditorStroke()" aria-label="Poništi poslednju oznaku">↶</button>
-      <button type="button" onclick="clearEditor()" aria-label="Obriši sve oznake">⌫</button>
-    </div>
-    <div class="editor-actions">
-      <button type="button" onclick="closeEditor()">Otkaži</button>
-      <button class="apply" type="button" onclick="applyEditor()">Gotovo — izaberi poboljšanje</button>
-    </div>
-  </section>
-</div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
 <script>
@@ -277,9 +242,6 @@
   let countries = [];
   let solutionCategories = [];
   let selectedSolutionCategory = 'all';
-  let annotationStrokes = [];
-  let editorPointerId = null;
-  let editorActiveStroke = null;
 
   function $(id) { return document.getElementById(id); }
   function clientId() {
@@ -374,7 +336,6 @@
     });
   }
   function showPanorama(pano) {
-    annotationStrokes = [];
     panoId = pano;
     yaw = 178; pitch = 0; fov = 90;
     syncShareUrl();
@@ -445,93 +406,7 @@
     });
     history.replaceState(null, '', location.pathname + '?' + params.toString());
   }
-  function updateBefore() { if (panoId) { annotationStrokes = []; $('before-image').src = imageUrl(); syncShareUrl(); } }
-  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
-  function editorPoint(event) {
-    const rect = $('editor-canvas').getBoundingClientRect();
-    return {
-      x: clamp((event.clientX - rect.left) / rect.width, 0, 1),
-      y: clamp((event.clientY - rect.top) / rect.height, 0, 1)
-    };
-  }
-  function drawEditorStroke(context, stroke) {
-    const width = 1200;
-    const height = 825;
-    context.beginPath();
-    if (stroke.points.length) {
-      context.moveTo(stroke.points[0].x * width, stroke.points[0].y * height);
-      stroke.points.slice(1).forEach(function (point) { context.lineTo(point.x * width, point.y * height); });
-    }
-    context.stroke();
-  }
-  function drawEditor() {
-    const canvas = $('editor-canvas');
-    if (!canvas) return;
-    const context = canvas.getContext('2d');
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.strokeStyle = '#ef4444';
-    context.lineWidth = 9;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    annotationStrokes.forEach(function (stroke) { drawEditorStroke(context, stroke); });
-    if (editorActiveStroke) drawEditorStroke(context, editorActiveStroke);
-  }
-  function finishEditorStroke(event) {
-    if (editorPointerId !== event.pointerId) return;
-    if (editorActiveStroke && editorActiveStroke.points.length > 1) annotationStrokes.push(editorActiveStroke);
-    editorActiveStroke = null;
-    editorPointerId = null;
-    drawEditor();
-  }
-  function initEditorCanvas() {
-    const canvas = $('editor-canvas');
-    canvas.addEventListener('pointerdown', function (event) {
-      event.preventDefault();
-      editorPointerId = event.pointerId;
-      canvas.setPointerCapture(event.pointerId);
-      const point = editorPoint(event);
-      editorActiveStroke = { type: 'brush', points: [point] };
-      drawEditor();
-    });
-    canvas.addEventListener('pointermove', function (event) {
-      if (editorPointerId !== event.pointerId || !editorActiveStroke) return;
-      event.preventDefault();
-      const point = editorPoint(event);
-      const last = editorActiveStroke.points[editorActiveStroke.points.length - 1];
-      if (Math.hypot(point.x - last.x, point.y - last.y) > .004) editorActiveStroke.points.push(point);
-      drawEditor();
-    });
-    canvas.addEventListener('pointerup', finishEditorStroke);
-    canvas.addEventListener('pointercancel', finishEditorStroke);
-  }
-  function editorAnnotationPayload() {
-    return JSON.stringify(annotationStrokes.map(function (stroke) {
-      return { type: 'brush', points: stroke.points.filter(function (_, index) { return index % 2 === 0 || index === stroke.points.length - 1; }).slice(0, 80) };
-    }));
-  }
-  window.openEditor = function () {
-    if (!panoId) { openModeMenu(); return; }
-    $('editor-image').src = imageUrl();
-    $('editor-modal').classList.add('visible');
-    $('editor-modal').setAttribute('aria-hidden', 'false');
-    document.body.classList.add('modal-open');
-    drawEditor();
-  };
-  window.closeEditor = function () {
-    $('editor-modal').classList.remove('visible');
-    $('editor-modal').setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('modal-open');
-    editorActiveStroke = null;
-    editorPointerId = null;
-    drawEditor();
-  };
-  window.undoEditorStroke = function () { annotationStrokes.pop(); drawEditor(); };
-  window.clearEditor = function () { annotationStrokes = []; drawEditor(); };
-  window.applyEditor = function () {
-    closeEditor();
-    openModeMenu();
-  };
-  initEditorCanvas();
+  function updateBefore() { if (panoId) { $('before-image').src = imageUrl(); syncShareUrl(); } }
   window.moveLeft = function () { yaw = (yaw + 345) % 360; updateBefore(); };
   window.moveRight = function () { yaw = (yaw + 15) % 360; updateBefore(); };
   window.moveUp = function () { pitch = Math.min(90, pitch + 10); updateBefore(); };
@@ -540,7 +415,7 @@
   window.zoomOut = function () { fov = Math.min(120, fov + 10); updateBefore(); };
   function renderHome() {
     $('sheet').classList.remove('expanded', 'folded'); $('sheet').style.transform = '';
-    $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Nasumično poboljšanje</h2><p class="sheet-subtitle">Izabraćemo osnovno poboljšanje za ovo mesto</p><button class="edit-button" type="button" onclick="openEditor()">✏️ Označi deo pre poboljšanja</button><button class="primary" onclick="generateImprovement(\'austria\', \'Učini mesto prijatnijim, zelenijim i udobnijim za ljude\')">Poboljšaj ovo mesto</button><button class="random-point" type="button" onclick="chooseRandomPoint()">🎲 Izaberi slučajnu tačku u Subotici</button><button class="text-button" onclick="openModeMenu()">Želim nešto posebno <span class="chevron">⌃</span></button>';
+    $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Nasumično poboljšanje</h2><p class="sheet-subtitle">Izabraćemo osnovno poboljšanje za ovo mesto</p><button class="primary" onclick="generateImprovement(\'austria\', \'Učini mesto prijatnijim, zelenijim i udobnijim za ljude\')">Poboljšaj ovo mesto</button><button class="random-point" type="button" onclick="chooseRandomPoint()">🎲 Izaberi slučajnu tačku u Subotici</button><button class="text-button" onclick="openModeMenu()">Želim nešto posebno <span class="chevron">⌃</span></button>';
   }
   window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openProblems()"><span class="mode-icon">⚠️</span><span><strong>Problem</strong><small>Izaberite šta trenutno ne radi dobro</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><p style="margin-top:18px">Kako bi ovo moglo da izgleda?</p><div class="countries">' + countryMarkup() + '</div>'; };
   window.selectCountry = function (button, value) { country = value; document.querySelectorAll('.country').forEach(function (item) { item.classList.remove('active'); }); button.classList.add('active'); };
@@ -744,7 +619,6 @@
   async function generateImprovement(promptId, detail, selections) {
     selections = selections || {};
     const annotateForRequest = annotateChanges;
-    const annotation = editorAnnotationPayload();
     if (!panoId) { openModeMenu(); return; }
     setBusy(true);
     $('after-placeholder').className = 'after-placeholder loading-shimmer';
@@ -757,7 +631,7 @@
         promptId: promptId, peopleIds: JSON.stringify(selections.peopleIds || []),
         improvementIds: JSON.stringify(selections.improvementIds || []), problemIds: JSON.stringify(selections.problemIds || []), countryId: country,
         annotateChanges: String(annotateForRequest),
-        detail: String(detail || '').slice(0, 180), annotation: annotation, clientId: clientId()
+        detail: String(detail || '').slice(0, 180), clientId: clientId()
       });
       if (!result.ok) throw new Error(result.error);
       $('after-placeholder').style.display = 'none';
