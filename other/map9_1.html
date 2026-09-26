@@ -128,6 +128,12 @@
     .country-row.active { border-color: #9ac934; background: #effacb; }
     .country-row strong { font-size: 14px; font-weight: 600; }
     .country-row .country-check { color: #42620d; font-size: 18px; }
+    .urbanist-list { display: grid; gap: 10px; margin-top: 12px; }
+    .urbanist-card { padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); }
+    .urbanist-card h3 { margin: 0; font-size: 15px; }
+    .urbanist-card .urbanist-place { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .urbanist-card ul { margin: 10px 0 0; padding-left: 18px; color: var(--text); font-size: 13px; line-height: 1.4; }
+    .urbanist-card li + li { margin-top: 6px; }
     .result { display: grid; gap: 10px; }
     .result-title { text-align: center; font-size: 17px; font-weight: 600; }
     .result-subtitle { margin: -2px 0 2px; color: var(--muted); text-align: center; font-size: 13px; line-height: 1.35; }
@@ -268,6 +274,7 @@
   let solutions = [];
   let problems = [];
   let countries = [];
+  let urbanists = [];
   let solutionCategories = [];
   let selectedSolutionCategory = 'all';
   let randomChoices = [];
@@ -301,6 +308,7 @@
       solutionCategories = data.improvementCategories || [];
       problems = data.problems || [];
       countries = data.countries || [];
+      urbanists = data.urbanists || [];
       return data;
     }).catch(function (error) {
       console.error('Opcije:', error);
@@ -318,6 +326,17 @@
     const selected = countries.find(function (item) { return item.id === country; });
     return selected ? selected.label : 'Bez reference';
   }
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
+  }
+  window.openUrbanists = function () {
+    mode = 'urbanists';
+    $('sheet-content').innerHTML = '<button class="back" type="button" onclick="backToModeMenu()"><b>‹</b>Nazad</button><h2>Urbanisti</h2><p>Sažeti prioriteti savremenih urbanista. Ovo nisu doslovni citati niti rangiranje.</p><div class="urbanist-list">' + urbanists.map(function (urbanist) {
+      return '<article class="urbanist-card"><h3>' + escapeHtml(urbanist.name) + '</h3><span class="urbanist-place">' + escapeHtml(urbanist.place) + '</span><ul>' + (urbanist.points || []).map(function (point) { return '<li>' + escapeHtml(point) + '</li>'; }).join('') + '</ul></article>';
+    }).join('') + '</div>';
+  };
   function renderCountries() {
     $('sheet-content').innerHTML = '<button class="back" type="button" onclick="backToModeMenu()"><b>‹</b>Nazad</button><h2>Zemlja i stil</h2><p>Izaberite zemlju kao konkretnu referencu za javni prostor.</p><input id="country-search" class="search" value="' + countrySearch.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" placeholder="🔎  Pronađi zemlju"><div id="country-list" class="country-list">' + countryListMarkup() + '</div>';
     $('country-search').addEventListener('input', function (event) {
@@ -462,7 +481,7 @@
     $('sheet').classList.remove('expanded', 'folded'); $('sheet').style.transform = '';
     $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Nasumično poboljšanje</h2><p class="sheet-subtitle">Izabraćemo osnovno poboljšanje za ovo mesto</p><button class="primary" onclick="generateImprovement(\'custom\', \'Učini mesto prijatnijim, zelenijim i udobnijim za ljude\')">Poboljšaj ovo mesto</button><button class="evaluate-button" type="button" onclick="generateImprovement(\'urban_evaluation\', \'\')">🔎 Uradi urbanističku procenu</button><button class="random-point" type="button" onclick="openRandom()">🎲 Izaberi slučajno poboljšanje</button><button class="random-point" type="button" onclick="chooseRandomPoint()">⌖ Izaberi slučajnu tačku u Subotici</button><button class="text-button" onclick="openModeMenu()">Želim nešto posebno <span class="chevron">⌃</span></button>';
   }
-  window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openProblems()"><span class="mode-icon">⚠️</span><span><strong>Problem</strong><small>Izaberite šta trenutno ne radi dobro</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="generateImprovement(\'urban_evaluation\', \'\')"><span class="mode-icon">🔎</span><span><strong>Urbanistička procena</strong><small>Označi probleme na ovoj panorami i potpiši ih</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><button class="mode-row" style="margin-top:16px" onclick="openCountries()"><span class="mode-icon">🌍</span><span><strong>Zemlja i stil</strong><small>' + selectedCountryLabel() + '</small></span><span class="arrow">›</span></button>'; };
+  window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openProblems()"><span class="mode-icon">⚠️</span><span><strong>Problem</strong><small>Izaberite šta trenutno ne radi dobro</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="generateImprovement(\'urban_evaluation\', \'\')"><span class="mode-icon">🔎</span><span><strong>Urbanistička procena</strong><small>Označi probleme na ovoj panorami i potpiši ih</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openUrbanists()"><span class="mode-icon">💬</span><span><strong>Urbanisti</strong><small>Ideje i prioriteti savremenih urbanista</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><button class="mode-row" style="margin-top:16px" onclick="openCountries()"><span class="mode-icon">🌍</span><span><strong>Zemlja i stil</strong><small>' + selectedCountryLabel() + '</small></span><span class="arrow">›</span></button>'; };
   window.selectCountry = function (value) {
     country = value;
     countrySearch = '';
