@@ -122,6 +122,11 @@
     .countries { display: flex; gap: 8px; overflow-x: auto; margin: 12px 0 16px; padding-bottom: 2px; scrollbar-width: none; }
     .country { flex: 0 0 auto; padding: 9px 11px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); font-size: 12px; }
     .country.active { border-color: #9ac934; background: #effacb; }
+    .country-list { display: grid; gap: 7px; max-height: 430px; overflow-y: auto; margin-top: 12px; }
+    .country-row { display: grid; grid-template-columns: 30px 1fr 20px; align-items: center; gap: 9px; min-height: 52px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); text-align: left; }
+    .country-row.active { border-color: #9ac934; background: #effacb; }
+    .country-row strong { font-size: 14px; font-weight: 600; }
+    .country-row .country-check { color: #42620d; font-size: 18px; }
     .result { display: grid; gap: 10px; }
     .result-title { text-align: center; font-size: 17px; font-weight: 600; }
     .result-subtitle { margin: -2px 0 2px; color: var(--muted); text-align: center; font-size: 13px; line-height: 1.35; }
@@ -301,11 +306,26 @@
       return null;
     });
   }
-  function countryMarkup() {
-    return countries.map(function (item, index) {
-      return '<button class="country ' + (item.id === country || (!country && index === 0) ? 'active' : '') + '" onclick="selectCountry(this, &quot;' + item.id + '&quot;)">' + (item.icon ? item.icon + ' ' : '') + item.label + '</button>';
+  let countrySearch = '';
+  function countryListMarkup() {
+    const query = countrySearch.trim().toLowerCase();
+    return countries.filter(function (item) { return !query || item.label.toLowerCase().indexOf(query) !== -1; }).map(function (item) {
+      return '<button class="country-row ' + (item.id === country ? 'active' : '') + '" type="button" onclick="selectCountry(\'' + item.id + '\')"><span>' + (item.icon || '🌍') + '</span><strong>' + item.label + '</strong><span class="country-check">' + (item.id === country ? '✓' : '') + '</span></button>';
     }).join('');
   }
+  function selectedCountryLabel() {
+    const selected = countries.find(function (item) { return item.id === country; });
+    return selected ? selected.label : 'Bez reference';
+  }
+  function renderCountries() {
+    $('sheet-content').innerHTML = '<button class="back" type="button" onclick="backToModeMenu()"><b>‹</b>Nazad</button><h2>Zemlja i stil</h2><p>Izaberite zemlju kao konkretnu referencu za javni prostor.</p><input id="country-search" class="search" value="' + countrySearch.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" placeholder="🔎  Pronađi zemlju"><div id="country-list" class="country-list">' + countryListMarkup() + '</div>';
+    $('country-search').addEventListener('input', function (event) {
+      countrySearch = event.target.value || '';
+      $('country-list').innerHTML = countryListMarkup();
+    });
+  }
+  window.openCountries = function () { mode = 'countries'; countrySearch = ''; renderCountries(); };
+  window.backToModeMenu = function () { countrySearch = ''; openModeMenu(); };
   function solutionCategoryMarkup() {
     return solutionCategories.map(function (item) {
       return '<button class="category ' + (item.id === selectedSolutionCategory ? 'active' : '') + '" type="button" onclick="selectSolutionCategory(this, &quot;' + item.id + '&quot;)">' + item.label + '</button>';
@@ -441,8 +461,8 @@
     $('sheet').classList.remove('expanded', 'folded'); $('sheet').style.transform = '';
     $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Nasumično poboljšanje</h2><p class="sheet-subtitle">Izabraćemo osnovno poboljšanje za ovo mesto</p><button class="primary" onclick="generateImprovement(\'custom\', \'Učini mesto prijatnijim, zelenijim i udobnijim za ljude\')">Poboljšaj ovo mesto</button><button class="random-point" type="button" onclick="openRandom()">🎲 Izaberi slučajno poboljšanje</button><button class="random-point" type="button" onclick="chooseRandomPoint()">⌖ Izaberi slučajnu tačku u Subotici</button><button class="text-button" onclick="openModeMenu()">Želim nešto posebno <span class="chevron">⌃</span></button>';
   }
-  window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openProblems()"><span class="mode-icon">⚠️</span><span><strong>Problem</strong><small>Izaberite šta trenutno ne radi dobro</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><p style="margin-top:18px">Kako bi ovo moglo da izgleda?</p><div class="countries">' + countryMarkup() + '</div>'; };
-  window.selectCountry = function (button, value) { country = value; document.querySelectorAll('.country').forEach(function (item) { item.classList.remove('active'); }); button.classList.add('active'); };
+  window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openProblems()"><span class="mode-icon">⚠️</span><span><strong>Problem</strong><small>Izaberite šta trenutno ne radi dobro</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><button class="mode-row" style="margin-top:16px" onclick="openCountries()"><span class="mode-icon">🌍</span><span><strong>Zemlja i stil</strong><small>' + selectedCountryLabel() + '</small></span><span class="arrow">›</span></button>'; };
+  window.selectCountry = function (value) { country = value; countrySearch = ''; openModeMenu(); };
   window.openMapPicker = function () {
     $('map-card').style.display = 'block';
     $('before-image').style.display = 'none';
