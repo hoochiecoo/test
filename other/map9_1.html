@@ -151,7 +151,7 @@
     .editor-stage { position: relative; overflow: hidden; border-radius: 18px; background: #ddd; touch-action: none; }
     .editor-stage img, .editor-stage canvas { display: block; width: 100%; aspect-ratio: 1200 / 825; }
     .editor-stage canvas { position: absolute; inset: 0; height: 100%; cursor: crosshair; }
-    .editor-tools { display: grid; grid-template-columns: 1fr 1fr 42px 42px; gap: 7px; margin-top: 10px; }
+    .editor-tools { display: grid; grid-template-columns: 1fr 42px 42px; gap: 7px; margin-top: 10px; }
     .editor-tools button { min-height: 42px; border-radius: 14px; background: var(--soft); font-size: 13px; font-weight: 600; }
     .editor-tools .active { background: var(--accent); color: var(--accent-dark); }
     .editor-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 10px; }
@@ -237,8 +237,7 @@
       <canvas id="editor-canvas" width="1200" height="825" aria-label="Platno za označavanje"></canvas>
     </div>
     <div class="editor-tools">
-      <button id="editor-brush" type="button" class="active" onclick="setEditorTool('brush')">✏️ Crtaj</button>
-      <button id="editor-circle" type="button" onclick="setEditorTool('circle')">◯ Kružni izbor</button>
+      <button type="button" class="active">✏️ Crtaj</button>
       <button type="button" onclick="undoEditorStroke()" aria-label="Poništi poslednju oznaku">↶</button>
       <button type="button" onclick="clearEditor()" aria-label="Obriši sve oznake">⌫</button>
     </div>
@@ -279,11 +278,8 @@
   let solutionCategories = [];
   let selectedSolutionCategory = 'all';
   let annotationStrokes = [];
-  let editorTool = 'brush';
   let editorPointerId = null;
   let editorActiveStroke = null;
-  let editorStartPoint = null;
-  let editorPreviewPoint = null;
 
   function $(id) { return document.getElementById(id); }
   function clientId() {
@@ -462,13 +458,7 @@
     const width = 1200;
     const height = 825;
     context.beginPath();
-    if (stroke.type === 'circle') {
-      const x = Math.min(stroke.start.x, stroke.end.x) * width;
-      const y = Math.min(stroke.start.y, stroke.end.y) * height;
-      const w = Math.abs(stroke.end.x - stroke.start.x) * width;
-      const h = Math.abs(stroke.end.y - stroke.start.y) * height;
-      context.ellipse(x + w / 2, y + h / 2, Math.max(w / 2, 3), Math.max(h / 2, 3), 0, 0, Math.PI * 2);
-    } else if (stroke.points.length) {
+    if (stroke.points.length) {
       context.moveTo(stroke.points[0].x * width, stroke.points[0].y * height);
       stroke.points.slice(1).forEach(function (point) { context.lineTo(point.x * width, point.y * height); });
     }
@@ -484,24 +474,12 @@
     context.lineCap = 'round';
     context.lineJoin = 'round';
     annotationStrokes.forEach(function (stroke) { drawEditorStroke(context, stroke); });
-    if (editorActiveStroke) {
-      drawEditorStroke(context, editorActiveStroke);
-      if (editorActiveStroke.type === 'circle' && editorPreviewPoint) {
-        drawEditorStroke(context, { type: 'circle', start: editorStartPoint, end: editorPreviewPoint });
-      }
-    }
+    if (editorActiveStroke) drawEditorStroke(context, editorActiveStroke);
   }
   function finishEditorStroke(event) {
     if (editorPointerId !== event.pointerId) return;
-    if (editorActiveStroke) {
-      if (editorActiveStroke.type === 'brush' && editorActiveStroke.points.length > 1) annotationStrokes.push(editorActiveStroke);
-      if (editorActiveStroke.type === 'circle' && editorStartPoint && editorPreviewPoint && (Math.abs(editorStartPoint.x - editorPreviewPoint.x) > .015 || Math.abs(editorStartPoint.y - editorPreviewPoint.y) > .015)) {
-        annotationStrokes.push({ type: 'circle', start: editorStartPoint, end: editorPreviewPoint });
-      }
-    }
+    if (editorActiveStroke && editorActiveStroke.points.length > 1) annotationStrokes.push(editorActiveStroke);
     editorActiveStroke = null;
-    editorStartPoint = null;
-    editorPreviewPoint = null;
     editorPointerId = null;
     drawEditor();
   }
@@ -512,21 +490,15 @@
       editorPointerId = event.pointerId;
       canvas.setPointerCapture(event.pointerId);
       const point = editorPoint(event);
-      editorStartPoint = point;
-      editorPreviewPoint = point;
-      editorActiveStroke = editorTool === 'circle' ? { type: 'circle', start: point, end: point } : { type: 'brush', points: [point] };
+      editorActiveStroke = { type: 'brush', points: [point] };
       drawEditor();
     });
     canvas.addEventListener('pointermove', function (event) {
       if (editorPointerId !== event.pointerId || !editorActiveStroke) return;
       event.preventDefault();
       const point = editorPoint(event);
-      editorPreviewPoint = point;
-      if (editorActiveStroke.type === 'circle') editorActiveStroke.end = point;
-      else {
-        const last = editorActiveStroke.points[editorActiveStroke.points.length - 1];
-        if (Math.hypot(point.x - last.x, point.y - last.y) > .004) editorActiveStroke.points.push(point);
-      }
+      const last = editorActiveStroke.points[editorActiveStroke.points.length - 1];
+      if (Math.hypot(point.x - last.x, point.y - last.y) > .004) editorActiveStroke.points.push(point);
       drawEditor();
     });
     canvas.addEventListener('pointerup', finishEditorStroke);
@@ -534,21 +506,9 @@
   }
   function editorAnnotationPayload() {
     return JSON.stringify(annotationStrokes.map(function (stroke) {
-      if (stroke.type === 'circle') {
-        return {
-          type: 'circle',
-          x: Math.min(stroke.start.x, stroke.end.x), y: Math.min(stroke.start.y, stroke.end.y),
-          w: Math.abs(stroke.end.x - stroke.start.x), h: Math.abs(stroke.end.y - stroke.start.y)
-        };
-      }
       return { type: 'brush', points: stroke.points.filter(function (_, index) { return index % 2 === 0 || index === stroke.points.length - 1; }).slice(0, 80) };
     }));
   }
-  window.setEditorTool = function (tool) {
-    editorTool = tool === 'circle' ? 'circle' : 'brush';
-    $('editor-brush').classList.toggle('active', editorTool === 'brush');
-    $('editor-circle').classList.toggle('active', editorTool === 'circle');
-  };
   window.openEditor = function () {
     if (!panoId) { openModeMenu(); return; }
     $('editor-image').src = imageUrl();
