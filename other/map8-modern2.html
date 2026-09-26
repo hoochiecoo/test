@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Unapredi mesto</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --card: #fff;
+      --text: #161616;
+      --muted: #707070;
+      --line: #e7e7e3;
+      --accent: #b8e84a;
+      --accent-dark: #26351a;
+      --soft: #f1f1ed;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #e6e7e2; }
+    body { color: var(--text); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; border: 0; color: inherit; }
+    .app { width: min(100%, 430px); min-height: 100vh; margin: 0 auto; padding: 0 16px 22px; background: var(--bg); }
+    .topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
+    .more { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); font-size: 18px; }
+    .gallery { position: relative; display: grid; gap: 10px; }
+    .gallery.processing::after { content: '🚲'; position: absolute; top: 42%; left: -34px; z-index: 8; display: block; font-size: 28px; pointer-events: none; animation: cyclistRide 2.2s ease-in-out infinite; }
+    button:disabled { cursor: wait; opacity: .48; }
+    @keyframes cyclistRide { 0% { transform: translateX(0) rotate(-2deg); } 50% { transform: translateX(240px) rotate(2deg); } 100% { transform: translateX(470px) rotate(-2deg); } }
+    .photo-card { position: relative; overflow: hidden; border-radius: var(--radius); background: #e8e8e4; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+    .photo-card > img, .photo-map { display: block; width: 100%; aspect-ratio: 16 / 11; object-fit: cover; }
+    #after-card { aspect-ratio: 16 / 11; }
+    .photo-map { min-height: 220px; background: #ddd; }
+    .badge { position: absolute; z-index: 3; top: 12px; left: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.9); font-size: 12px; font-weight: 650; }
+    .after-placeholder { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; align-content: center; gap: 7px; min-height: 220px; padding: 24px; background: rgba(247,247,245,.72); color: var(--muted); text-align: center; }
+    .after-placeholder .spark { font-size: 25px; }
+    .after-placeholder strong { color: var(--text); font-size: 15px; font-weight: 600; }
+    .after-placeholder small { font-size: 12px; }
+    #after-image.preview { display: block; filter: grayscale(1) blur(2px); opacity: .62; transform: scale(1.02); }
+    .loading-shimmer { background: linear-gradient(100deg,#ecece8 30%,#fafaf7 45%,#ecece8 60%); background-size: 250% 100%; animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { to { background-position: -250% 0; } }
+    #map-card { display: block; }
+    #before-image, #after-image { display: none; }
+    .image-controls { position: absolute; inset: 0; pointer-events: none; }
+    .image-controls button { position: absolute; pointer-events: auto; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.82); color: #222; box-shadow: 0 4px 14px rgba(0,0,0,.1); font-size: 20px; }
+    .image-controls button { transition: opacity .2s ease, transform .2s ease; }
+    .gallery.controls-muted .image-controls button { opacity: .24; }
+    .gallery.controls-muted.controls-awake .image-controls button { opacity: 1; }
+    .image-controls .left { left: 10px; top: 50%; }
+    .image-controls .right { right: 10px; top: 50%; }
+    .image-controls .up { left: 50%; top: 10px; transform: translateX(-50%); }
+    .image-controls .down { left: 50%; bottom: 10px; transform: translateX(-50%); }
+    .image-controls .bottom-group { position: absolute; left: 50%; bottom: 10px; display: flex; gap: 5px; transform: translateX(-50%); }
+    .image-controls .bottom-group button { position: static; transform: none; width: 38px; height: 38px; }
+    .image-controls .bottom-group .down { width: 44px; }
+    .sheet { position: sticky; bottom: 10px; z-index: 10; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); transition: padding .3s ease, max-height .3s ease, transform .25s ease; }
+    .sheet.folded { max-height: 78px; overflow: hidden; }
+    .sheet.dragging { transition: none; }
+    .handle { width: 38px; height: 4px; margin: 0 auto 14px; border-radius: 999px; background: #c9c9c3; }
+    .sheet-title { margin: 0; text-align: center; font-size: 18px; font-weight: 600; }
+    .sheet-subtitle { margin: 6px 0 14px; color: var(--muted); text-align: center; font-size: 13px; }
+    .primary { width: 100%; min-height: 56px; border-radius: 18px; background: var(--accent); color: var(--accent-dark); font-weight: 650; }
+    .text-button { display: block; margin: 12px auto 0; padding: 5px 8px; background: transparent; color: var(--muted); font-size: 14px; }
+    .text-button .chevron { display: inline-block; margin-left: 4px; transition: transform .25s; }
+    .sheet.expanded .text-button .chevron { transform: rotate(180deg); }
+    .mode-list { display: grid; gap: 8px; margin-top: 16px; }
+    .mode-row { display: grid; grid-template-columns: 34px 1fr 20px; align-items: center; gap: 10px; min-height: 76px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--bg); text-align: left; }
+    .mode-icon { font-size: 22px; }
+    .mode-row strong { display: block; font-size: 15px; font-weight: 600; }
+    .mode-row small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.3; }
+    .mode-row .arrow { color: var(--muted); font-size: 20px; }
+    .back { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 0; background: transparent; font-size: 15px; }
+    .back b { font-size: 22px; font-weight: 400; }
+    .sheet h2 { margin: 0 0 5px; font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+    .sheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+    .search { width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 16px; background: var(--soft); outline: none; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+    .chip { min-height: 52px; padding: 8px 10px; border: 1px solid transparent; border-radius: 16px; background: var(--soft); text-align: left; font-size: 13px; }
+    .chip.active, .tag.active { border-color: #9ac934; background: #e9f7bd; }
+    .chip .check { float: right; display: none; color: #42620d; }
+    .chip.active .check { display: inline; }
+    .category-row { display: flex; gap: 6px; overflow-x: auto; margin: 12px 0; padding-bottom: 2px; scrollbar-width: none; }
+    .category { flex: 0 0 auto; min-height: 34px; padding: 0 13px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 12px; }
+    .category.active { background: var(--text); color: #fff; }
+    .solution-list { display: grid; gap: 8px; max-height: 310px; overflow-y: auto; }
+    .solution { display: grid; grid-template-columns: 32px 1fr 34px; align-items: center; gap: 9px; min-height: 68px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); text-align: left; }
+    .solution strong { display: block; font-size: 14px; font-weight: 600; }
+    .solution small { color: var(--muted); font-size: 12px; }
+    .add { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); font-size: 20px; }
+    .add.active { background: var(--accent); color: var(--accent-dark); }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+    .tag { padding: 7px 10px; border-radius: 999px; background: var(--soft); color: #444; font-size: 12px; }
+    textarea { width: 100%; height: 140px; resize: none; padding: 14px; border: 0; border-radius: 18px; background: #f5f5f2; outline: none; line-height: 1.45; }
+    .quick-prompts { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
+    .quick-prompts button { padding: 7px 10px; border-radius: 999px; background: var(--soft); color: #555; font-size: 12px; }
+    .countries { display: flex; gap: 8px; overflow-x: auto; margin: 12px 0 16px; padding-bottom: 2px; scrollbar-width: none; }
+    .country { flex: 0 0 auto; padding: 9px 11px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); font-size: 12px; }
+    .country.active { border-color: #9ac934; background: #effacb; }
+    .result { display: grid; gap: 10px; }
+    .result-title { text-align: center; font-size: 17px; font-weight: 600; }
+    .result-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .result-chips span { padding: 7px 10px; border-radius: 999px; background: var(--soft); color: #555; font-size: 12px; }
+    .secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .secondary-actions button { min-height: 48px; border-radius: 16px; background: var(--soft); font-weight: 600; }
+    @media (max-width: 360px) { .app { padding-left: 12px; padding-right: 12px; } .mode-row { padding-left: 10px; padding-right: 10px; } }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand">Unapredi mesto</div>
+    <button class="more" type="button" onclick="openModeMenu()">•••</button>
+  </header>
+
+  <section id="gallery" class="gallery">
+    <article class="photo-card" id="before-card">
+      <span class="badge">Pre</span>
+      <div id="map-card" class="photo-map"></div>
+      <img id="before-image" alt="Početna panorama">
+      <div class="image-controls">
+        <button class="left" type="button" onclick="moveLeft()">‹</button>
+        <button class="right" type="button" onclick="moveRight()">›</button>
+        <button class="up" type="button" onclick="moveDown()">⌃</button>
+        <div class="bottom-group">
+          <button type="button" onclick="zoomOut()">−</button>
+          <button class="down" type="button" onclick="moveUp()">⌄</button>
+          <button type="button" onclick="zoomIn()">＋</button>
+        </div>
+      </div>
+    </article>
+    <article class="photo-card" id="after-card">
+      <span class="badge">Posle</span>
+      <div id="after-placeholder" class="after-placeholder">
+        <div class="spark">✨</div>
+        <strong>Ovde će se pojaviti nova verzija</strong>
+        <small>Izaberite poboljšanje ispod</small>
+      </div>
+      <img id="after-image" alt="Poboljšana panorama">
+    </article>
+  </section>
+
+  <section id="sheet" class="sheet">
+    <div class="handle"></div>
+    <div id="sheet-content"></div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+<script>
+(function () {
+  'use strict';
+
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxfRN__ZahuCL-w3errRyaTkGKPfrby4mhuRNQgw39No2zrD9jlkIPIaOtzEZX05pdjKg/exec';
+  const defaultLat = 46.1005;
+  const defaultLng = 19.6676;
+  let map;
+  let marker;
+  let panoId = '';
+  let selectedLat = defaultLat;
+  let selectedLng = defaultLng;
+  let yaw = 178;
+  let pitch = 0;
+  let fov = 90;
+  let mode = 'home';
+  let selectedPeople = new Set();
+  let selectedSolutions = new Set();
+  let country = 'Bez reference';
+
+  const people = [
+    ['👶', 'Dete'], ['🍼', 'Kolica za bebe'], ['🧑', 'Tinejdžeri'],
+    ['♿', 'Osoba sa invaliditetom'], ['👵', 'Starija osoba'], ['🚲', 'Biciklista']
+  ];
+  const solutions = [
+    ['🌳', 'Dodaj drveće', 'Hlad i zelenilo duž ulice', 'greenery'],
+    ['🪑', 'Dodaj klupe', 'Mesta za odmor', 'comfort'],
+    ['🚶', 'Proširi trotoar', 'Više prostora za pešake', 'pedestrian'],
+    ['🚲', 'Dodaj biciklističku stazu', 'Bezbedno kretanje biciklom', 'cycling'],
+    ['💡', 'Dodaj rasvetu', 'Bolja vidljivost uveče', 'calm']
+  ];
+
+  function $(id) { return document.getElementById(id); }
+  function clientId() {
+    let id = localStorage.getItem('subotica_client_id');
+    if (!id) { id = 'client_' + Math.random().toString(36).slice(2); localStorage.setItem('subotica_client_id', id); }
+    return id;
+  }
+  function callBackend(params) {
+    return new Promise(function (resolve, reject) {
+      if (BACKEND_URL.indexOf('PASTE_') === 0) return reject(new Error('Unesi URL Apps Script backenda.'));
+      const name = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const query = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+      const timer = setTimeout(function () { cleanup(); reject(new Error('Backend timeout')); }, 90000);
+      function cleanup() { clearTimeout(timer); delete window[name]; script.remove(); }
+      window[name] = function (data) { cleanup(); resolve(data); };
+      script.onerror = function () { cleanup(); reject(new Error('Backend nije dostupan.')); };
+      script.src = BACKEND_URL + '?callback=' + name + '&' + query;
+      document.body.appendChild(script);
+    });
+  }
+  function imageUrl() {
+    return 'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?cb_client=maps_sv.tactile&w=1200&h=825&panoid=' + encodeURIComponent(panoId) + '&yaw=' + yaw + '&pitch=' + pitch + '&thumbfov=' + fov;
+  }
+  function setBusy(value) {
+    document.querySelectorAll('button').forEach(function (button) { button.disabled = value; });
+    $('gallery').classList.toggle('processing', value);
+  }
+  let controlsTimer;
+  function wakeControls() {
+    $('gallery').classList.add('controls-awake');
+    clearTimeout(controlsTimer);
+    controlsTimer = setTimeout(function () { $('gallery').classList.remove('controls-awake'); }, 2200);
+  }
+  function selectPoint(lat, lng) {
+    selectedLat = lat;
+    selectedLng = lng;
+    marker.setLatLng([lat, lng]);
+    if (!google || !google.maps || !google.maps.StreetViewService) return;
+    $('after-placeholder').innerHTML = '<div class="spark">⌛</div><strong>Tražimo panoramu…</strong>';
+    new google.maps.StreetViewService().getPanorama({ location: { lat: lat, lng: lng }, radius: 50 }, function (data, status) {
+      if (status !== 'OK' || !data.location || !data.location.pano) {
+        $('after-placeholder').innerHTML = '<div class="spark">⌕</div><strong>Panorama nije pronađena</strong><small>Izaberite drugu tačku</small>';
+        return;
+      }
+      panoId = data.location.pano;
+      yaw = 178; pitch = 0; fov = 90;
+      syncShareUrl();
+      $('map-card').style.display = 'none';
+      $('before-image').src = imageUrl();
+      $('before-image').style.display = 'block';
+      $('after-image').src = imageUrl();
+      $('after-image').className = 'preview';
+      $('after-image').style.display = 'block';
+      $('after-placeholder').style.display = 'grid';
+      $('after-placeholder').innerHTML = '<div class="spark">✨</div><strong>Ovde će se pojaviti nova verzija</strong><small>Izaberite poboljšanje ispod</small>';
+      renderHome();
+    });
+  }
+  function syncShareUrl() {
+    if (!panoId) return;
+    const params = new URLSearchParams({
+      lat: selectedLat.toFixed(7), lng: selectedLng.toFixed(7), pano: panoId,
+      yaw: String(yaw), pitch: String(pitch), fov: String(fov)
+    });
+    history.replaceState(null, '', location.pathname + '?' + params.toString());
+  }
+  function updateBefore() { if (panoId) { $('before-image').src = imageUrl(); syncShareUrl(); } }
+  window.moveLeft = function () { yaw = (yaw + 345) % 360; updateBefore(); };
+  window.moveRight = function () { yaw = (yaw + 15) % 360; updateBefore(); };
+  window.moveUp = function () { pitch = Math.min(90, pitch + 10); updateBefore(); };
+  window.moveDown = function () { pitch = Math.max(-90, pitch - 10); updateBefore(); };
+  window.zoomIn = function () { fov = Math.max(20, fov - 10); updateBefore(); };
+  window.zoomOut = function () { fov = Math.min(120, fov + 10); updateBefore(); };
+  function renderHome() {
+    $('sheet').classList.remove('expanded', 'folded'); $('sheet').style.transform = '';
+    $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Nasumično poboljšanje</h2><p class="sheet-subtitle">Izabraćemo osnovno poboljšanje za ovo mesto</p><button class="primary" onclick="generateImprovement(\'austria\', \'Učini mesto prijatnijim, zelenijim i udobnijim za ljude\')">Poboljšaj ovo mesto</button><button class="text-button" onclick="openModeMenu()">Želim nešto posebno <span class="chevron">⌃</span></button>';
+  }
+  window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><p style="margin-top:18px">Kako bi ovo moglo da izgleda?</p><div class="countries"><button class="country active" onclick="selectCountry(this, &quot;Bez reference&quot;)">Bez reference</button><button class="country" onclick="selectCountry(this, &quot;Holandija&quot;)">🇳🇱 Holandija</button><button class="country" onclick="selectCountry(this, &quot;Danska&quot;)">🇩🇰 Danska</button><button class="country" onclick="selectCountry(this, &quot;Japan&quot;)">🇯🇵 Japan</button><button class="country" onclick="selectCountry(this, &quot;Srbija&quot;)">🇷🇸 Srbija</button></div>'; };
+  window.selectCountry = function (button, value) { country = value; document.querySelectorAll('.country').forEach(function (item) { item.classList.remove('active'); }); button.classList.add('active'); };
+  window.openMapPicker = function () {
+    $('map-card').style.display = 'block';
+    $('before-image').style.display = 'none';
+    $('sheet').classList.add('folded');
+    setTimeout(function () { map.invalidateSize(true); $('map-card').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
+  };
+  const baseOpenModeMenu = window.openModeMenu;
+  window.openModeMenu = function () {
+    baseOpenModeMenu();
+    const list = document.querySelector('.mode-list');
+    if (!list || document.getElementById('map-picker-row')) return;
+    const row = document.createElement('button');
+    row.id = 'map-picker-row';
+    row.className = 'mode-row';
+    row.type = 'button';
+    row.innerHTML = '<span class="mode-icon">⌖</span><span><strong>Izaberi na mapi</strong><small>Promeni lokaciju za novu panoramu</small></span><span class="arrow">›</span>';
+    row.onclick = openMapPicker;
+    list.prepend(row);
+  };
+  function back() { renderHome(); }
+  window.openPeople = function () { mode = 'people'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Nazad</button><h2>Za koga da ovo mesto bude udobnije?</h2><p>Možete izabrati više opcija</p><input class="search" placeholder="🔎  Pronađi"><div class="chip-grid">' + people.map((p, i) => '<button class="chip ' + (selectedPeople.has(i) ? 'active' : '') + '" onclick="togglePerson(' + i + ')">' + p[0] + ' ' + p[1] + '<span class="check">✓</span></button>').join('') + '</div><button class="primary" ' + (selectedPeople.size ? '' : 'disabled') + ' onclick="generateForPeople()">Kreiraj verziju</button>'; };
+  window.togglePerson = function (i) { selectedPeople.has(i) ? selectedPeople.delete(i) : selectedPeople.add(i); openPeople(); };
+  window.generateForPeople = function () { generateImprovement('pedestrian', 'Učini mesto udobnijim za ' + Array.from(selectedPeople).map(i => people[i][1].toLowerCase()).join(', ') + '.'); };
+  window.openBuild = function () { mode = 'build'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Sastavi poboljšanje</button><input class="search" placeholder="🔎  Pronađi: drvo, prelaz, klupa…"><div class="category-row"><button class="category active">Sve</button><button class="category">Bezbednost</button><button class="category">Komfor</button><button class="category">Zelenilo</button><button class="category">Kretanje</button></div><div class="solution-list">' + solutions.map((s, i) => '<div class="solution"><span>' + s[0] + '</span><span><strong>' + s[1] + '</strong><small>' + s[2] + '</small></span><button class="add ' + (selectedSolutions.has(i) ? 'active' : '') + '" onclick="toggleSolution(' + i + ')">' + (selectedSolutions.has(i) ? '✓' : '+') + '</button></div>').join('') + '</div><div class="tags">' + Array.from(selectedSolutions).map(i => '<span class="tag">' + solutions[i][1] + ' ×</span>').join('') + '</div><button class="primary" ' + (selectedSolutions.size ? '' : 'disabled') + ' onclick="generateForSolutions()">Kreiraj verziju</button>'; };
+  window.toggleSolution = function (i) { selectedSolutions.has(i) ? selectedSolutions.delete(i) : selectedSolutions.add(i); openBuild(); };
+  window.generateForSolutions = function () { generateImprovement('pedestrian', Array.from(selectedSolutions).map(i => solutions[i][1]).join(', ') + '. Učini ovo mesto udobnijim, uz očuvanje realistične gradske scene.'); };
+  window.openDescribe = function () { mode = 'describe'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Opiši šta želiš da promeniš</button><textarea id="custom-prompt" placeholder="Na primer:\nŽelim više zelenila, hlada i bezbednije mesto za šetnju sa decom"></textarea><div class="quick-prompts"><button onclick="addQuick(\'Više zelenila\')">+ Više zelenila</button><button onclick="addQuick(\'Bezbednije za decu\')">+ Bezbednije za decu</button><button onclick="addQuick(\'Manje automobila\')">+ Manje automobila</button><button onclick="addQuick(\'Više prostora za odmor\')">+ Više odmora</button><button onclick="addQuick(\'Udobnije za bicikl\')">+ Udobnije za bicikl</button></div><button class="primary" onclick="generateDescription()">Kreiraj verziju</button>'; };
+  window.addQuick = function (text) { const input = $('custom-prompt'); input.value = input.value ? input.value + ', ' + text.toLowerCase() : text; input.focus(); };
+  window.generateDescription = function () { generateImprovement('austria', $('custom-prompt').value || 'Učini ovo gradsko mesto lepšim, zelenijim i udobnijim za ljude.'); };
+  window.openRandom = function () { mode = 'random'; $('sheet-content').innerHTML = '<div class="result"><div class="spark">🎲</div><h2>Kreirajmo neočekivanu verziju</h2><p>Sistem će sam izabrati šta da poboljša</p><button class="primary" onclick="generateImprovement(\'austria\', \'Izaberi najbolje neočekivano poboljšanje gradske sredine\')">Hajde</button><button class="text-button" onclick="back()">Otkaži</button></div>'; };
+  window.saveCollage = function () {
+    const before = $('before-image');
+    const after = $('after-image');
+    if (!before.src || !after.src) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200; canvas.height = 1650;
+    const context = canvas.getContext('2d');
+    const first = new Image(); const second = new Image();
+    first.crossOrigin = 'anonymous'; second.crossOrigin = 'anonymous';
+    let loaded = 0;
+    function draw() {
+      if (++loaded < 2) return;
+      context.fillStyle = '#f7f7f5'; context.fillRect(0, 0, 1200, 1650);
+      context.drawImage(first, 0, 0, 1200, 825);
+      context.drawImage(second, 0, 825, 1200, 825);
+      const link = document.createElement('a');
+      try { link.href = canvas.toDataURL('image/jpeg', .92); } catch (error) { alert('JPEG nije moguće sačuvati zbog ograničenja pregledača.'); return; }
+      link.download = 'urban-before-after.jpg'; document.body.appendChild(link); link.click(); link.remove();
+    }
+    first.onload = draw; second.onload = draw; first.src = before.src; second.src = after.src;
+  };
+  async function generateImprovement(promptKey, detail) {
+    if (!panoId) { openModeMenu(); return; }
+    setBusy(true);
+    $('after-placeholder').className = 'after-placeholder loading-shimmer';
+    $('after-placeholder').innerHTML = '<div class="spark">⌛</div><strong>Kreiramo verziju…</strong><small>Potrajaće samo trenutak</small>';
+    try {
+      const auth = await callBackend({ action: 'authorize', lat: selectedLat, lng: selectedLng, clientId: clientId() });
+      if (!auth.ok) throw new Error(auth.error);
+      const reference = country === 'Bez reference' ? '' : ' Stil reference: ' + country + '.';
+      const result = await callBackend({ action: 'generate', token: auth.token, panoId: panoId, yaw: yaw, pitch: pitch, fov: fov, promptKey: promptKey, detail: (detail + reference).slice(0, 180), clientId: clientId() });
+      if (!result.ok) throw new Error(result.error);
+      $('after-placeholder').style.display = 'none';
+      $('after-image').src = 'data:' + (result.image.media_type || 'image/png') + ';base64,' + result.image.b64_json;
+      $('after-image').className = '';
+      $('after-image').style.display = 'block';
+      $('sheet').classList.remove('expanded');
+      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Gotovo</div><div class="result-chips"><span>Zelenilo</span><span>Komfor</span><span>Gradska sredina</span></div><div class="secondary-actions"><button onclick="saveCollage()">Sačuvaj kolaž</button><button onclick="shareResult()">Podeli</button></div><button class="primary" onclick="openModeMenu()">Još jedna verzija</button><button class="text-button" onclick="openModeMenu()">Izmeni</button></div>';
+      $('gallery').classList.add('controls-muted');
+    } catch (error) { $('after-placeholder').className = 'after-placeholder'; $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Verzija nije kreirana</strong><small>' + error.message + '</small>'; renderHome(); }
+    finally { setBusy(false); }
+  }
+  window.generateImprovement = generateImprovement;
+  window.shareResult = function () { const url = location.href; if (navigator.share) navigator.share({ title: 'Poboljšanje gradske sredine', text: 'Nova verzija gradske sredine', url: url }); else navigator.clipboard.writeText(url).then(function () { alert('Link je kopiran.'); }); };
+
+  let sheetStartY = 0;
+  let sheetDragging = false;
+  const sheetHandle = document.querySelector('.handle');
+  sheetHandle.addEventListener('pointerdown', function (event) {
+    sheetStartY = event.clientY;
+    sheetDragging = true;
+    $('sheet').classList.add('dragging');
+    sheetHandle.setPointerCapture(event.pointerId);
+  });
+  sheetHandle.addEventListener('pointermove', function (event) {
+    if (!sheetDragging) return;
+    const distance = Math.max(0, event.clientY - sheetStartY);
+    $('sheet').style.transform = 'translateY(' + distance + 'px)';
+  });
+  sheetHandle.addEventListener('pointerup', function (event) {
+    if (!sheetDragging) return;
+    sheetDragging = false;
+    $('sheet').classList.remove('dragging');
+    const distance = event.clientY - sheetStartY;
+    $('sheet').style.transform = '';
+    if (distance < 20 && $('sheet').classList.contains('folded')) {
+      $('sheet').classList.remove('folded');
+      return;
+    }
+    if (distance > 55) {
+      $('sheet').classList.remove('expanded');
+      $('sheet').classList.add('folded');
+    }
+  });
+
+  map = L.map('map-card', { zoomControl: false }).setView([defaultLat, defaultLng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+  marker = L.marker([defaultLat, defaultLng]).addTo(map);
+  map.on('click', function (event) { selectPoint(event.latlng.lat, event.latlng.lng); });
+  $('before-card').addEventListener('click', wakeControls);
+  $('after-card').addEventListener('click', wakeControls);
+  setTimeout(function () { map.invalidateSize(true); }, 120);
+  window.addEventListener('resize', function () { map.invalidateSize(true); });
+  const shared = new URLSearchParams(location.search);
+  const sharedLat = Number(shared.get('lat'));
+  const sharedLng = Number(shared.get('lng'));
+  const sharedPano = shared.get('pano') || '';
+  if (isFinite(sharedLat) && isFinite(sharedLng) && /^[A-Za-z0-9_-]{10,200}$/.test(sharedPano)) {
+    selectedLat = sharedLat;
+    selectedLng = sharedLng;
+    panoId = sharedPano;
+    yaw = Math.max(0, Math.min(359, Number(shared.get('yaw')) || 178));
+    pitch = Math.max(-90, Math.min(90, Number(shared.get('pitch')) || 0));
+    fov = Math.max(20, Math.min(120, Number(shared.get('fov')) || 90));
+    marker.setLatLng([selectedLat, selectedLng]);
+    $('map-card').style.display = 'none';
+    $('before-image').src = imageUrl();
+    $('before-image').style.display = 'block';
+    $('after-image').src = imageUrl();
+    $('after-image').className = 'preview';
+    $('after-image').style.display = 'block';
+    renderHome();
+  }
+  renderHome();
+})();
+</script>
+</body>
+</html>
