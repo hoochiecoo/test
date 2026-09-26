@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street View — Subotica</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f4f6f8;
+            color: #17202a;
+        }
+        .app-shell { max-width: 760px; margin: 0 auto; }
+        h1 { font-size: 22px; margin: 0 0 10px; }
+        h2 { font-size: 15px; margin: 0 0 8px; }
+        .hint { margin: 0 0 8px; color: #68737d; font-size: 13px; }
+        .screen-card {
+            background: #fff; border-radius: 16px; padding: 12px;
+            box-shadow: 0 3px 16px rgba(20, 30, 40, .10);
+        }
+        #map-card { display: none; }
+        #map-toggle { width: 100%; margin-bottom: 10px; min-height: 42px; }
+        #coordinate-map { width: 100%; height: 220px; border-radius: 12px; overflow: hidden; }
+        #selected-coordinates { margin-top: 7px; font-size: 12px; color: #68737d; }
+        .coordinates, #subotica-panoid, #subotica-street-view { display: none; }
+
+        #panorama-image {
+            width: 100%; max-width: 100%; margin-top: 0;
+
+            /* Чтобы при обновлении размер не прыгал */
+            min-height: 210px; border-radius: 12px;
+
+            background: #111;
+            overflow: hidden;
+        }
+
+        #panorama-image img {
+            display: block;
+            width: 100%; max-width: 100%;
+
+            opacity: 1;
+
+            /*
+                Плавная смена изображения.
+            */
+            transition: opacity 0.15s ease;
+        }
+        .panorama-stage { position: relative; }
+        .edge-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 52px; height: 76px; border: 0; border-radius: 14px;
+            background: rgba(0,0,0,.62); color: #fff; font-size: 34px;
+            z-index: 2;
+        }
+        .edge-nav.left { left: 8px; }
+        .edge-nav.right { right: 8px; }
+        .edge-nav.up, .edge-nav.down { left: 50%; transform: translateX(-50%); width: 76px; height: 44px; font-size: 28px; }
+        .edge-nav.up { top: 8px; }
+        .edge-nav.down { top: auto; bottom: 8px; }
+        #panorama-controls > div:first-child, #panorama-controls > div:nth-child(3) { display: none; }
+        #panorama-controls > div:nth-child(2) { display: none; }
+        #panorama-controls > div:nth-child(4) { text-align: center; }
+        .urban-panel { margin-top: 12px; padding: 12px; border-radius: 14px; background: linear-gradient(135deg, #f7f1e8, #e9f0eb); }
+        .urban-panel button { width: 100%; min-height: 42px; border: 0; border-radius: 10px; background: #245c48; color: #fff; font-weight: 700; cursor: pointer; }
+        .urban-panel button.secondary { margin-top: 8px; background: #d96f45; }
+        .urban-result { display: none; margin-top: 9px; color: #315347; font-size: 13px; line-height: 1.35; }
+        .urban-result.visible { display: block; animation: urbanIn .45s ease both; }
+        #panorama-image.urban-mode img { filter: saturate(.78) sepia(.14) contrast(1.05); transition: filter .8s ease; }
+        @keyframes urbanIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        #panorama-image img.loading {
+            opacity: 0.75;
+        }
+
+        #panorama-controls {
+            margin-top: 9px;
+        }
+
+        #panorama-controls button {
+            margin: 2px; min-width: 42px; min-height: 36px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="app-shell">
+    <h1>Street View вокруг Суботицы</h1>
+    <button id="map-toggle" onclick="toggleMap()">Показать карту</button>
+
+
+    <!-- ============================================================
+         ШАГ 1
+         ============================================================ -->
+
+    <div id="map-card" class="screen-card">
+
+        <h2>Выбери точку — панорама загрузится автоматически</h2>
+
+        <p class="hint">Нажми на нужное место на карте</p>
+
+        <div id="coordinate-map"></div>
+
+        <div class="coordinates" style="margin-top: 10px;">
+
+            <label>
+                Latitude:
+
+                <input
+                    type="number"
+                    id="latitude"
+                    step="any"
+                    value="46.1005"
+                    readonly>
+            </label>
+
+
+            <label style="margin-left: 10px;">
+                Longitude:
+
+                <input
+                    type="number"
+                    id="longitude"
+                    step="any"
+                    value="19.6676"
+                    readonly>
+            </label>
+
+        </div>
+
+
+        <div
+            id="selected-coordinates"
+            style="margin-top: 10px;">
+
+            Выбрано: 46.1005, 19.6676
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ============================================================
+         ШАГ 2
+         ============================================================ -->
+
+    <div class="screen-card" style="margin-top: 10px;">
+    <h2>Панорама</h2>
+    <p id="loading-status" class="hint">Выбери точку на карте, чтобы начать</p>
+
+
+    <div
+        id="subotica-panoid"
+        style="margin-top: 10px;">
+    </div>
+
+
+    <div
+        id="subotica-street-view"
+        style="
+            width: 600px;
+            height: 400px;
+            margin-top: 10px;
+        ">
+    </div>
+
+
+
+    <!-- ============================================================
+         ШАГ 3
+         ============================================================ -->
+
+    <div class="panorama-stage">
+      <button class="edge-nav up" onclick="movePanoramaUp()" aria-label="Вверх">⌃</button>
+      <button class="edge-nav left" onclick="movePanoramaLeft()" aria-label="Влево">‹</button>
+      <div id="panorama-image"></div>
+      <button class="edge-nav right" onclick="movePanoramaRight()" aria-label="Вправо">›</button>
+      <button class="edge-nav down" onclick="movePanoramaDown()" aria-label="Вниз">⌄</button>
+    </div>
+
+
+    <!-- ============================================================
+         УПРАВЛЕНИЕ ФИНАЛЬНОЙ КАРТИНКОЙ
+         ============================================================ -->
+
+    <div
+        id="panorama-controls"
+        style="display: none;">
+
+
+        <div>
+
+            <button
+                onclick="movePanoramaUp()">
+                ↑
+            </button>
+
+        </div>
+
+
+        <div>
+
+            <button
+                onclick="movePanoramaLeft()">
+                ←
+            </button>
+
+
+            <button
+                onclick="resetPanoramaView()">
+                Сброс
+            </button>
+
+
+            <button
+                onclick="movePanoramaRight()">
+                →
+            </button>
+
+        </div>
+
+
+        <div>
+
+            <button
+                onclick="movePanoramaDown()">
+                ↓
+            </button>
+
+        </div>
+
+
+        <div style="margin-top: 10px;">
+
+            <button
+                onclick="zoomPanoramaIn()">
+                ＋
+            </button>
+
+
+            <button
+                onclick="zoomPanoramaOut()">
+                −
+            </button>
+
+        </div>
+
+
+        <div
+            id="panorama-values"
+            style="
+                margin-top: 8px;
+                font-family: monospace;
+            ">
+        </div>
+
+    </div>
+    <div class="urban-panel">
+      <button onclick="applyUrbanAdvice()">Применить урбанистический совет</button>
+      <button class="secondary" onclick="showAustriaVision()">Как выглядела бы улица в Австрии?</button>
+      <div id="urban-result" class="urban-result"></div>
+    </div>
+    </div>
+    </main>
+
+
+
+    <!-- ============================================================
+         LEAFLET
+         ============================================================ -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+
+    <script>
+
+        /*
+            ============================================================
+            ШАГ 1
+            Карта для выбора координат
+            ============================================================
+        */
+
+        const defaultLat = 46.1005;
+        const defaultLng = 19.6676;
+
+
+        const coordinateMap =
+            L.map(
+                'coordinate-map'
+            ).setView(
+                [
+                    defaultLat,
+                    defaultLng
+                ],
+                13
+            );
+
+
+        L.tileLayer(
+
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+
+            {
+                maxZoom: 19,
+
+                attribution:
+                    '&copy; OpenStreetMap contributors'
+            }
+
+        ).addTo(
+            coordinateMap
+        );
+
+
+        let coordinateMarker =
+            L.marker(
+                [
+                    defaultLat,
+                    defaultLng
+                ]
+            ).addTo(
+                coordinateMap
+            );
+
+
+
+        function selectCoordinates(
+            lat,
+            lng
+        ) {
+
+            document.getElementById(
+                'latitude'
+            ).value =
+                lat.toFixed(7);
+
+
+            document.getElementById(
+                'longitude'
+            ).value =
+                lng.toFixed(7);
+
+
+            document.getElementById(
+                'selected-coordinates'
+            ).textContent =
+                `Выбрано: ${lat.toFixed(7)}, ${lng.toFixed(7)}`;
+
+
+            coordinateMarker.setLatLng(
+                [
+                    lat,
+                    lng
+                ]
+            );
+
+            document.getElementById('loading-status').textContent =
+                'Ищу ближайшую панораму…';
+            generateStreetViews();
+        }
+
+
+
+        coordinateMap.on(
+
+            'click',
+
+            function(event) {
+
+                const lat =
+                    event.latlng.lat;
+
+                const lng =
+                    event.latlng.lng;
+
+
+                selectCoordinates(
+                    lat,
+                    lng
+                );
+            }
+        );
+
+        function toggleMap() {
+            const mapCard = document.getElementById('map-card');
+            const isOpen = mapCard.style.display === 'block';
+            mapCard.style.display = isOpen ? 'none' : 'block';
+            document.getElementById('map-toggle').textContent =
+                isOpen ? 'Показать карту' : 'Скрыть карту';
+            if (!isOpen) coordinateMap.invalidateSize();
+        }
+
+
+
+        /*
+            ============================================================
+            ШАГ 2
+            Street View
+            ============================================================
+        */
+
+        function generateStreetViews() {
+
+            const lat =
+                parseFloat(
+                    document.getElementById(
+                        'latitude'
+                    ).value
+                );
+
+
+            const lng =
+                parseFloat(
+                    document.getElementById(
+                        'longitude'
+                    ).value
+                );
+
+
+            if (
+                isNaN(lat) ||
+                isNaN(lng)
+            ) {
+
+                alert(
+                    'Сначала выбери точку на карте'
+                );
+
+                return;
+            }
+
+
+            generateStreetView(
+                'subotica',
+                lat,
+                lng
+            );
+        }
+
+
+
+        function generateStreetView(
+            city,
+            lat,
+            lng
+        ) {
+
+            const radius = 3;
+
+
+            function randomOffset() {
+
+                return (
+                    (Math.random() - 0.5) *
+                    2 *
+                    radius /
+                    111
+                );
+            }
+
+
+
+            function getRandomCoordinates() {
+
+                const randomLat =
+                    lat;
+
+                const randomLng =
+                    lng;
+
+
+                return {
+
+                    randomLat,
+                    randomLng
+                };
+            }
+
+
+
+            function checkStreetViewAvailable({
+
+                randomLat,
+                randomLng
+
+            }) {
+
+                const svService =
+                    new google.maps.StreetViewService();
+
+
+                const latLng =
+                    new google.maps.LatLng(
+                        randomLat,
+                        randomLng
+                    );
+
+
+
+                svService.getPanorama(
+
+                    {
+
+                        location:
+                            latLng,
+
+                        radius:
+                            50
+                    },
+
+
+                    (
+                        data,
+                        status
+                    ) => {
+
+
+                        if (
+                            status === 'OK'
+                        ) {
+
+                            document.getElementById('loading-status').textContent =
+                                'Панорама готова — используй кнопки ниже';
+
+
+                            document.getElementById(
+                                `${city}-panoid`
+                            ).textContent =
+
+                                `panoid: ${data.location.pano}`;
+
+
+
+                            const iframeSrc =
+
+                                `https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1s${data.location.pano}!2m2!1d${randomLat}!2d${randomLng}!3f0!4f0!5f0.7820865974627469`;
+
+
+
+                            document.getElementById(
+                                `${city}-street-view`
+                            ).innerHTML =
+
+                                `<iframe
+                                    width="600"
+                                    height="400"
+                                    src="${iframeSrc}"
+                                    frameborder="0"
+                                    style="border:0;"
+                                    allowfullscreen>
+                                </iframe>`;
+
+                            showPanoramaImage();
+
+
+                        } else {
+
+
+                            alert(
+                                'Street View рядом с выбранной точкой не найден. Выбери другую точку на карте.'
+                            );
+                        }
+                    }
+                );
+            }
+
+
+
+            const coordinates =
+                getRandomCoordinates();
+
+
+            checkStreetViewAvailable(
+                coordinates
+            );
+        }
+
+
+
+        /*
+            ============================================================
+            ШАГ 3
+            ФИНАЛЬНАЯ КАРТИНКА
+            ============================================================
+        */
+
+
+        let currentPanoId = '';
+
+
+        /*
+            Направление.
+
+            0   = север
+            90  = восток
+            180 = юг
+            270 = запад
+        */
+        let panoramaYaw = 178;
+
+
+        /*
+            Наклон камеры.
+        */
+        let panoramaPitch = 0;
+
+
+        /*
+            Поле зрения.
+
+            МЕНЬШЕ = сильнее приблизить
+            БОЛЬШЕ = сильнее отдалить
+        */
+        let panoramaFov = 90;
+
+
+        /*
+            ID последнего запроса.
+
+            Нужен, чтобы при очень быстрых
+            нажатиях старая загрузка картинки
+            не перезаписала более новую.
+        */
+        let panoramaRequestId = 0;
+
+
+
+        function showPanoramaImage() {
+
+            document.getElementById('map-card').style.display = 'none';
+            document.getElementById('map-toggle').textContent = 'Показать карту';
+
+            const panoText =
+                document.getElementById(
+                    'subotica-panoid'
+                ).textContent;
+
+
+            if (
+                !panoText
+            ) {
+
+                alert(
+                    'Сначала получи Street View'
+                );
+
+                return;
+            }
+
+
+            currentPanoId =
+                panoText
+                    .replace(
+                        'panoid: ',
+                        ''
+                    )
+                    .trim();
+
+
+            /*
+                Начальное положение.
+            */
+            panoramaYaw = 178;
+
+            panoramaPitch = 0;
+
+            panoramaFov = 90;
+
+
+            /*
+                Создаем IMG только один раз.
+
+                Дальше мы НЕ удаляем его при каждом клике.
+                Поэтому страница больше не моргает.
+            */
+            const panoramaContainer =
+                document.getElementById(
+                    'panorama-image'
+                );
+
+
+            panoramaContainer.innerHTML = `
+                <img
+                    id="panorama-final-image"
+                    width="600"
+                    alt="Street View panorama">
+            `;
+
+
+            updatePanoramaImage();
+
+
+            document.getElementById(
+                'panorama-controls'
+            ).style.display =
+                'block';
+        }
+
+
+
+        /*
+            ============================================================
+            ПОСТРОЕНИЕ URL
+            ============================================================
+        */
+
+        function getPanoramaImageUrl() {
+
+            return (
+
+                `https://streetviewpixels-pa.googleapis.com/v1/thumbnail` +
+
+                `?cb_client=maps_sv.tactile` +
+
+                `&w=1200` +
+
+                `&h=800` +
+
+                `&pitch=${panoramaPitch}` +
+
+                `&panoid=${encodeURIComponent(currentPanoId)}` +
+
+                `&yaw=${panoramaYaw}` +
+
+                /*
+                    ВАЖНО:
+
+                    здесь используется thumbfov,
+                    а не fov.
+                */
+                `&thumbfov=${panoramaFov}` +
+
+                /*
+                    Чтобы браузер не использовал
+                    старую закэшированную картинку.
+                */
+                `&_=${Date.now()}`
+            );
+        }
+
+
+
+        /*
+            ============================================================
+            ПЛАВНОЕ ОБНОВЛЕНИЕ КАРТИНКИ
+            ============================================================
+        */
+
+        function updatePanoramaImage() {
+
+            if (
+                !currentPanoId
+            ) {
+
+                return;
+            }
+
+
+            const panoramaImage =
+                document.getElementById(
+                    'panorama-final-image'
+                );
+
+
+            if (
+                !panoramaImage
+            ) {
+
+                return;
+            }
+
+
+            /*
+                Уникальный номер этого запроса.
+            */
+            panoramaRequestId++;
+
+
+            const thisRequestId =
+                panoramaRequestId;
+
+
+            const newImageUrl =
+                getPanoramaImageUrl();
+
+
+
+            /*
+                Создаем невидимую картинку.
+
+                Пользователь ее пока не видит.
+            */
+            const preloadImage =
+                new Image();
+
+
+
+            /*
+                Старая картинка остается на экране,
+                пока новая загружается.
+            */
+            panoramaImage.classList.add(
+                'loading'
+            );
+
+
+
+            preloadImage.onload =
+                function() {
+
+
+                    /*
+                        Если после этого запроса
+                        пользователь уже успел нажать
+                        еще одну кнопку —
+                        эту старую загрузку игнорируем.
+                    */
+                    if (
+                        thisRequestId !==
+                        panoramaRequestId
+                    ) {
+
+                        return;
+                    }
+
+
+                    /*
+                        Новая картинка уже полностью
+                        загружена.
+
+                        Теперь заменяем src.
+                    */
+                    panoramaImage.src =
+                        newImageUrl;
+
+
+                    requestAnimationFrame(
+                        function() {
+
+                            panoramaImage.classList.remove(
+                                'loading'
+                            );
+                        }
+                    );
+                };
+
+
+
+            preloadImage.onerror =
+                function() {
+
+                    panoramaImage.classList.remove(
+                        'loading'
+                    );
+                };
+
+
+
+            /*
+                Только здесь реально начинается
+                фоновая загрузка.
+            */
+            preloadImage.src =
+                newImageUrl;
+
+
+
+            updatePanoramaValues();
+        }
+
+
+
+        /*
+            ============================================================
+            ПОКАЗАТЬ ТЕКУЩИЕ ПАРАМЕТРЫ
+            ============================================================
+        */
+
+        function updatePanoramaValues() {
+
+            document.getElementById(
+                'panorama-values'
+            ).textContent =
+
+                `yaw: ${panoramaYaw}° | ` +
+
+                `pitch: ${panoramaPitch}° | ` +
+
+                `fov: ${panoramaFov}°`;
+        }
+
+
+
+        /*
+            ============================================================
+            ВЛЕВО
+            ============================================================
+        */
+
+        function movePanoramaLeft() {
+
+            panoramaYaw -= 15;
+
+
+            if (
+                panoramaYaw < 0
+            ) {
+
+                panoramaYaw += 360;
+            }
+
+
+            updatePanoramaImage();
+        }
+
+
+
+        /*
+            ============================================================
+            ВПРАВО
+            ============================================================
+        */
+
+        function movePanoramaRight() {
+
+            panoramaYaw += 15;
+
+
+            if (
+                panoramaYaw >= 360
+            ) {
+
+                panoramaYaw -= 360;
+            }
+
+
+            updatePanoramaImage();
+        }
+
+
+
+        /*
+            ============================================================
+            ВВЕРХ
+            ============================================================
+        */
+
+        function movePanoramaUp() {
+
+            panoramaPitch += 10;
+
+
+            if (
+                panoramaPitch > 90
+            ) {
+
+                panoramaPitch = 90;
+            }
+
+
+            updatePanoramaImage();
+        }
+
+
+
+        /*
+            ============================================================
+            ВНИЗ
+            ============================================================
+        */
+
+        function movePanoramaDown() {
+
+            panoramaPitch -= 10;
+
+
+            if (
+                panoramaPitch < -90
+            ) {
+
+                panoramaPitch = -90;
+            }
+
+
+            updatePanoramaImage();
+        }
+
+
+
+        /*
+            ============================================================
+            ПРИБЛИЗИТЬ
+            ============================================================
+
+            Например:
+
+            90
+            80
+            70
+            60
+            50
+            40
+            ...
+
+            Чем меньше thumbfov,
+            тем сильнее увеличение.
+        */
+
+        function zoomPanoramaIn() {
+
+            panoramaFov -= 10;
+
+
+            if (
+                panoramaFov < 20
+            ) {
+
+                panoramaFov = 20;
+            }
+
+
+            updatePanoramaImage();
+        }
+
+
+
+        /*
+            ============================================================
+            ОТДАЛИТЬ
+            ============================================================
+        */
+
+        function zoomPanoramaOut() {
+
+            panoramaFov += 10;
+
+
+            if (
+                panoramaFov > 120
+            ) {
+
+                panoramaFov = 120;
+            }
+
+
+            updatePanoramaImage();
+        }
+
+
+
+        /*
+            ============================================================
+            СБРОС
+            ============================================================
+        */
+
+        function resetPanoramaView() {
+
+            panoramaYaw = 178;
+
+            panoramaPitch = 0;
+
+            panoramaFov = 90;
+
+
+            updatePanoramaImage();
+        }
+
+        function showUrbanResult(message) {
+            const result = document.getElementById('urban-result');
+            result.textContent = message;
+            result.classList.remove('visible');
+            void result.offsetWidth;
+            result.classList.add('visible');
+        }
+
+        function applyUrbanAdvice() {
+            document.getElementById('panorama-image').classList.add('urban-mode');
+            showUrbanResult('Совет применён: больше зелени, спокойнее фасады и безопаснее пространство для пешеходов.');
+        }
+
+        function showAustriaVision() {
+            document.getElementById('panorama-image').classList.add('urban-mode');
+            showUrbanResult('MVP-вид: представь аккуратную улицу с велополосой, тёплым светом и активным первым этажом — как в австрийском городе.');
+        }
+
+    </script>
+
+
+
+    <!-- Google Maps нужен для Street View -->
+
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY">
+    </script>
+
+</body>
+</html>
