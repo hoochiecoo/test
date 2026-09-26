@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Street View — Subotica</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        #coordinate-map {
+            width: 600px;
+            height: 400px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Random Street Views around Subotica</h1>
+
+    <!-- ШАГ 1 -->
+    <div style="margin-bottom: 20px;">
+        <h2>Шаг 1. Выбери точку на карте</h2>
+
+        <p>
+            Нажми на нужное место на карте.
+            Координаты будут выбраны автоматически.
+        </p>
+
+        <div id="coordinate-map"></div>
+
+        <div style="margin-top: 10px;">
+            <label>
+                Latitude:
+                <input
+                    type="number"
+                    id="latitude"
+                    step="any"
+                    value="46.1005"
+                    readonly>
+            </label>
+
+            <label style="margin-left: 10px;">
+                Longitude:
+                <input
+                    type="number"
+                    id="longitude"
+                    step="any"
+                    value="19.6676"
+                    readonly>
+            </label>
+        </div>
+
+        <div
+            id="selected-coordinates"
+            style="margin-top: 10px;">
+            Выбрано: 46.1005, 19.6676
+        </div>
+    </div>
+
+    <!-- ШАГ 2 -->
+    <h2>Шаг 2. Получи Street View</h2>
+
+    <button onclick="generateStreetViews()">Get Street View</button>
+    <button onclick="showPanoramaImage()">Показать панораму</button>
+
+    <div id="subotica-panoid" style="margin-top: 10px;"></div>
+
+    <div
+        id="subotica-street-view"
+        style="width: 600px; height: 400px; margin-top: 10px;">
+    </div>
+
+    <div id="panorama-image" style="margin-top: 15px;"></div>
+
+
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <script>
+        /*
+            ============================================================
+            ШАГ 1
+            Карта для выбора координат
+            ============================================================
+        */
+
+        const defaultLat = 46.1005;
+        const defaultLng = 19.6676;
+
+        const coordinateMap = L.map('coordinate-map').setView(
+            [defaultLat, defaultLng],
+            13
+        );
+
+        L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }
+        ).addTo(coordinateMap);
+
+        let coordinateMarker = L.marker(
+            [defaultLat, defaultLng]
+        ).addTo(coordinateMap);
+
+
+        function selectCoordinates(lat, lng) {
+
+            document.getElementById(
+                'latitude'
+            ).value = lat.toFixed(7);
+
+            document.getElementById(
+                'longitude'
+            ).value = lng.toFixed(7);
+
+            document.getElementById(
+                'selected-coordinates'
+            ).textContent =
+                `Выбрано: ${lat.toFixed(7)}, ${lng.toFixed(7)}`;
+
+            coordinateMarker.setLatLng([lat, lng]);
+        }
+
+
+        coordinateMap.on('click', function(event) {
+
+            const lat = event.latlng.lat;
+            const lng = event.latlng.lng;
+
+            selectCoordinates(lat, lng);
+        });
+
+
+        /*
+            ============================================================
+            ШАГ 2
+            Street View
+            ============================================================
+        */
+
+        function generateStreetViews() {
+
+            const lat = parseFloat(
+                document.getElementById('latitude').value
+            );
+
+            const lng = parseFloat(
+                document.getElementById('longitude').value
+            );
+
+            if (isNaN(lat) || isNaN(lng)) {
+
+                alert('Сначала выбери точку на карте');
+
+                return;
+            }
+
+            generateStreetView(
+                'subotica',
+                lat,
+                lng
+            );
+        }
+
+
+        function generateStreetView(city, lat, lng) {
+
+            const radius = 3; // 3 km radius
+
+
+            function randomOffset() {
+
+                return (
+                    (Math.random() - 0.5) *
+                    2 *
+                    radius /
+                    111
+                );
+            }
+
+
+            function getRandomCoordinates() {
+
+                const randomLat = lat;
+                const randomLng = lng;
+
+                return {
+                    randomLat,
+                    randomLng
+                };
+            }
+
+
+            function checkStreetViewAvailable({
+                randomLat,
+                randomLng
+            }) {
+
+                const svService =
+                    new google.maps.StreetViewService();
+
+                const latLng =
+                    new google.maps.LatLng(
+                        randomLat,
+                        randomLng
+                    );
+
+
+                svService.getPanorama(
+
+                    {
+                        location: latLng,
+                        radius: 50
+                    },
+
+                    (data, status) => {
+
+                        if (status === 'OK') {
+
+                            document.getElementById(
+                                `${city}-panoid`
+                            ).textContent =
+                                `panoid: ${data.location.pano}`;
+
+
+                            const iframeSrc =
+                                `https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1s${data.location.pano}!2m2!1d${randomLat}!2d${randomLng}!3f0!4f0!5f0.7820865974627469`;
+
+
+                            document.getElementById(
+                                `${city}-street-view`
+                            ).innerHTML =
+                                `<iframe
+                                    width="600"
+                                    height="400"
+                                    src="${iframeSrc}"
+                                    frameborder="0"
+                                    style="border:0;"
+                                    allowfullscreen>
+                                </iframe>`;
+
+                        } else {
+
+                            alert(
+                                'Street View рядом с выбранной точкой не найден. Выбери другую точку на карте.'
+                            );
+                        }
+                    }
+                );
+            }
+
+
+            const coordinates =
+                getRandomCoordinates();
+
+            checkStreetViewAvailable(
+                coordinates
+            );
+        }
+
+
+        /*
+            ============================================================
+            ШАГ 3
+            Картинка панорамы
+            ============================================================
+        */
+
+        function showPanoramaImage() {
+
+            const panoText =
+                document.getElementById(
+                    'subotica-panoid'
+                ).textContent;
+
+
+            if (!panoText) {
+
+                alert(
+                    'Сначала получи Street View'
+                );
+
+                return;
+            }
+
+
+            const panoId =
+                panoText
+                    .replace('panoid: ', '')
+                    .trim();
+
+
+            const imageUrl =
+                `https://streetviewpixels-pa.googleapis.com/v1/thumbnail` +
+                `?cb_client=maps_sv.tactile` +
+                `&w=1200` +
+                `&h=800` +
+                `&pitch=0` +
+                `&panoid=${encodeURIComponent(panoId)}` +
+                `&yaw=178`;
+
+
+            document.getElementById(
+                'panorama-image'
+            ).innerHTML = `
+                <img
+                    src="${imageUrl}"
+                    width="600"
+                    style="max-width: 100%;"
+                    alt="Street View panorama">
+            `;
+        }
+    </script>
+
+
+    <!-- Google Maps нужен только для Street View -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+
+</body>
+</html>
