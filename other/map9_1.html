@@ -235,7 +235,7 @@
     </div>
     <div class="editor-actions">
       <button type="button" onclick="closeEditor()">Otkaži</button>
-      <button class="apply" type="button" onclick="applyEditor()">Gotovo — unapredi</button>
+      <button class="apply" type="button" onclick="applyEditor()">Gotovo — izaberi poboljšanje</button>
     </div>
   </section>
 </div>
@@ -246,7 +246,7 @@
 (function () {
   'use strict';
 
-  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwQUnthcpKig5LmoXX8uMp_Z_JBTd1eSHfKl8OslMaeq87cpKhORyurN0odytcsOCflIQ/exec';
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxfRN__ZahuCL-w3errRyaTkGKPfrby4mhuRNQgw39No2zrD9jlkIPIaOtzEZX05pdjKg/exec';
   const defaultLat = 46.1005;
   const defaultLng = 19.6676;
   let map;
@@ -559,10 +559,8 @@
   window.undoEditorStroke = function () { annotationStrokes.pop(); drawEditor(); };
   window.clearEditor = function () { annotationStrokes = []; drawEditor(); };
   window.applyEditor = function () {
-    const hasAnnotations = annotationStrokes.length > 0;
     closeEditor();
-    if (hasAnnotations) generateImprovement('austria', 'Prioritetno unaprediti deo koji je korisnik označio na slici.');
-    else generateImprovement('austria', 'Učini mesto prijatnijim, zelenijim i udobnijim za ljude.');
+    openModeMenu();
   };
   initEditorCanvas();
   window.moveLeft = function () { yaw = (yaw + 345) % 360; updateBefore(); };
