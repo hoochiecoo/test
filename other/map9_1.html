@@ -217,14 +217,14 @@
   <section class="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-title">
     <div id="video-export-busy" class="video-export-busy" aria-live="polite" aria-hidden="true">
       <div class="video-export-spinner"></div>
-      <strong>Snimamo video…</strong>
-      <small>Sačekajte nekoliko sekundi, prozor ostaje zaključan</small>
+      <strong id="video-export-title">Pripremamo kadrove…</strong>
+      <small id="video-export-detail">0/125 · Sačekajte, prozor ostaje zaključan</small>
     </div>
     <button class="share-close" type="button" onclick="closeShareModal()" aria-label="Zatvori">×</button>
     <h2 id="share-title">Kolaž je spreman</h2>
     <p>Pregledajte rezultat, sačuvajte kolaž ili napravite kratki video pre/posle.</p>
     <div class="animation-preview">
-      <canvas id="animation-preview" width="1200" height="825" aria-label="Pregled animacije pre i posle"></canvas>
+      <canvas id="animation-preview" width="960" height="660" aria-label="Pregled animacije pre i posle"></canvas>
     </div>
     <div class="animation-caption">Video 5 s · originalni format · separator se pomera levo-desno</div>
     <div class="share-collage">
@@ -551,8 +551,12 @@
   };
   let animationPreviewFrame = 0;
   let animationImages = null;
-  const animationWidth = 1200;
-  const animationHeight = 825;
+  const animationWidth = 960;
+  const animationHeight = 660;
+  const animationFrameWidth = 480;
+  const animationFrameHeight = 330;
+  const animationFps = 25;
+  const animationFrameCount = 125;
   const animationDuration = 5000;
   function loadAnimationImages() {
     if (animationImages) return Promise.resolve(animationImages);
@@ -576,30 +580,33 @@
     const drawHeight = image.height * scale;
     context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
   }
-  function drawAnimationFrame(context, images, split) {
+  function drawAnimationFrameAt(context, images, split, width, height) {
     context.fillStyle = '#171717';
-    context.fillRect(0, 0, animationWidth, animationHeight);
-    drawCover(context, images.before, animationWidth, animationHeight);
+    context.fillRect(0, 0, width, height);
+    drawCover(context, images.before, width, height);
     context.save();
     context.beginPath();
-    context.rect(0, 0, animationWidth * split, animationHeight);
+    context.rect(0, 0, width * split, height);
     context.clip();
-    drawCover(context, images.after, animationWidth, animationHeight);
+    drawCover(context, images.after, width, height);
     context.restore();
-    const dividerX = animationWidth * split;
+    const dividerX = width * split;
     context.fillStyle = 'rgba(0,0,0,.3)';
-    context.fillRect(dividerX - 5, 0, 10, animationHeight);
+    context.fillRect(dividerX - 5, 0, 10, height);
     context.fillStyle = '#fff';
-    context.fillRect(dividerX - 2, 0, 4, animationHeight);
+    context.fillRect(dividerX - 2, 0, 4, height);
     context.beginPath();
-    context.arc(dividerX, animationHeight / 2, 22, 0, Math.PI * 2);
+    context.arc(dividerX, height / 2, 22, 0, Math.PI * 2);
     context.fillStyle = '#fff';
     context.fill();
     context.fillStyle = '#222';
     context.font = 'bold 25px system-ui, sans-serif';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText('↔', dividerX, animationHeight / 2);
+    context.fillText('↔', dividerX, height / 2);
+  }
+  function drawAnimationFrame(context, images, split) {
+    drawAnimationFrameAt(context, images, split, animationWidth, animationHeight);
   }
   function animationSplit(elapsed) {
     const phase = Math.min(elapsed / animationDuration, 1);
@@ -631,6 +638,28 @@
     overlay.classList.toggle('visible', value);
     overlay.setAttribute('aria-hidden', value ? 'false' : 'true');
   }
+  function setVideoExportProgress(current, total, recording) {
+    $('video-export-title').textContent = recording ? 'Snimamo video…' : 'Pripremamo kadrove…';
+    $('video-export-detail').textContent = (current || 0) + '/' + total + ' · Sačekajte, prozor ostaje zaključan';
+  }
+  function prepareAnimationFrames(images) {
+    return new Promise(function (resolve) {
+      const frames = [];
+      let index = 0;
+      function prepareNext() {
+        if (index >= animationFrameCount) { resolve(frames); return; }
+        const frame = document.createElement('canvas');
+        frame.width = animationFrameWidth;
+        frame.height = animationFrameHeight;
+        drawAnimationFrameAt(frame.getContext('2d'), images, animationSplit(index / (animationFrameCount - 1) * animationDuration), animationFrameWidth, animationFrameHeight);
+        frames.push(frame);
+        index += 1;
+        setVideoExportProgress(index, animationFrameCount, false);
+        setTimeout(prepareNext, 0);
+      }
+      prepareNext();
+    });
+  }
   window.saveAnimation = function () {
     const button = document.querySelector('.save-video');
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
@@ -641,19 +670,20 @@
     button.textContent = 'Pripremam video…';
     cancelAnimationFrame(animationPreviewFrame);
     setVideoExportBusy(true);
-    loadAnimationImages().then(function (images) {
+    loadAnimationImages().then(prepareAnimationFrames).then(function (frames) {
       const canvas = document.createElement('canvas');
       canvas.width = animationWidth; canvas.height = animationHeight;
       const context = canvas.getContext('2d');
-      const stream = canvas.captureStream(30);
+      const stream = canvas.captureStream(animationFps);
       const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
       const recorder = new MediaRecorder(stream, { mimeType: mimeType });
       const chunks = [];
+      let frameIndex = 0;
       let timer = null;
       recorder.ondataavailable = function (event) { if (event.data.size) chunks.push(event.data); };
-      recorder.onerror = function () { if (timer) clearInterval(timer); stream.getTracks().forEach(function (track) { track.stop(); }); setVideoExportBusy(false); button.disabled = false; button.textContent = 'Sačuvaj video · 5 s'; startAnimationPreview(); alert('Video nije moguće sačuvati.'); };
+      recorder.onerror = function () { if (timer) clearTimeout(timer); stream.getTracks().forEach(function (track) { track.stop(); }); setVideoExportBusy(false); button.disabled = false; button.textContent = 'Sačuvaj video · 5 s'; startAnimationPreview(); alert('Video nije moguće sačuvati.'); };
       recorder.onstop = function () {
-        if (timer) clearInterval(timer);
+        if (timer) clearTimeout(timer);
         const blob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -667,19 +697,16 @@
         button.textContent = 'Sačuvaj video · 5 s';
         startAnimationPreview();
       };
-      const started = performance.now();
+      setVideoExportProgress(0, frames.length, true);
       recorder.start(100);
-      function render() {
-        const elapsed = performance.now() - started;
-        drawAnimationFrame(context, images, animationSplit(elapsed));
-        if (elapsed >= animationDuration) {
-          clearInterval(timer);
-          drawAnimationFrame(context, images, animationSplit(animationDuration));
-          recorder.stop();
-        }
+      function renderNextFrame() {
+        if (frameIndex >= frames.length) { recorder.stop(); return; }
+        context.drawImage(frames[frameIndex], 0, 0, animationWidth, animationHeight);
+        frameIndex += 1;
+        setVideoExportProgress(frameIndex, frames.length, true);
+        timer = setTimeout(renderNextFrame, 1000 / animationFps);
       }
-      render();
-      timer = setInterval(render, 1000 / 30);
+      renderNextFrame();
     }).catch(function (error) {
       setVideoExportBusy(false);
       button.disabled = false;
