@@ -135,9 +135,13 @@
     .share-dialog p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.35; }
     .share-collage { display: grid; gap: 7px; overflow: hidden; border-radius: 20px; background: var(--soft); }
     .share-collage img { display: block; width: 100%; aspect-ratio: 16 / 11; object-fit: cover; }
+    .animation-preview { overflow: hidden; margin-bottom: 10px; border-radius: 20px; background: #171717; }
+    .animation-preview canvas { display: block; width: 100%; aspect-ratio: 9 / 16; }
+    .animation-caption { margin: -2px 0 12px; color: var(--muted); text-align: center; font-size: 12px; }
     .share-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
     .share-actions button { min-height: 52px; border-radius: 17px; background: var(--soft); font-weight: 650; }
-    .share-actions .save { grid-column: 1 / -1; background: var(--accent); color: var(--accent-dark); }
+    .share-actions .save, .share-actions .save-video { grid-column: 1 / -1; background: var(--accent); color: var(--accent-dark); }
+    .share-actions .save-video { background: #dcecff; color: #17375e; }
     .edit-button { width: 100%; min-height: 48px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--soft); font-weight: 600; }
     .editor-modal { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; padding: 16px; background: rgba(22,22,22,.52); backdrop-filter: blur(8px); }
     .editor-modal.visible { display: grid; }
@@ -206,7 +210,11 @@
   <section class="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-title">
     <button class="share-close" type="button" onclick="closeShareModal()" aria-label="Zatvori">×</button>
     <h2 id="share-title">Kolaž je spreman</h2>
-    <p>Pregledajte rezultat i pošaljite fotografiju ili je sačuvajte kao JPEG.</p>
+    <p>Pregledajte rezultat, sačuvajte kolaž ili napravite kratki video pre/posle.</p>
+    <div class="animation-preview">
+      <canvas id="animation-preview" width="720" height="1280" aria-label="Pregled animacije pre i posle"></canvas>
+    </div>
+    <div class="animation-caption">Video 5 s · vertikalni format · separator se pomera levo-desno</div>
     <div class="share-collage">
       <img id="share-before" alt="Pre">
       <img id="share-after" alt="Posle">
@@ -215,6 +223,7 @@
       <button type="button" onclick="shareInstagram()">Instagram</button>
       <button type="button" onclick="shareFacebook()">Facebook</button>
       <button class="save" type="button" onclick="saveCollage()">Sačuvaj JPEG</button>
+      <button class="save-video" type="button" onclick="saveAnimation()">Sačuvaj video · 5 s</button>
     </div>
   </section>
 </div>
@@ -630,14 +639,138 @@
     }
     first.onload = draw; second.onload = draw; first.src = before.src; second.src = after.src;
   };
+  let animationPreviewFrame = 0;
+  let animationImages = null;
+  const animationWidth = 720;
+  const animationHeight = 1280;
+  const animationDuration = 5000;
+  function loadAnimationImages() {
+    if (animationImages) return Promise.resolve(animationImages);
+    const before = new Image();
+    const after = new Image();
+    before.crossOrigin = 'anonymous';
+    after.crossOrigin = 'anonymous';
+    return new Promise(function (resolve, reject) {
+      let loaded = 0;
+      function complete() { loaded += 1; if (loaded === 2) { animationImages = { before: before, after: after }; resolve(animationImages); } }
+      before.onload = complete; after.onload = complete;
+      before.onerror = function () { reject(new Error('Početna slika nije dostupna za video.')); };
+      after.onerror = function () { reject(new Error('Nova slika nije dostupna za video.')); };
+      before.src = $('before-image').src;
+      after.src = $('after-image').src;
+    });
+  }
+  function drawCover(context, image, width, height) {
+    const scale = Math.max(width / image.width, height / image.height);
+    const drawWidth = image.width * scale;
+    const drawHeight = image.height * scale;
+    context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+  }
+  function drawAnimationFrame(context, images, split) {
+    context.fillStyle = '#171717';
+    context.fillRect(0, 0, animationWidth, animationHeight);
+    drawCover(context, images.before, animationWidth, animationHeight);
+    context.save();
+    context.beginPath();
+    context.rect(0, 0, animationWidth * split, animationHeight);
+    context.clip();
+    drawCover(context, images.after, animationWidth, animationHeight);
+    context.restore();
+    const dividerX = animationWidth * split;
+    context.fillStyle = 'rgba(0,0,0,.3)';
+    context.fillRect(dividerX - 5, 0, 10, animationHeight);
+    context.fillStyle = '#fff';
+    context.fillRect(dividerX - 2, 0, 4, animationHeight);
+    context.beginPath();
+    context.arc(dividerX, animationHeight / 2, 22, 0, Math.PI * 2);
+    context.fillStyle = '#fff';
+    context.fill();
+    context.fillStyle = '#222';
+    context.font = 'bold 25px system-ui, sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText('↔', dividerX, animationHeight / 2);
+  }
+  function animationSplit(elapsed) {
+    const phase = Math.min(elapsed / animationDuration, 1);
+    return .06 + ((Math.sin(phase * Math.PI * 2 - Math.PI / 2) + 1) / 2) * .88;
+  }
+  function startAnimationPreview() {
+    const canvas = $('animation-preview');
+    if (!canvas) return;
+    cancelAnimationFrame(animationPreviewFrame);
+    loadAnimationImages().then(function (images) {
+      const context = canvas.getContext('2d');
+      const started = performance.now();
+      function render(now) {
+        if (!$('share-modal').classList.contains('visible')) return;
+        drawAnimationFrame(context, images, animationSplit((now - started) % animationDuration));
+        animationPreviewFrame = requestAnimationFrame(render);
+      }
+      animationPreviewFrame = requestAnimationFrame(render);
+    }).catch(function (error) {
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#171717'; context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = '#fff'; context.font = '24px system-ui, sans-serif'; context.textAlign = 'center';
+      context.fillText(error.message, canvas.width / 2, canvas.height / 2);
+    });
+  }
+  window.saveAnimation = function () {
+    const button = document.querySelector('.save-video');
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      alert('Ovaj pregledač ne podržava čuvanje video animacije.');
+      return;
+    }
+    button.disabled = true;
+    button.textContent = 'Pripremam video…';
+    loadAnimationImages().then(function (images) {
+      const canvas = document.createElement('canvas');
+      canvas.width = animationWidth; canvas.height = animationHeight;
+      const context = canvas.getContext('2d');
+      const stream = canvas.captureStream(30);
+      const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+      const recorder = new MediaRecorder(stream, { mimeType: mimeType });
+      const chunks = [];
+      recorder.ondataavailable = function (event) { if (event.data.size) chunks.push(event.data); };
+      recorder.onerror = function () { stream.getTracks().forEach(function (track) { track.stop(); }); button.disabled = false; button.textContent = 'Sačuvaj video · 5 s'; alert('Video nije moguće sačuvati.'); };
+      recorder.onstop = function () {
+        const blob = new Blob(chunks, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = mimeType === 'video/mp4' ? 'urban-before-after-5s.mp4' : 'urban-before-after-5s.webm';
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        stream.getTracks().forEach(function (track) { track.stop(); });
+        button.disabled = false;
+        button.textContent = 'Sačuvaj video · 5 s';
+      };
+      const started = performance.now();
+      recorder.start();
+      function render(now) {
+        const elapsed = now - started;
+        drawAnimationFrame(context, images, animationSplit(elapsed));
+        if (elapsed < animationDuration) requestAnimationFrame(render);
+        else recorder.stop();
+      }
+      requestAnimationFrame(render);
+    }).catch(function (error) {
+      button.disabled = false;
+      button.textContent = 'Sačuvaj video · 5 s';
+      alert(error.message);
+    });
+  };
   window.openShareModal = function () {
     $('share-before').src = $('before-image').src;
     $('share-after').src = $('after-image').src;
+    animationImages = null;
     $('share-modal').classList.add('visible');
     $('share-modal').setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
+    startAnimationPreview();
   };
   window.closeShareModal = function () {
+    cancelAnimationFrame(animationPreviewFrame);
     $('share-modal').classList.remove('visible');
     $('share-modal').setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
