@@ -19,10 +19,11 @@
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: #e6e7e2; }
+    body { min-height: 100vh; min-height: 100dvh; }
     body { color: var(--text); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     button, input, textarea { font: inherit; }
     button { cursor: pointer; border: 0; color: inherit; }
-    .app { width: min(100%, 430px); min-height: 100vh; margin: 0 auto; padding: 0 16px 22px; background: var(--bg); }
+    .app { width: min(100%, 430px); min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 0 16px 22px; background: var(--bg); }
     .topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; }
     .brand { font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
     .more { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); font-size: 18px; }
@@ -56,12 +57,19 @@
     .image-controls .bottom-group { position: absolute; left: 50%; bottom: 10px; display: flex; gap: 5px; transform: translateX(-50%); }
     .image-controls .bottom-group button { position: static; transform: none; width: 38px; height: 38px; }
     .image-controls .bottom-group .down { width: 44px; }
-    .sheet { position: sticky; bottom: 10px; z-index: 10; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); transition: padding .3s ease, max-height .3s ease, transform .25s ease; }
+    .sheet { position: sticky; bottom: 10px; z-index: 10; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); transition: padding .3s ease, max-height .3s ease, transform .3s ease; will-change: transform; }
     .sheet.folded { max-height: 78px; overflow: hidden; }
+    .sheet.folded #global-setting, .sheet.folded #sheet-content { display: none; }
+    .sheet.processing { transform: translateY(26px); }
+    .sheet.processing #global-setting, .sheet.processing #sheet-content { visibility: hidden; }
     .sheet.dragging { transition: none; }
     .handle { width: 38px; height: 4px; margin: 0 auto 14px; border-radius: 999px; background: #c9c9c3; }
     .sheet-title { margin: 0; text-align: center; font-size: 18px; font-weight: 600; }
     .sheet-subtitle { margin: 6px 0 14px; color: var(--muted); text-align: center; font-size: 13px; }
+    .global-setting { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); }
+    .setting-toggle { display: flex; align-items: center; gap: 9px; color: var(--text); font-size: 13px; cursor: pointer; }
+    .setting-toggle input { width: 18px; height: 18px; margin: 0; accent-color: #86ad25; }
+    .setting-toggle small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.25; }
     .primary { width: 100%; min-height: 56px; border-radius: 18px; background: var(--accent); color: var(--accent-dark); font-weight: 650; }
     .text-button { display: block; margin: 12px auto 0; padding: 5px 8px; background: transparent; color: var(--muted); font-size: 14px; }
     .text-button .chevron { display: inline-block; margin-left: 4px; transition: transform .25s; }
@@ -144,6 +152,7 @@
 
   <section id="sheet" class="sheet">
     <div class="handle"></div>
+    <div id="global-setting" class="global-setting"></div>
     <div id="sheet-content"></div>
   </section>
 </main>
@@ -169,6 +178,7 @@
   let selectedPeople = new Set();
   let selectedSolutions = new Set();
   let country = 'none';
+  let annotateChanges = false;
   let people = [];
   let solutions = [];
   let countries = [];
@@ -210,12 +220,22 @@
       return '<button class="country ' + (item.id === country || (!country && index === 0) ? 'active' : '') + '" onclick="selectCountry(this, &quot;' + item.id + '&quot;)">' + (item.icon ? item.icon + ' ' : '') + item.label + '</button>';
     }).join('');
   }
+  function renderGlobalSetting() {
+    $('global-setting').innerHTML = '<label class="setting-toggle"><input type="checkbox" ' + (annotateChanges ? 'checked' : '') + ' onchange="setAnnotateChanges(this.checked)"><span><b>Dodaj objašnjenja promena</b><small>Označi šta je promenjeno i zašto je korisno</small></span></label>';
+  }
+  window.setAnnotateChanges = function (value) { annotateChanges = value === true; };
   function imageUrl() {
     return 'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?cb_client=maps_sv.tactile&w=1200&h=825&panoid=' + encodeURIComponent(panoId) + '&yaw=' + yaw + '&pitch=' + pitch + '&thumbfov=' + fov;
   }
   function setBusy(value) {
     document.querySelectorAll('button').forEach(function (button) { button.disabled = value; });
     $('gallery').classList.toggle('processing', value);
+    $('sheet').classList.toggle('processing', value);
+    if (value) {
+      $('sheet').classList.remove('expanded');
+      $('sheet').classList.add('folded');
+      $('sheet').style.transform = '';
+    }
   }
   let controlsTimer;
   function wakeControls() {
@@ -322,6 +342,7 @@
   };
   async function generateImprovement(promptId, detail, selections) {
     selections = selections || {};
+    const annotateForRequest = annotateChanges;
     if (!panoId) { openModeMenu(); return; }
     setBusy(true);
     $('after-placeholder').className = 'after-placeholder loading-shimmer';
@@ -333,6 +354,7 @@
         action: 'generate', token: auth.token, panoId: panoId, yaw: yaw, pitch: pitch, fov: fov,
         promptId: promptId, peopleIds: JSON.stringify(selections.peopleIds || []),
         improvementIds: JSON.stringify(selections.improvementIds || []), countryId: country,
+        annotateChanges: String(annotateForRequest),
         detail: String(detail || '').slice(0, 180), clientId: clientId()
       });
       if (!result.ok) throw new Error(result.error);
@@ -353,6 +375,11 @@
   let sheetDragging = false;
   const sheetHandle = document.querySelector('.handle');
   sheetHandle.addEventListener('pointerdown', function (event) {
+    if ($('sheet').classList.contains('processing')) {
+      $('sheet').classList.remove('processing');
+      $('sheet').classList.remove('folded');
+      $('sheet').style.transform = '';
+    }
     sheetStartY = event.clientY;
     sheetDragging = true;
     $('sheet').classList.add('dragging');
@@ -407,6 +434,7 @@
     $('after-image').style.display = 'block';
     renderHome();
   }
+  renderGlobalSetting();
   loadOptions().then(function () {
     if (mode === 'home') renderHome();
   });
