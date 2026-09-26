@@ -18,7 +18,7 @@
       --radius: 20px;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: #e6e7e2; }
+    html, body { margin: 0; min-height: 100%; background: #e6e7e2; overscroll-behavior-y: none; }
     body { min-height: 100vh; min-height: 100dvh; }
     body { color: var(--text); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     button, input, textarea { font: inherit; }
@@ -63,7 +63,8 @@
     .sheet.processing { transform: translateY(26px); }
     .sheet.processing #global-setting, .sheet.processing #sheet-content { visibility: hidden; }
     .sheet.dragging { transition: none; }
-    .handle { width: 38px; height: 4px; margin: 0 auto 14px; border-radius: 999px; background: #c9c9c3; }
+    .handle { position: relative; width: 72px; height: 30px; margin: 0 auto 8px; border-radius: 999px; background: transparent; touch-action: none; cursor: grab; }
+    .handle::after { content: ''; position: absolute; top: 13px; left: 17px; width: 38px; height: 4px; border-radius: 999px; background: #c9c9c3; }
     .sheet-title { margin: 0; text-align: center; font-size: 18px; font-weight: 600; }
     .sheet-subtitle { margin: 6px 0 14px; color: var(--muted); text-align: center; font-size: 13px; }
     .global-setting { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); }
@@ -373,38 +374,64 @@
 
   let sheetStartY = 0;
   let sheetDragging = false;
+  let sheetMoved = false;
   const sheetHandle = document.querySelector('.handle');
   sheetHandle.addEventListener('pointerdown', function (event) {
     if ($('sheet').classList.contains('processing')) {
       $('sheet').classList.remove('processing');
-      $('sheet').classList.remove('folded');
       $('sheet').style.transform = '';
     }
     sheetStartY = event.clientY;
+    sheetMoved = false;
     sheetDragging = true;
     $('sheet').classList.add('dragging');
     sheetHandle.setPointerCapture(event.pointerId);
   });
   sheetHandle.addEventListener('pointermove', function (event) {
     if (!sheetDragging) return;
-    const distance = Math.max(0, event.clientY - sheetStartY);
+    const distance = event.clientY - sheetStartY;
+    if (Math.abs(distance) > 6) sheetMoved = true;
+    if (distance < -18 && $('sheet').classList.contains('folded')) {
+      $('sheet').classList.remove('folded');
+      $('sheet').classList.add('expanded');
+    }
     $('sheet').style.transform = 'translateY(' + distance + 'px)';
   });
-  sheetHandle.addEventListener('pointerup', function (event) {
+  function finishSheetGesture(event) {
     if (!sheetDragging) return;
     sheetDragging = false;
     $('sheet').classList.remove('dragging');
     const distance = event.clientY - sheetStartY;
     $('sheet').style.transform = '';
-    if (distance < 20 && $('sheet').classList.contains('folded')) {
+    if (distance < -24) {
       $('sheet').classList.remove('folded');
+      $('sheet').classList.add('expanded');
       return;
     }
     if (distance > 55) {
       $('sheet').classList.remove('expanded');
       $('sheet').classList.add('folded');
+      return;
     }
-  });
+    if (!sheetMoved) {
+      const folded = $('sheet').classList.contains('folded');
+      $('sheet').classList.toggle('folded', !folded);
+      $('sheet').classList.toggle('expanded', folded);
+    }
+  }
+  sheetHandle.addEventListener('pointerup', finishSheetGesture);
+  sheetHandle.addEventListener('pointercancel', finishSheetGesture);
+
+  let touchStartY = 0;
+  document.addEventListener('touchstart', function (event) {
+    if (event.touches.length === 1) touchStartY = event.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (event) {
+    if (event.touches.length !== 1 || window.scrollY > 0) return;
+    const target = event.target;
+    if (target.closest && target.closest('#map-card, .handle, textarea, input, .solution-list')) return;
+    if (event.touches[0].clientY > touchStartY) event.preventDefault();
+  }, { passive: false });
 
   map = L.map('map-card', { zoomControl: false }).setView([defaultLat, defaultLng], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
