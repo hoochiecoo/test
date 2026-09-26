@@ -27,6 +27,9 @@
     .app { width: min(100%, 430px); min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 0 16px 22px; background: var(--bg); }
     .topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; }
     .brand { font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
+    .topbar-actions { display: flex; align-items: center; gap: 6px; }
+    .header-action, .more { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); }
+    .header-action { font-size: 19px; }
     .more { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); font-size: 18px; }
     .gallery { position: relative; display: grid; gap: 10px; }
     .gallery.processing::after { content: '🚲'; position: absolute; top: 42%; left: -34px; z-index: 8; display: block; font-size: 28px; pointer-events: none; animation: cyclistRide 2.2s ease-in-out infinite; }
@@ -75,6 +78,7 @@
     .setting-toggle input { width: 18px; height: 18px; margin: 0; accent-color: #86ad25; }
     .setting-toggle small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.25; }
     .primary { width: 100%; min-height: 56px; border-radius: 18px; background: var(--accent); color: var(--accent-dark); font-weight: 650; }
+    .random-point { width: 100%; min-height: 48px; margin-top: 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); font-weight: 600; }
     .text-button { display: block; margin: 12px auto 0; padding: 5px 8px; background: transparent; color: var(--muted); font-size: 14px; }
     .text-button .chevron { display: inline-block; margin-left: 4px; transition: transform .25s; }
     .sheet.expanded .text-button .chevron { transform: rotate(180deg); }
@@ -141,7 +145,11 @@
 <main class="app">
   <header class="topbar">
     <div class="brand">Unapredi mesto</div>
-    <button class="more" type="button" onclick="openModeMenu()">•••</button>
+    <div class="topbar-actions">
+      <button class="header-action" type="button" onclick="chooseRandomPoint()" aria-label="Izaberi slučajnu tačku u Subotici" title="Slučajna tačka u Subotici">🎲</button>
+      <button class="header-action" type="button" onclick="sharePage()" aria-label="Podeli stranicu" title="Podeli stranicu">↗</button>
+      <button class="more" type="button" onclick="openModeMenu()" aria-label="Otvori opcije">•••</button>
+    </div>
   </header>
 
   <section id="gallery" class="gallery">
@@ -308,27 +316,79 @@
     selectedLat = lat;
     selectedLng = lng;
     marker.setLatLng([lat, lng]);
-    if (!google || !google.maps || !google.maps.StreetViewService) return;
+    if (typeof google === 'undefined' || !google.maps || !google.maps.StreetViewService) return;
     $('after-placeholder').innerHTML = '<div class="spark">⌛</div><strong>Tražimo panoramu…</strong>';
     new google.maps.StreetViewService().getPanorama({ location: { lat: lat, lng: lng }, radius: 50 }, function (data, status) {
       if (status !== 'OK' || !data.location || !data.location.pano) {
         $('after-placeholder').innerHTML = '<div class="spark">⌕</div><strong>Panorama nije pronađena</strong><small>Izaberite drugu tačku</small>';
         return;
       }
-      panoId = data.location.pano;
-      yaw = 178; pitch = 0; fov = 90;
-      syncShareUrl();
-      $('map-card').style.display = 'none';
-      $('before-image').src = imageUrl();
-      $('before-image').style.display = 'block';
-      $('after-image').src = imageUrl();
-      $('after-image').className = 'preview';
-      $('after-image').style.display = 'block';
-      $('after-placeholder').style.display = 'grid';
-      $('after-placeholder').innerHTML = '<div class="spark">✨</div><strong>Ovde će se pojaviti nova verzija</strong><small>Izaberite poboljšanje ispod</small>';
-      renderHome();
+      showPanorama(data.location.pano);
     });
   }
+  function showPanorama(pano) {
+    panoId = pano;
+    yaw = 178; pitch = 0; fov = 90;
+    syncShareUrl();
+    $('map-card').style.display = 'none';
+    $('before-image').src = imageUrl();
+    $('before-image').style.display = 'block';
+    $('after-image').src = imageUrl();
+    $('after-image').className = 'preview';
+    $('after-image').style.display = 'block';
+    $('after-placeholder').style.display = 'grid';
+    $('after-placeholder').innerHTML = '<div class="spark">✨</div><strong>Ovde će se pojaviti nova verzija</strong><small>Izaberite poboljšanje ispod</small>';
+    renderHome();
+  }
+  const suboticaBounds = { minLat: 46.065, maxLat: 46.135, minLng: 19.605, maxLng: 19.725 };
+  let randomPointBusy = false;
+  function setRandomPointBusy(value) {
+    document.querySelectorAll('[onclick="chooseRandomPoint()"]')
+      .forEach(function (button) { button.disabled = value; });
+  }
+  window.chooseRandomPoint = function () {
+    if (randomPointBusy) return;
+    if (typeof google === 'undefined' || !google.maps || !google.maps.StreetViewService) {
+      alert('Mapa još nije spremna. Pokušajte ponovo za trenutak.');
+      return;
+    }
+    randomPointBusy = true;
+    setRandomPointBusy(true);
+    $('after-placeholder').style.display = 'grid';
+    $('after-placeholder').className = 'after-placeholder loading-shimmer';
+    $('after-placeholder').innerHTML = '<div class="spark">🎲</div><strong>Tražimo slučajnu tačku…</strong><small>Subotica, samo trenutak</small>';
+    let attempts = 0;
+    const service = new google.maps.StreetViewService();
+    function tryPoint() {
+      attempts += 1;
+      const point = {
+        lat: suboticaBounds.minLat + Math.random() * (suboticaBounds.maxLat - suboticaBounds.minLat),
+        lng: suboticaBounds.minLng + Math.random() * (suboticaBounds.maxLng - suboticaBounds.minLng)
+      };
+      service.getPanorama({ location: point, radius: 350 }, function (data, status) {
+        if (status === 'OK' && data.location && data.location.pano && data.location.latLng) {
+          const lat = data.location.latLng.lat();
+          const lng = data.location.latLng.lng();
+          selectedLat = lat;
+          selectedLng = lng;
+          marker.setLatLng([lat, lng]);
+          randomPointBusy = false;
+          setRandomPointBusy(false);
+          showPanorama(data.location.pano);
+          return;
+        }
+        if (attempts < 12) {
+          tryPoint();
+          return;
+        }
+        randomPointBusy = false;
+        setRandomPointBusy(false);
+        $('after-placeholder').className = 'after-placeholder';
+        $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Nismo pronašli slučajnu tačku</strong><small>Pokušajte ponovo</small>';
+      });
+    }
+    tryPoint();
+  };
   function syncShareUrl() {
     if (!panoId) return;
     const params = new URLSearchParams({
@@ -346,7 +406,7 @@
   window.zoomOut = function () { fov = Math.min(120, fov + 10); updateBefore(); };
   function renderHome() {
     $('sheet').classList.remove('expanded', 'folded'); $('sheet').style.transform = '';
-    $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Nasumično poboljšanje</h2><p class="sheet-subtitle">Izabraćemo osnovno poboljšanje za ovo mesto</p><button class="primary" onclick="generateImprovement(\'austria\', \'Učini mesto prijatnijim, zelenijim i udobnijim za ljude\')">Poboljšaj ovo mesto</button><button class="text-button" onclick="openModeMenu()">Želim nešto posebno <span class="chevron">⌃</span></button>';
+    $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Nasumično poboljšanje</h2><p class="sheet-subtitle">Izabraćemo osnovno poboljšanje za ovo mesto</p><button class="primary" onclick="generateImprovement(\'austria\', \'Učini mesto prijatnijim, zelenijim i udobnijim za ljude\')">Poboljšaj ovo mesto</button><button class="random-point" type="button" onclick="chooseRandomPoint()">🎲 Izaberi slučajnu tačku u Subotici</button><button class="text-button" onclick="openModeMenu()">Želim nešto posebno <span class="chevron">⌃</span></button>';
   }
   window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openProblems()"><span class="mode-icon">⚠️</span><span><strong>Problem</strong><small>Izaberite šta trenutno ne radi dobro</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><p style="margin-top:18px">Kako bi ovo moglo da izgleda?</p><div class="countries">' + countryMarkup() + '</div>'; };
   window.selectCountry = function (button, value) { country = value; document.querySelectorAll('.country').forEach(function (item) { item.classList.remove('active'); }); button.classList.add('active'); };
@@ -450,9 +510,38 @@
     finally { setBusy(false); }
   }
   window.generateImprovement = generateImprovement;
-  window.shareResult = function () { const url = location.href; if (navigator.share) navigator.share({ title: 'Poboljšanje gradske sredine', text: 'Nova verzija gradske sredine', url: url }); else navigator.clipboard.writeText(url).then(function () { alert('Link je kopiran.'); }); };
+  function pageShareUrl() {
+    const url = new URL(location.href);
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  }
+  function copyPageUrl(url) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(url);
+    }
+    const input = document.createElement('textarea');
+    input.value = url;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    try { document.execCommand('copy'); } finally { input.remove(); }
+    return Promise.resolve();
+  }
+  window.sharePage = function () {
+    const url = pageShareUrl();
+    if (navigator.share) {
+      navigator.share({ title: 'Unapredi mesto', text: 'Pogledajte Unapredi mesto', url: url })
+        .catch(function (error) { if (error.name !== 'AbortError') copyPageUrl(url).then(function () { alert('Link je kopiran.'); }); });
+      return;
+    }
+    copyPageUrl(url).then(function () { alert('Link je kopiran.'); });
+  };
+  window.shareResult = function () { window.sharePage(); };
   window.shareInstagram = function () { window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer'); };
-  window.shareFacebook = function () { window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(location.href), '_blank', 'noopener,noreferrer'); };
+  window.shareFacebook = function () { window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(pageShareUrl()), '_blank', 'noopener,noreferrer'); };
 
   let sheetStartY = 0;
   let sheetDragging = false;
