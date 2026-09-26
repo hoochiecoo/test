@@ -136,7 +136,7 @@
     .share-collage { display: grid; gap: 7px; overflow: hidden; border-radius: 20px; background: var(--soft); }
     .share-collage img { display: block; width: 100%; aspect-ratio: 16 / 11; object-fit: cover; }
     .animation-preview { overflow: hidden; margin-bottom: 10px; border-radius: 20px; background: #171717; }
-    .animation-preview canvas { display: block; width: 100%; aspect-ratio: 9 / 16; }
+    .animation-preview canvas { display: block; width: 100%; aspect-ratio: 16 / 11; }
     .animation-caption { margin: -2px 0 12px; color: var(--muted); text-align: center; font-size: 12px; }
     .share-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
     .share-actions button { min-height: 52px; border-radius: 17px; background: var(--soft); font-weight: 650; }
@@ -212,9 +212,9 @@
     <h2 id="share-title">Kolaž je spreman</h2>
     <p>Pregledajte rezultat, sačuvajte kolaž ili napravite kratki video pre/posle.</p>
     <div class="animation-preview">
-      <canvas id="animation-preview" width="720" height="1280" aria-label="Pregled animacije pre i posle"></canvas>
+      <canvas id="animation-preview" width="1200" height="825" aria-label="Pregled animacije pre i posle"></canvas>
     </div>
-    <div class="animation-caption">Video 5 s · vertikalni format · separator se pomera levo-desno</div>
+    <div class="animation-caption">Video 5 s · originalni format · separator se pomera levo-desno</div>
     <div class="share-collage">
       <img id="share-before" alt="Pre">
       <img id="share-after" alt="Posle">
@@ -601,8 +601,8 @@
   };
   let animationPreviewFrame = 0;
   let animationImages = null;
-  const animationWidth = 720;
-  const animationHeight = 1280;
+  const animationWidth = 1200;
+  const animationHeight = 825;
   const animationDuration = 5000;
   function loadAnimationImages() {
     if (animationImages) return Promise.resolve(animationImages);
@@ -691,9 +691,11 @@
       const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
       const recorder = new MediaRecorder(stream, { mimeType: mimeType });
       const chunks = [];
+      let timer = null;
       recorder.ondataavailable = function (event) { if (event.data.size) chunks.push(event.data); };
-      recorder.onerror = function () { stream.getTracks().forEach(function (track) { track.stop(); }); button.disabled = false; button.textContent = 'Sačuvaj video · 5 s'; alert('Video nije moguće sačuvati.'); };
+      recorder.onerror = function () { if (timer) clearInterval(timer); stream.getTracks().forEach(function (track) { track.stop(); }); button.disabled = false; button.textContent = 'Sačuvaj video · 5 s'; alert('Video nije moguće sačuvati.'); };
       recorder.onstop = function () {
+        if (timer) clearInterval(timer);
         const blob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -706,14 +708,18 @@
         button.textContent = 'Sačuvaj video · 5 s';
       };
       const started = performance.now();
-      recorder.start();
-      function render(now) {
-        const elapsed = now - started;
+      recorder.start(100);
+      function render() {
+        const elapsed = performance.now() - started;
         drawAnimationFrame(context, images, animationSplit(elapsed));
-        if (elapsed < animationDuration) requestAnimationFrame(render);
-        else recorder.stop();
+        if (elapsed >= animationDuration) {
+          clearInterval(timer);
+          drawAnimationFrame(context, images, animationSplit(animationDuration));
+          recorder.stop();
+        }
       }
-      requestAnimationFrame(render);
+      render();
+      timer = setInterval(render, 1000 / 30);
     }).catch(function (error) {
       button.disabled = false;
       button.textContent = 'Sačuvaj video · 5 s';
