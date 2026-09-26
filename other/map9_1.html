@@ -697,7 +697,7 @@
     const context = canvas.getContext('2d');
     const frameDuration = 1_000_000 / animationFps;
     for (let index = 0; index < frames.length; index += 1) {
-      context.drawImage(frames[index], 0, 0, animationWidth, animationHeight);
+      context.drawImage(frames[index], 0, 0, animationExportWidth, animationExportHeight);
       const videoFrame = new VideoFrame(canvas, {
         timestamp: Math.round(index * frameDuration),
         duration: Math.round(frameDuration)
@@ -800,7 +800,7 @@
       const frameDuration = animationDuration / frames.length;
       function renderNextFrame() {
         if (frameIndex >= frames.length) return;
-        context.drawImage(frames[frameIndex], 0, 0, animationWidth, animationHeight);
+        context.drawImage(frames[frameIndex], 0, 0, animationExportWidth, animationExportHeight);
         if (manualCapture) videoTrack.requestFrame();
         frameIndex += 1;
         setVideoExportProgress(frameIndex, frames.length, true);
