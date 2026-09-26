@@ -25,6 +25,8 @@
     button, input, textarea { font: inherit; }
     button { cursor: pointer; border: 0; color: inherit; }
     .app { width: min(100%, 430px); min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 0 16px 22px; background: var(--bg); }
+    .scroll-top { position: fixed; right: max(16px, calc((100vw - 430px) / 2 + 16px)); bottom: 92px; z-index: 20; display: none; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.94); box-shadow: 0 5px 18px rgba(0,0,0,.14); font-size: 20px; }
+    .scroll-top.visible { display: block; }
     .topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; }
     .brand { font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
     .topbar-actions { display: flex; align-items: center; gap: 6px; }
@@ -191,6 +193,8 @@
   </section>
 </main>
 
+<button id="scroll-top" class="scroll-top" type="button" onclick="scrollToTop()" aria-label="Vrati se na vrh">↑</button>
+
 <div id="share-modal" class="share-modal" aria-hidden="true">
   <section class="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-title">
     <button class="share-close" type="button" onclick="closeShareModal()" aria-label="Zatvori">×</button>
@@ -219,7 +223,7 @@
 (function () {
   'use strict';
 
-  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwQUnthcpKig5LmoXX8uMp_Z_JBTd1eSHfKl8OslMaeq87cpKhORyurN0odytcsOCflIQ/exec';
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxfRN__ZahuCL-w3errRyaTkGKPfrby4mhuRNQgw39No2zrD9jlkIPIaOtzEZX05pdjKg/exec';
   const defaultLat = 46.1005;
   const defaultLng = 19.6676;
   let map;
@@ -616,6 +620,10 @@
     $('share-modal').setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
   };
+  window.scrollToTop = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  window.addEventListener('scroll', function () {
+    $('scroll-top').classList.toggle('visible', window.scrollY > 180);
+  }, { passive: true });
   async function generateImprovement(promptId, detail, selections) {
     selections = selections || {};
     const annotateForRequest = annotateChanges;
