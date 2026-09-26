@@ -21,6 +21,7 @@
     html, body { margin: 0; min-height: 100%; background: #e6e7e2; overscroll-behavior-y: none; }
     body { min-height: 100vh; min-height: 100dvh; }
     body { color: var(--text); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body.modal-open { overflow: hidden; }
     button, input, textarea { font: inherit; }
     button { cursor: pointer; border: 0; color: inherit; }
     .app { width: min(100%, 430px); min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 0 16px 22px; background: var(--bg); }
@@ -122,6 +123,17 @@
     .result-chips span { padding: 7px 10px; border-radius: 999px; background: var(--soft); color: #555; font-size: 12px; }
     .secondary-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .secondary-actions button { min-height: 48px; border-radius: 16px; background: var(--soft); font-weight: 600; }
+    .share-modal { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; padding: 16px; background: rgba(22,22,22,.48); backdrop-filter: blur(8px); }
+    .share-modal.visible { display: grid; }
+    .share-dialog { position: relative; width: min(100%, 398px); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 22px 16px 16px; border-radius: 26px; background: var(--card); box-shadow: 0 18px 60px rgba(0,0,0,.22); }
+    .share-close { position: absolute; top: 10px; right: 12px; width: 38px; height: 38px; border-radius: 50%; background: var(--soft); font-size: 22px; }
+    .share-dialog h2 { margin: 0 42px 5px 0; font-size: 21px; font-weight: 650; }
+    .share-dialog p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .share-collage { display: grid; gap: 7px; overflow: hidden; border-radius: 20px; background: var(--soft); }
+    .share-collage img { display: block; width: 100%; aspect-ratio: 16 / 11; object-fit: cover; }
+    .share-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .share-actions button { min-height: 52px; border-radius: 17px; background: var(--soft); font-weight: 650; }
+    .share-actions .save { grid-column: 1 / -1; background: var(--accent); color: var(--accent-dark); }
     @media (max-width: 360px) { .app { padding-left: 12px; padding-right: 12px; } .mode-row { padding-left: 10px; padding-right: 10px; } }
   </style>
 </head>
@@ -167,6 +179,23 @@
   </section>
 </main>
 
+<div id="share-modal" class="share-modal" aria-hidden="true">
+  <section class="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-title">
+    <button class="share-close" type="button" onclick="closeShareModal()" aria-label="Zatvori">×</button>
+    <h2 id="share-title">Kolaž je spreman</h2>
+    <p>Pregledajte rezultat i pošaljite fotografiju ili je sačuvajte kao JPEG.</p>
+    <div class="share-collage">
+      <img id="share-before" alt="Pre">
+      <img id="share-after" alt="Posle">
+    </div>
+    <div class="share-actions">
+      <button type="button" onclick="shareInstagram()">Instagram</button>
+      <button type="button" onclick="shareFacebook()">Facebook</button>
+      <button class="save" type="button" onclick="saveCollage()">Sačuvaj JPEG</button>
+    </div>
+  </section>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
 <script>
@@ -194,6 +223,8 @@
   let solutions = [];
   let problems = [];
   let countries = [];
+  let solutionCategories = [];
+  let selectedSolutionCategory = 'all';
 
   function $(id) { return document.getElementById(id); }
   function clientId() {
@@ -220,6 +251,7 @@
       if (!data.ok) throw new Error(data.error || 'Opcije nisu dostupne.');
       people = data.people || [];
       solutions = data.improvements || [];
+      solutionCategories = data.improvementCategories || [];
       problems = data.problems || [];
       countries = data.countries || [];
       return data;
@@ -232,6 +264,16 @@
     return countries.map(function (item, index) {
       return '<button class="country ' + (item.id === country || (!country && index === 0) ? 'active' : '') + '" onclick="selectCountry(this, &quot;' + item.id + '&quot;)">' + (item.icon ? item.icon + ' ' : '') + item.label + '</button>';
     }).join('');
+  }
+  function solutionCategoryMarkup() {
+    return solutionCategories.map(function (item) {
+      return '<button class="category ' + (item.id === selectedSolutionCategory ? 'active' : '') + '" type="button" onclick="selectSolutionCategory(this, &quot;' + item.id + '&quot;)">' + item.label + '</button>';
+    }).join('');
+  }
+  function visibleSolutions() {
+    return solutions.map(function (item, index) { return { item: item, index: index }; }).filter(function (entry) {
+      return selectedSolutionCategory === 'all' || entry.item.category === selectedSolutionCategory || (entry.item.filters || []).indexOf(selectedSolutionCategory) !== -1;
+    });
   }
   function renderGlobalSetting() {
     $('global-setting').innerHTML = '<label class="setting-toggle"><input type="checkbox" ' + (annotateChanges ? 'checked' : '') + ' onchange="setAnnotateChanges(this.checked)"><span><b>Dodaj objašnjenja promena</b><small>Označi šta je promenjeno i zašto je korisno</small></span></label>';
@@ -331,7 +373,8 @@
   window.openPeople = function () { mode = 'people'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Nazad</button><h2>Za koga da ovo mesto bude udobnije?</h2><p>Možete izabrati više opcija</p><input class="search" placeholder="🔎  Pronađi"><div class="chip-grid">' + people.map((p, i) => '<button class="chip ' + (selectedPeople.has(i) ? 'active' : '') + '" onclick="togglePerson(' + i + ')">' + p.icon + ' ' + p.label + '<span class="check">✓</span></button>').join('') + '</div><button class="primary" ' + (selectedPeople.size ? '' : 'disabled') + ' onclick="generateForPeople()">Kreiraj verziju</button>'; };
   window.togglePerson = function (i) { selectedPeople.has(i) ? selectedPeople.delete(i) : selectedPeople.add(i); openPeople(); };
   window.generateForPeople = function () { generateImprovement('pedestrian', '', { peopleIds: Array.from(selectedPeople).map(i => people[i].id) }); };
-  window.openBuild = function () { mode = 'build'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Sastavi poboljšanje</button><input class="search" placeholder="🔎  Pronađi: drvo, prelaz, klupa…"><div class="category-row"><button class="category active">Sve</button><button class="category">Bezbednost</button><button class="category">Komfor</button><button class="category">Zelenilo</button><button class="category">Kretanje</button></div><div class="solution-list">' + solutions.map((s, i) => '<div class="solution"><span>' + s.icon + '</span><span><strong>' + s.label + '</strong><small>' + s.description + '</small></span><button class="add ' + (selectedSolutions.has(i) ? 'active' : '') + '" onclick="toggleSolution(' + i + ')">' + (selectedSolutions.has(i) ? '✓' : '+') + '</button></div>').join('') + '</div><div class="tags">' + Array.from(selectedSolutions).map(i => '<span class="tag">' + solutions[i].label + ' ×</span>').join('') + '</div><button class="primary" ' + (selectedSolutions.size ? '' : 'disabled') + ' onclick="generateForSolutions()">Kreiraj verziju</button>'; };
+  window.openBuild = function () { mode = 'build'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Sastavi poboljšanje</button><input class="search" placeholder="🔎  Pronađi: drvo, prelaz, klupa…"><div class="category-row">' + solutionCategoryMarkup() + '</div><div class="solution-list">' + visibleSolutions().map(function (entry) { const s = entry.item; const i = entry.index; return '<div class="solution"><span>' + s.icon + '</span><span><strong>' + s.label + '</strong><small>' + s.description + '</small></span><button class="add ' + (selectedSolutions.has(i) ? 'active' : '') + '" onclick="toggleSolution(' + i + ')">' + (selectedSolutions.has(i) ? '✓' : '+') + '</button></div>'; }).join('') + '</div><div class="tags">' + Array.from(selectedSolutions).map(i => '<span class="tag">' + solutions[i].label + ' ×</span>').join('') + '</div><button class="primary" ' + (selectedSolutions.size ? '' : 'disabled') + ' onclick="generateForSolutions()">Kreiraj verziju</button>'; };
+  window.selectSolutionCategory = function (button, value) { selectedSolutionCategory = value; openBuild(); };
   window.toggleSolution = function (i) { selectedSolutions.has(i) ? selectedSolutions.delete(i) : selectedSolutions.add(i); openBuild(); };
   window.generateForSolutions = function () { generateImprovement('pedestrian', '', { improvementIds: Array.from(selectedSolutions).map(i => solutions[i].id) }); };
   window.openProblems = function () { mode = 'problems'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Nazad</button><h2>Šta je problem?</h2><p>Izaberite do osam stvari koje treba poboljšati</p><input class="search" placeholder="🔎  Pronađi problem"><div class="problem-list">' + problems.map((p, i) => '<button class="problem-row" type="button" onclick="toggleProblem(' + i + ')"><span>' + p.icon + '</span><span><strong>' + p.label + '</strong><small>' + p.description + '</small></span><span class="add ' + (selectedProblems.has(i) ? 'active' : '') + '">' + (selectedProblems.has(i) ? '✓' : '+') + '</span></button>').join('') + '</div><div class="tags">' + Array.from(selectedProblems).map(i => '<span class="tag">' + problems[i].label + ' ×</span>').join('') + '</div><button class="primary" ' + (selectedProblems.size ? '' : 'disabled') + ' onclick="generateForProblems()">Kreiraj verziju</button>'; };
@@ -341,8 +384,7 @@
   window.addQuick = function (text) { const input = $('custom-prompt'); input.value = input.value ? input.value + ', ' + text.toLowerCase() : text; input.focus(); };
   window.generateDescription = function () { generateImprovement('austria', $('custom-prompt').value || 'Učini ovo gradsko mesto lepšim, zelenijim i udobnijim za ljude.'); };
   window.openRandom = function () { mode = 'random'; $('sheet-content').innerHTML = '<div class="result"><div class="spark">🎲</div><h2>Kreirajmo neočekivanu verziju</h2><p>Sistem će sam izabrati šta da poboljša</p><button class="primary" onclick="generateImprovement(\'austria\', \'Izaberi najbolje neočekivano poboljšanje gradske sredine\')">Hajde</button><button class="text-button" onclick="back()">Otkaži</button></div>'; };
-  window.saveCollage = function (auto) {
-    auto = auto === true;
+  window.saveCollage = function () {
     const before = $('before-image');
     const after = $('after-image');
     if (!before.src || !after.src) return;
@@ -358,10 +400,22 @@
       context.drawImage(first, 0, 0, 1200, 825);
       context.drawImage(second, 0, 825, 1200, 825);
       const link = document.createElement('a');
-      try { link.href = canvas.toDataURL('image/jpeg', .92); } catch (error) { if (!auto) alert('JPEG nije moguće sačuvati zbog ograničenja pregledača.'); return; }
+      try { link.href = canvas.toDataURL('image/jpeg', .92); } catch (error) { alert('JPEG nije moguće sačuvati zbog ograničenja pregledača.'); return; }
       link.download = 'urban-before-after.jpg'; document.body.appendChild(link); link.click(); link.remove();
     }
     first.onload = draw; second.onload = draw; first.src = before.src; second.src = after.src;
+  };
+  window.openShareModal = function () {
+    $('share-before').src = $('before-image').src;
+    $('share-after').src = $('after-image').src;
+    $('share-modal').classList.add('visible');
+    $('share-modal').setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  };
+  window.closeShareModal = function () {
+    $('share-modal').classList.remove('visible');
+    $('share-modal').setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
   };
   async function generateImprovement(promptId, detail, selections) {
     selections = selections || {};
@@ -383,21 +437,21 @@
       if (!result.ok) throw new Error(result.error);
       $('after-placeholder').style.display = 'none';
       const afterImage = $('after-image');
-      afterImage.onload = function () { afterImage.onload = null; saveCollage(true); };
       afterImage.src = 'data:' + (result.image.media_type || 'image/png') + ';base64,' + result.image.b64_json;
       afterImage.className = '';
       afterImage.style.display = 'block';
       $('sheet').classList.remove('expanded');
-      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Gotovo</div><div class="result-subtitle">Kolaž je spreman i sačuvan. Podelite fotografiju ili napravite novu verziju.</div><div class="result-chips"><span>Zelenilo</span><span>Komfor</span><span>Gradska sredina</span></div><div class="secondary-actions"><button onclick="shareInstagram()">Instagram</button><button onclick="shareFacebook()">Facebook</button><button onclick="saveCollage()">Sačuvaj</button></div><button class="primary" onclick="openModeMenu()">Još jedna verzija</button><button class="text-button" onclick="openModeMenu()">Izmeni</button></div>';
+      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Gotovo</div><div class="result-subtitle">Kolaž je spreman. Podelite fotografiju ili ga sačuvajte kao JPEG.</div><div class="result-chips"><span>Zelenilo</span><span>Komfor</span><span>Gradska sredina</span></div><div class="secondary-actions"><button onclick="shareInstagram()">Instagram</button><button onclick="shareFacebook()">Facebook</button><button onclick="saveCollage()">Sačuvaj</button></div><button class="primary" onclick="openModeMenu()">Još jedna verzija</button><button class="text-button" onclick="openModeMenu()">Izmeni</button></div>';
       $('sheet').classList.remove('folded', 'processing');
       $('sheet').classList.add('expanded');
       $('gallery').classList.add('controls-muted');
+      openShareModal();
     } catch (error) { $('after-placeholder').className = 'after-placeholder'; $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Verzija nije kreirana</strong><small>' + error.message + '</small>'; renderHome(); }
     finally { setBusy(false); }
   }
   window.generateImprovement = generateImprovement;
   window.shareResult = function () { const url = location.href; if (navigator.share) navigator.share({ title: 'Poboljšanje gradske sredine', text: 'Nova verzija gradske sredine', url: url }); else navigator.clipboard.writeText(url).then(function () { alert('Link je kopiran.'); }); };
-  window.shareInstagram = function () { saveCollage(false); window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer'); };
+  window.shareInstagram = function () { window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer'); };
   window.shareFacebook = function () { window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(location.href), '_blank', 'noopener,noreferrer'); };
 
   let sheetStartY = 0;
