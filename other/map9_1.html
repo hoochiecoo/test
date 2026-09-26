@@ -661,9 +661,70 @@
       prepareNext();
     });
   }
+  async function encodeAnimationWithWebCodecs(frames) {
+    if (!window.VideoEncoder || !window.VideoFrame) throw new Error('WebCodecs nije dostupan.');
+    const muxerModule = await import('https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/+esm');
+    const Muxer = muxerModule.Muxer;
+    const ArrayBufferTarget = muxerModule.ArrayBufferTarget;
+    if (!Muxer || !ArrayBufferTarget) throw new Error('MP4 enkoder nije dostupan.');
+    const config = {
+      codec: 'avc1.42001f',
+      width: animationWidth,
+      height: animationHeight,
+      bitrate: 4_000_000,
+      framerate: animationFps
+    };
+    const supported = await VideoEncoder.isConfigSupported(config);
+    if (!supported.supported) throw new Error('Ovaj pregledač ne podržava MP4 enkoder.');
+    const target = new ArrayBufferTarget();
+    const muxer = new Muxer({
+      target: target,
+      video: { codec: 'avc', width: animationWidth, height: animationHeight },
+      fastStart: 'in-memory',
+      firstTimestampBehavior: 'offset'
+    });
+    let encodeError = null;
+    const encoder = new VideoEncoder({
+      output: function (chunk, metadata) { muxer.addVideoChunk(chunk, metadata); },
+      error: function (error) { encodeError = error; }
+    });
+    encoder.configure(config);
+    const canvas = document.createElement('canvas');
+    canvas.width = animationWidth;
+    canvas.height = animationHeight;
+    const context = canvas.getContext('2d');
+    const frameDuration = 1_000_000 / animationFps;
+    for (let index = 0; index < frames.length; index += 1) {
+      context.drawImage(frames[index], 0, 0, animationWidth, animationHeight);
+      const videoFrame = new VideoFrame(canvas, {
+        timestamp: Math.round(index * frameDuration),
+        duration: Math.round(frameDuration)
+      });
+      encoder.encode(videoFrame, { keyFrame: index === 0 });
+      videoFrame.close();
+      if (encoder.encodeQueueSize > 4) await new Promise(function (resolve) { encoder.addEventListener('dequeue', resolve, { once: true }); });
+      setVideoExportProgress(index + 1, frames.length, true);
+    }
+    await encoder.flush();
+    encoder.close();
+    if (encodeError) throw encodeError;
+    muxer.finalize();
+    return new Blob([target.buffer], { type: 'video/mp4' });
+  }
+
+  function downloadAnimationBlob(blob) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'urban-before-after-5s.' + (blob.type === 'video/mp4' ? 'mp4' : 'webm');
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
   window.saveAnimation = function () {
     const button = document.querySelector('.save-video');
-    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+    const canUseRealtimeFallback = !!(window.MediaRecorder && HTMLCanvasElement.prototype.captureStream);
+    if ((!window.VideoEncoder || !window.VideoFrame) && !canUseRealtimeFallback) {
       alert('Ovaj pregledač ne podržava čuvanje video animacije.');
       return;
     }
@@ -672,6 +733,30 @@
     cancelAnimationFrame(animationPreviewFrame);
     setVideoExportBusy(true);
     loadAnimationImages().then(prepareAnimationFrames).then(function (frames) {
+      setVideoExportProgress(0, frames.length, true);
+      return encodeAnimationWithWebCodecs(frames).then(function (blob) {
+        downloadAnimationBlob(blob);
+        return true;
+      }).catch(function (error) {
+        console.warn('WebCodecs MP4 export failed, using MediaRecorder fallback:', error);
+        return saveAnimationWithMediaRecorder(frames);
+      });
+    }).then(function () {
+      setVideoExportBusy(false);
+      button.disabled = false;
+      button.textContent = 'Sačuvaj video · 5 s';
+      startAnimationPreview();
+    }).catch(function (error) {
+      setVideoExportBusy(false);
+      button.disabled = false;
+      button.textContent = 'Sačuvaj video · 5 s';
+      startAnimationPreview();
+      alert(error.message);
+    });
+  };
+
+  function saveAnimationWithMediaRecorder(frames) {
+    return new Promise(function (resolve, reject) {
       const canvas = document.createElement('canvas');
       canvas.width = animationWidth; canvas.height = animationHeight;
       const context = canvas.getContext('2d');
@@ -697,27 +782,15 @@
         if (timer) clearTimeout(timer);
         if (stopTimer) clearTimeout(stopTimer);
         stream.getTracks().forEach(function (track) { track.stop(); });
-        setVideoExportBusy(false);
-        button.disabled = false;
-        button.textContent = 'Sačuvaj video · 5 s';
-        startAnimationPreview();
-        alert('Video nije moguće sačuvati.');
+        reject(new Error('Video nije moguće sačuvati.'));
       };
       recorder.onstop = function () {
         if (timer) clearTimeout(timer);
         if (stopTimer) clearTimeout(stopTimer);
         const blob = new Blob(chunks, { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = mimeType === 'video/mp4' ? 'urban-before-after-5s.mp4' : 'urban-before-after-5s.webm';
-        document.body.appendChild(link); link.click(); link.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        downloadAnimationBlob(blob);
         stream.getTracks().forEach(function (track) { track.stop(); });
-        setVideoExportBusy(false);
-        button.disabled = false;
-        button.textContent = 'Sačuvaj video · 5 s';
-        startAnimationPreview();
+        resolve(true);
       };
       setVideoExportProgress(0, frames.length, true);
       recorder.start(100);
@@ -741,14 +814,8 @@
       stopTimer = setTimeout(function () {
         if (recorder.state !== 'inactive') recorder.stop();
       }, animationDuration);
-    }).catch(function (error) {
-      setVideoExportBusy(false);
-      button.disabled = false;
-      button.textContent = 'Sačuvaj video · 5 s';
-      startAnimationPreview();
-      alert(error.message);
     });
-  };
+  }
   window.openShareModal = function () {
     $('share-before').src = $('before-image').src;
     $('share-after').src = $('after-image').src;
