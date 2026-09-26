@@ -488,6 +488,7 @@
     list.prepend(row);
   };
   function back() { renderHome(); }
+  window.back = back;
   window.openPeople = function () { mode = 'people'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Nazad</button><h2>Za koga da ovo mesto bude udobnije?</h2><p>Možete izabrati više opcija</p><input class="search" placeholder="🔎  Pronađi"><div class="chip-grid">' + people.map((p, i) => '<button class="chip ' + (selectedPeople.has(i) ? 'active' : '') + '" onclick="togglePerson(' + i + ')">' + p.icon + ' ' + p.label + '<span class="check">✓</span></button>').join('') + '</div><button class="primary" ' + (selectedPeople.size ? '' : 'disabled') + ' onclick="generateForPeople()">Kreiraj verziju</button>'; };
   window.togglePerson = function (i) { selectedPeople.has(i) ? selectedPeople.delete(i) : selectedPeople.add(i); openPeople(); };
   window.generateForPeople = function () { generateImprovement('custom', '', { peopleIds: Array.from(selectedPeople).map(i => people[i].id) }); };
