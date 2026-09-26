@@ -4,8 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Улучшить место</title>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     :root {
       --bg: #f7f7f5;
@@ -30,12 +29,14 @@
     .gallery { display: grid; gap: 10px; }
     .photo-card { position: relative; overflow: hidden; border-radius: var(--radius); background: #e8e8e4; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
     .photo-card > img, .photo-map { display: block; width: 100%; aspect-ratio: 16 / 11; object-fit: cover; }
+    #after-card { aspect-ratio: 16 / 11; }
     .photo-map { min-height: 220px; background: #ddd; }
     .badge { position: absolute; z-index: 3; top: 12px; left: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.9); font-size: 12px; font-weight: 650; }
-    .after-placeholder { display: grid; place-items: center; align-content: center; gap: 7px; min-height: 220px; padding: 24px; color: var(--muted); text-align: center; }
+    .after-placeholder { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; align-content: center; gap: 7px; min-height: 220px; padding: 24px; background: rgba(247,247,245,.72); color: var(--muted); text-align: center; }
     .after-placeholder .spark { font-size: 25px; }
     .after-placeholder strong { color: var(--text); font-size: 15px; font-weight: 600; }
     .after-placeholder small { font-size: 12px; }
+    #after-image.preview { display: block; filter: grayscale(1) blur(2px); opacity: .62; transform: scale(1.02); }
     .loading-shimmer { background: linear-gradient(100deg,#ecece8 30%,#fafaf7 45%,#ecece8 60%); background-size: 250% 100%; animation: shimmer 1.2s infinite; }
     @keyframes shimmer { to { background-position: -250% 0; } }
     #map-card { display: block; }
@@ -46,6 +47,9 @@
     .image-controls .right { right: 10px; top: 50%; }
     .image-controls .up { left: 50%; top: 10px; transform: translateX(-50%); }
     .image-controls .down { left: 50%; bottom: 10px; transform: translateX(-50%); }
+    .image-controls .bottom-group { position: absolute; left: 50%; bottom: 10px; display: flex; gap: 5px; transform: translateX(-50%); }
+    .image-controls .bottom-group button { position: static; transform: none; width: 38px; height: 38px; }
+    .image-controls .bottom-group .down { width: 44px; }
     .sheet { position: sticky; bottom: 10px; z-index: 10; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); transition: padding .3s ease; }
     .handle { width: 38px; height: 4px; margin: 0 auto 14px; border-radius: 999px; background: #c9c9c3; }
     .sheet-title { margin: 0; text-align: center; font-size: 18px; font-weight: 600; }
@@ -112,8 +116,12 @@
       <div class="image-controls">
         <button class="left" type="button" onclick="moveLeft()">‹</button>
         <button class="right" type="button" onclick="moveRight()">›</button>
-        <button class="up" type="button" onclick="moveUp()">⌃</button>
-        <button class="down" type="button" onclick="moveDown()">⌄</button>
+        <button class="up" type="button" onclick="moveDown()">⌃</button>
+        <div class="bottom-group">
+          <button type="button" onclick="zoomOut()">−</button>
+          <button class="down" type="button" onclick="moveUp()">⌄</button>
+          <button type="button" onclick="zoomIn()">＋</button>
+        </div>
       </div>
     </article>
     <article class="photo-card" id="after-card">
@@ -133,6 +141,8 @@
   </section>
 </main>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
 <script>
 (function () {
   'use strict';
@@ -205,6 +215,10 @@
       $('map-card').style.display = 'none';
       $('before-image').src = imageUrl();
       $('before-image').style.display = 'block';
+      $('after-image').src = imageUrl();
+      $('after-image').className = 'preview';
+      $('after-image').style.display = 'block';
+      $('after-placeholder').style.display = 'grid';
       $('after-placeholder').innerHTML = '<div class="spark">✨</div><strong>Здесь появится новый вариант</strong><small>Выберите улучшение ниже</small>';
       renderHome();
     });
@@ -214,6 +228,8 @@
   window.moveRight = function () { yaw = (yaw + 15) % 360; updateBefore(); };
   window.moveUp = function () { pitch = Math.min(90, pitch + 10); updateBefore(); };
   window.moveDown = function () { pitch = Math.max(-90, pitch - 10); updateBefore(); };
+  window.zoomIn = function () { fov = Math.max(20, fov - 10); updateBefore(); };
+  window.zoomOut = function () { fov = Math.min(120, fov + 10); updateBefore(); };
   function renderHome() {
     mode = 'home'; $('sheet').classList.remove('expanded');
     $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Случайно улучшить</h2><p class="sheet-subtitle">Подберём один из базовых вариантов для этого места</p><button class="primary" onclick="generateImprovement(\'austria\', \'Сделай место удобнее, зеленее и приятнее для людей\')">Улучшить это место</button><button class="text-button" onclick="openModeMenu()">Хочу что-то особенное <span class="chevron">⌃</span></button>';
@@ -231,6 +247,27 @@
   window.addQuick = function (text) { const input = $('custom-prompt'); input.value = input.value ? input.value + ', ' + text.toLowerCase() : text; input.focus(); };
   window.generateDescription = function () { generateImprovement('austria', $('custom-prompt').value || 'Сделай городское место более красивым, зелёным и удобным для людей.'); };
   window.openRandom = function () { mode = 'random'; $('sheet-content').innerHTML = '<div class="result"><div class="spark">🎲</div><h2>Создадим неожиданный вариант</h2><p>Система сама выберет, что улучшить</p><button class="primary" onclick="generateImprovement(\'austria\', \'Выбери лучший неожиданный вариант улучшения городской среды\')">Поехали</button><button class="text-button" onclick="back()">Отмена</button></div>'; };
+  window.saveCollage = function () {
+    const before = $('before-image');
+    const after = $('after-image');
+    if (!before.src || !after.src) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200; canvas.height = 1650;
+    const context = canvas.getContext('2d');
+    const first = new Image(); const second = new Image();
+    first.crossOrigin = 'anonymous'; second.crossOrigin = 'anonymous';
+    let loaded = 0;
+    function draw() {
+      if (++loaded < 2) return;
+      context.fillStyle = '#f7f7f5'; context.fillRect(0, 0, 1200, 1650);
+      context.drawImage(first, 0, 0, 1200, 825);
+      context.drawImage(second, 0, 825, 1200, 825);
+      const link = document.createElement('a');
+      try { link.href = canvas.toDataURL('image/jpeg', .92); } catch (error) { alert('Не удалось сохранить JPEG из-за ограничений браузера.'); return; }
+      link.download = 'urban-before-after.jpg'; document.body.appendChild(link); link.click(); link.remove();
+    }
+    first.onload = draw; second.onload = draw; first.src = before.src; second.src = after.src;
+  };
   async function generateImprovement(promptKey, detail) {
     if (!panoId) { openModeMenu(); return; }
     $('after-placeholder').className = 'after-placeholder loading-shimmer';
@@ -243,9 +280,10 @@
       if (!result.ok) throw new Error(result.error);
       $('after-placeholder').style.display = 'none';
       $('after-image').src = 'data:' + (result.image.media_type || 'image/png') + ';base64,' + result.image.b64_json;
+      $('after-image').className = '';
       $('after-image').style.display = 'block';
       $('sheet').classList.remove('expanded');
-      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Готово</div><div class="result-chips"><span>Зелень</span><span>Комфорт</span><span>Городская среда</span></div><div class="secondary-actions"><button onclick="openModeMenu()">Изменить</button><button onclick="shareResult()">Поделиться</button></div><button class="primary" onclick="openModeMenu()">Ещё вариант</button></div>';
+      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Готово</div><div class="result-chips"><span>Зелень</span><span>Комфорт</span><span>Городская среда</span></div><div class="secondary-actions"><button onclick="saveCollage()">Сохранить коллаж</button><button onclick="shareResult()">Поделиться</button></div><button class="primary" onclick="openModeMenu()">Ещё вариант</button><button class="text-button" onclick="openModeMenu()">Изменить</button></div>';
     } catch (error) { $('after-placeholder').className = 'after-placeholder'; $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Не получилось создать вариант</strong><small>' + error.message + '</small>'; renderHome(); }
   }
   window.generateImprovement = generateImprovement;
@@ -255,6 +293,8 @@
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
   marker = L.marker([defaultLat, defaultLng]).addTo(map);
   map.on('click', function (event) { selectPoint(event.latlng.lat, event.latlng.lng); });
+  setTimeout(function () { map.invalidateSize(true); }, 120);
+  window.addEventListener('resize', function () { map.invalidateSize(true); });
   renderHome();
 })();
 </script>
