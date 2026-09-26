@@ -675,16 +675,37 @@
       const canvas = document.createElement('canvas');
       canvas.width = animationWidth; canvas.height = animationHeight;
       const context = canvas.getContext('2d');
-      const stream = canvas.captureStream(animationFps);
+      // Use manual capture when the browser supports it. With a fixed FPS
+      // stream the browser may sample the canvas while the main thread is
+      // busy and silently omit prepared frames.
+      let stream = canvas.captureStream(0);
+      let videoTrack = stream.getVideoTracks()[0];
+      let manualCapture = !!(videoTrack && typeof videoTrack.requestFrame === 'function');
+      if (!manualCapture) {
+        stream.getTracks().forEach(function (track) { track.stop(); });
+        stream = canvas.captureStream(animationFps);
+        videoTrack = stream.getVideoTracks()[0];
+      }
       const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
       const recorder = new MediaRecorder(stream, { mimeType: mimeType });
       const chunks = [];
       let frameIndex = 0;
       let timer = null;
+      let stopTimer = null;
       recorder.ondataavailable = function (event) { if (event.data.size) chunks.push(event.data); };
-      recorder.onerror = function () { if (timer) clearTimeout(timer); stream.getTracks().forEach(function (track) { track.stop(); }); setVideoExportBusy(false); button.disabled = false; button.textContent = 'Sačuvaj video · 5 s'; startAnimationPreview(); alert('Video nije moguće sačuvati.'); };
+      recorder.onerror = function () {
+        if (timer) clearTimeout(timer);
+        if (stopTimer) clearTimeout(stopTimer);
+        stream.getTracks().forEach(function (track) { track.stop(); });
+        setVideoExportBusy(false);
+        button.disabled = false;
+        button.textContent = 'Sačuvaj video · 5 s';
+        startAnimationPreview();
+        alert('Video nije moguće sačuvati.');
+      };
       recorder.onstop = function () {
         if (timer) clearTimeout(timer);
+        if (stopTimer) clearTimeout(stopTimer);
         const blob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -700,14 +721,26 @@
       };
       setVideoExportProgress(0, frames.length, true);
       recorder.start(100);
+      const startedAt = performance.now();
+      const frameDuration = animationDuration / frames.length;
       function renderNextFrame() {
-        if (frameIndex >= frames.length) { recorder.stop(); return; }
+        if (frameIndex >= frames.length) return;
         context.drawImage(frames[frameIndex], 0, 0, animationWidth, animationHeight);
+        if (manualCapture) videoTrack.requestFrame();
         frameIndex += 1;
         setVideoExportProgress(frameIndex, frames.length, true);
-        timer = setTimeout(renderNextFrame, 1000 / animationFps);
+        if (frameIndex < frames.length) {
+          const nextFrameAt = startedAt + frameIndex * frameDuration;
+          timer = setTimeout(renderNextFrame, Math.max(0, nextFrameAt - performance.now()));
+        }
       }
       renderNextFrame();
+      // Keep the final frame on screen for the remainder of the exact 5 s
+      // timeline. This avoids a 4.96 s file and gives the encoder time to
+      // flush the last video sample.
+      stopTimer = setTimeout(function () {
+        if (recorder.state !== 'inactive') recorder.stop();
+      }, animationDuration);
     }).catch(function (error) {
       setVideoExportBusy(false);
       button.disabled = false;
