@@ -334,9 +334,10 @@
   window.openUrbanists = function () {
     mode = 'urbanists';
     $('sheet-content').innerHTML = '<button class="back" type="button" onclick="backToModeMenu()"><b>‹</b>Nazad</button><h2>Urbanisti</h2><p>Sažeti prioriteti savremenih urbanista. Ovo nisu doslovni citati niti rangiranje.</p><div class="urbanist-list">' + urbanists.map(function (urbanist) {
-      return '<article class="urbanist-card"><h3>' + escapeHtml(urbanist.name) + '</h3><span class="urbanist-place">' + escapeHtml(urbanist.place) + '</span><ul>' + (urbanist.points || []).map(function (point) { return '<li>' + escapeHtml(point) + '</li>'; }).join('') + '</ul></article>';
+      return '<article class="urbanist-card"><h3>' + escapeHtml(urbanist.name) + '</h3><span class="urbanist-place">' + escapeHtml(urbanist.place) + '</span><ul>' + (urbanist.points || []).map(function (point) { return '<li>' + escapeHtml(point) + '</li>'; }).join('') + '</ul><button class="primary" type="button" onclick="generateUrbanist(\'' + escapeHtml(urbanist.id) + '\')">Primeni ovaj pristup</button></article>';
     }).join('') + '</div>';
   };
+  window.generateUrbanist = function (urbanistId) { generateImprovement('custom', '', { urbanistId: urbanistId }); };
   function renderCountries() {
     $('sheet-content').innerHTML = '<button class="back" type="button" onclick="backToModeMenu()"><b>‹</b>Nazad</button><h2>Zemlja i stil</h2><p>Izaberite zemlju kao konkretnu referencu za javni prostor.</p><input id="country-search" class="search" value="' + countrySearch.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" placeholder="🔎  Pronađi zemlju"><div id="country-list" class="country-list">' + countryListMarkup() + '</div>';
     $('country-search').addEventListener('input', function (event) {
@@ -871,6 +872,7 @@
         action: 'generate', token: auth.token, panoId: panoId, yaw: yaw, pitch: pitch, fov: fov,
         promptId: promptId, peopleIds: JSON.stringify(selections.peopleIds || []),
         improvementIds: JSON.stringify(selections.improvementIds || []), problemIds: JSON.stringify(selections.problemIds || []), countryId: country,
+        urbanistId: String(selections.urbanistId || ''),
         annotateChanges: String(annotateForRequest),
         detail: String(detail || '').slice(0, 180), clientId: clientId()
       });
