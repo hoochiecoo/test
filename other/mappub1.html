@@ -49,7 +49,7 @@
   <script>
   (function(){
     'use strict';
-    var CONFIG={apiUrl:'PASTE_APPS_SCRIPT_EXEC_URL_HERE',defaultLat:46.1005,defaultLng:19.6676};
+    var CONFIG={apiUrl:'https://script.google.com/macros/s/AKfycbyPak5kJDErWECAmAmy4n5nqLoxOOrUT-OgOnYanihw4XQY1KJHav41WPC_eWwOLx2SrA/exec',defaultLat:46.1005,defaultLng:19.6676};
     var state={clientId:'',runId:'',saveToken:'',isProcessing:false,options:{improvements:[],problems:[],countries:[]},promptId:'austria',improvementIds:[],problemIds:[],countryId:'none',lat:null,lng:null,panoId:'',yaw:178,pitch:0,fov:90,sourceUrl:'',beforeSrc:'',afterSrc:'',history:[],cursor:'',hasMore:true,historyLoaded:false,genMap:null,historyMap:null,genMarker:null,historyMarkers:[],selectedRecord:null};
     var $=function(id){return document.getElementById(id)};
     var esc=function(v){return String(v==null?'':v).replace(/[&<>'"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[c]})};
