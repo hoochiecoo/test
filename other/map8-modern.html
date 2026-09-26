@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Улучшить место</title>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --card: #fff;
+      --text: #161616;
+      --muted: #707070;
+      --line: #e7e7e3;
+      --accent: #b8e84a;
+      --accent-dark: #26351a;
+      --soft: #f1f1ed;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #e6e7e2; }
+    body { color: var(--text); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; border: 0; color: inherit; }
+    .app { width: min(100%, 430px); min-height: 100vh; margin: 0 auto; padding: 0 16px 22px; background: var(--bg); }
+    .topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
+    .more { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); font-size: 18px; }
+    .gallery { display: grid; gap: 10px; }
+    .photo-card { position: relative; overflow: hidden; border-radius: var(--radius); background: #e8e8e4; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+    .photo-card > img, .photo-map { display: block; width: 100%; aspect-ratio: 16 / 11; object-fit: cover; }
+    .photo-map { min-height: 220px; background: #ddd; }
+    .badge { position: absolute; z-index: 3; top: 12px; left: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.9); font-size: 12px; font-weight: 650; }
+    .after-placeholder { display: grid; place-items: center; align-content: center; gap: 7px; min-height: 220px; padding: 24px; color: var(--muted); text-align: center; }
+    .after-placeholder .spark { font-size: 25px; }
+    .after-placeholder strong { color: var(--text); font-size: 15px; font-weight: 600; }
+    .after-placeholder small { font-size: 12px; }
+    .loading-shimmer { background: linear-gradient(100deg,#ecece8 30%,#fafaf7 45%,#ecece8 60%); background-size: 250% 100%; animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { to { background-position: -250% 0; } }
+    #map-card { display: block; }
+    #before-image, #after-image { display: none; }
+    .image-controls { position: absolute; inset: 0; pointer-events: none; }
+    .image-controls button { position: absolute; pointer-events: auto; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.82); color: #222; box-shadow: 0 4px 14px rgba(0,0,0,.1); font-size: 20px; }
+    .image-controls .left { left: 10px; top: 50%; }
+    .image-controls .right { right: 10px; top: 50%; }
+    .image-controls .up { left: 50%; top: 10px; transform: translateX(-50%); }
+    .image-controls .down { left: 50%; bottom: 10px; transform: translateX(-50%); }
+    .sheet { position: sticky; bottom: 10px; z-index: 10; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); transition: padding .3s ease; }
+    .handle { width: 38px; height: 4px; margin: 0 auto 14px; border-radius: 999px; background: #c9c9c3; }
+    .sheet-title { margin: 0; text-align: center; font-size: 18px; font-weight: 600; }
+    .sheet-subtitle { margin: 6px 0 14px; color: var(--muted); text-align: center; font-size: 13px; }
+    .primary { width: 100%; min-height: 56px; border-radius: 18px; background: var(--accent); color: var(--accent-dark); font-weight: 650; }
+    .text-button { display: block; margin: 12px auto 0; padding: 5px 8px; background: transparent; color: var(--muted); font-size: 14px; }
+    .text-button .chevron { display: inline-block; margin-left: 4px; transition: transform .25s; }
+    .sheet.expanded .text-button .chevron { transform: rotate(180deg); }
+    .mode-list { display: grid; gap: 8px; margin-top: 16px; }
+    .mode-row { display: grid; grid-template-columns: 34px 1fr 20px; align-items: center; gap: 10px; min-height: 76px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--bg); text-align: left; }
+    .mode-icon { font-size: 22px; }
+    .mode-row strong { display: block; font-size: 15px; font-weight: 600; }
+    .mode-row small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.3; }
+    .mode-row .arrow { color: var(--muted); font-size: 20px; }
+    .back { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 0; background: transparent; font-size: 15px; }
+    .back b { font-size: 22px; font-weight: 400; }
+    .sheet h2 { margin: 0 0 5px; font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+    .sheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+    .search { width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 16px; background: var(--soft); outline: none; }
+    .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+    .chip { min-height: 52px; padding: 8px 10px; border: 1px solid transparent; border-radius: 16px; background: var(--soft); text-align: left; font-size: 13px; }
+    .chip.active, .tag.active { border-color: #9ac934; background: #e9f7bd; }
+    .chip .check { float: right; display: none; color: #42620d; }
+    .chip.active .check { display: inline; }
+    .category-row { display: flex; gap: 6px; overflow-x: auto; margin: 12px 0; padding-bottom: 2px; scrollbar-width: none; }
+    .category { flex: 0 0 auto; min-height: 34px; padding: 0 13px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 12px; }
+    .category.active { background: var(--text); color: #fff; }
+    .solution-list { display: grid; gap: 8px; max-height: 310px; overflow-y: auto; }
+    .solution { display: grid; grid-template-columns: 32px 1fr 34px; align-items: center; gap: 9px; min-height: 68px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); text-align: left; }
+    .solution strong { display: block; font-size: 14px; font-weight: 600; }
+    .solution small { color: var(--muted); font-size: 12px; }
+    .add { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); font-size: 20px; }
+    .add.active { background: var(--accent); color: var(--accent-dark); }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+    .tag { padding: 7px 10px; border-radius: 999px; background: var(--soft); color: #444; font-size: 12px; }
+    textarea { width: 100%; height: 140px; resize: none; padding: 14px; border: 0; border-radius: 18px; background: #f5f5f2; outline: none; line-height: 1.45; }
+    .quick-prompts { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
+    .quick-prompts button { padding: 7px 10px; border-radius: 999px; background: var(--soft); color: #555; font-size: 12px; }
+    .countries { display: flex; gap: 8px; overflow-x: auto; margin: 12px 0 16px; padding-bottom: 2px; scrollbar-width: none; }
+    .country { flex: 0 0 auto; padding: 9px 11px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); font-size: 12px; }
+    .country.active { border-color: #9ac934; background: #effacb; }
+    .result { display: grid; gap: 10px; }
+    .result-title { text-align: center; font-size: 17px; font-weight: 600; }
+    .result-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .result-chips span { padding: 7px 10px; border-radius: 999px; background: var(--soft); color: #555; font-size: 12px; }
+    .secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .secondary-actions button { min-height: 48px; border-radius: 16px; background: var(--soft); font-weight: 600; }
+    .notice { margin: 9px 0 0; color: var(--muted); text-align: center; font-size: 12px; }
+    @media (max-width: 360px) { .app { padding-left: 12px; padding-right: 12px; } .mode-row { padding-left: 10px; padding-right: 10px; } }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand">Улучшить место</div>
+    <button class="more" type="button" onclick="openModeMenu()">•••</button>
+  </header>
+
+  <section class="gallery">
+    <article class="photo-card" id="before-card">
+      <span class="badge">До</span>
+      <div id="map-card" class="photo-map"></div>
+      <img id="before-image" alt="Исходная панорама">
+      <div class="image-controls">
+        <button class="left" type="button" onclick="moveLeft()">‹</button>
+        <button class="right" type="button" onclick="moveRight()">›</button>
+        <button class="up" type="button" onclick="moveUp()">⌃</button>
+        <button class="down" type="button" onclick="moveDown()">⌄</button>
+      </div>
+    </article>
+    <article class="photo-card" id="after-card">
+      <span class="badge">После</span>
+      <div id="after-placeholder" class="after-placeholder">
+        <div class="spark">✨</div>
+        <strong>Здесь появится новый вариант</strong>
+        <small>Выберите улучшение ниже</small>
+      </div>
+      <img id="after-image" alt="Улучшенная панорама">
+    </article>
+  </section>
+
+  <section id="sheet" class="sheet">
+    <div class="handle"></div>
+    <div id="sheet-content"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxfRN__ZahuCL-w3errRyaTkGKPfrby4mhuRNQgw39No2zrD9jlkIPIaOtzEZX05pdjKg/exec';
+  const defaultLat = 46.1005;
+  const defaultLng = 19.6676;
+  let map;
+  let marker;
+  let panoId = '';
+  let selectedLat = defaultLat;
+  let selectedLng = defaultLng;
+  let yaw = 178;
+  let pitch = 0;
+  let fov = 90;
+  let mode = 'home';
+  let selectedPromptKey = 'austria';
+  let selectedPeople = new Set();
+  let selectedSolutions = new Set();
+  let country = 'Без референса';
+
+  const people = [
+    ['👶', 'Ребёнок'], ['🍼', 'С коляской'], ['🧑', 'Подростки'],
+    ['♿', 'Человек с инвалидностью'], ['👵', 'Пожилой человек'], ['🚲', 'Велосипедист']
+  ];
+  const solutions = [
+    ['🌳', 'Добавить деревья', 'Тень и зелень вдоль улицы', 'greenery'],
+    ['🪑', 'Добавить скамейки', 'Места для отдыха', 'comfort'],
+    ['🚶', 'Расширить тротуар', 'Больше места для пешеходов', 'pedestrian'],
+    ['🚲', 'Добавить велодорожку', 'Безопасное движение на велосипеде', 'cycling'],
+    ['💡', 'Добавить освещение', 'Улучшить видимость вечером', 'calm']
+  ];
+
+  function $(id) { return document.getElementById(id); }
+  function clientId() {
+    let id = localStorage.getItem('subotica_client_id');
+    if (!id) { id = 'client_' + Math.random().toString(36).slice(2); localStorage.setItem('subotica_client_id', id); }
+    return id;
+  }
+  function callBackend(params) {
+    return new Promise(function (resolve, reject) {
+      if (BACKEND_URL.indexOf('PASTE_') === 0) return reject(new Error('Укажи URL Apps Script backend.'));
+      const name = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const query = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+      const timer = setTimeout(function () { cleanup(); reject(new Error('Backend timeout')); }, 90000);
+      function cleanup() { clearTimeout(timer); delete window[name]; script.remove(); }
+      window[name] = function (data) { cleanup(); resolve(data); };
+      script.onerror = function () { cleanup(); reject(new Error('Backend недоступен.')); };
+      script.src = BACKEND_URL + '?callback=' + name + '&' + query;
+      document.body.appendChild(script);
+    });
+  }
+  function imageUrl() {
+    return 'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?cb_client=maps_sv.tactile&w=1200&h=825&panoid=' + encodeURIComponent(panoId) + '&yaw=' + yaw + '&pitch=' + pitch + '&thumbfov=' + fov;
+  }
+  function selectPoint(lat, lng) {
+    selectedLat = lat;
+    selectedLng = lng;
+    marker.setLatLng([lat, lng]);
+    if (!google || !google.maps || !google.maps.StreetViewService) return;
+    $('after-placeholder').innerHTML = '<div class="spark">⌛</div><strong>Ищем панораму…</strong>';
+    new google.maps.StreetViewService().getPanorama({ location: { lat: lat, lng: lng }, radius: 50 }, function (data, status) {
+      if (status !== 'OK' || !data.location || !data.location.pano) {
+        $('after-placeholder').innerHTML = '<div class="spark">⌕</div><strong>Панорама не найдена</strong><small>Выберите точку рядом</small>';
+        return;
+      }
+      panoId = data.location.pano;
+      yaw = 178; pitch = 0; fov = 90;
+      $('map-card').style.display = 'none';
+      $('before-image').src = imageUrl();
+      $('before-image').style.display = 'block';
+      $('after-placeholder').innerHTML = '<div class="spark">✨</div><strong>Здесь появится новый вариант</strong><small>Выберите улучшение ниже</small>';
+      renderHome();
+    });
+  }
+  function updateBefore() { if (panoId) $('before-image').src = imageUrl(); }
+  window.moveLeft = function () { yaw = (yaw + 345) % 360; updateBefore(); };
+  window.moveRight = function () { yaw = (yaw + 15) % 360; updateBefore(); };
+  window.moveUp = function () { pitch = Math.min(90, pitch + 10); updateBefore(); };
+  window.moveDown = function () { pitch = Math.max(-90, pitch - 10); updateBefore(); };
+  function renderHome() {
+    mode = 'home'; $('sheet').classList.remove('expanded');
+    $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Случайно улучшить</h2><p class="sheet-subtitle">Подберём один из базовых вариантов для этого места</p><button class="primary" onclick="generateImprovement(\'austria\', \'Сделай место удобнее, зеленее и приятнее для людей\')">Улучшить это место</button><button class="text-button" onclick="openModeMenu()">Хочу что-то особенное <span class="chevron">⌃</span></button>';
+  }
+  window.openModeMenu = function () { mode = 'menu'; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Что хотите изменить?</h2><p>Выберите удобный способ улучшения места</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Для кого</strong><small>Сделать место удобнее конкретным людям</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Собрать самому</strong><small>Выбрать конкретные улучшения</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Описать словами</strong><small>Напишите, каким хотите видеть это место</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Полный рандом</strong><small>Позволить приложению выбрать всё</small></span><span class="arrow">›</span></button></div><p style="margin-top:18px">Как это могло бы выглядеть?</p><div class="countries"><button class="country active" onclick="selectCountry(this, &quot;Без референса&quot;)">Без референса</button><button class="country" onclick="selectCountry(this, &quot;Нидерланды&quot;)">🇳🇱 Нидерланды</button><button class="country" onclick="selectCountry(this, &quot;Дания&quot;)">🇩🇰 Дания</button><button class="country" onclick="selectCountry(this, &quot;Япония&quot;)">🇯🇵 Япония</button><button class="country" onclick="selectCountry(this, &quot;Сербия&quot;)">🇷🇸 Сербия</button></div>'; };
+  window.selectCountry = function (button, value) { country = value; document.querySelectorAll('.country').forEach(function (item) { item.classList.remove('active'); }); button.classList.add('active'); };
+  function back() { renderHome(); }
+  window.openPeople = function () { mode = 'people'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Назад</button><h2>Для кого сделать это место удобнее?</h2><p>Можно выбрать несколько вариантов</p><input class="search" placeholder="🔎  Найти"><div class="chip-grid">' + people.map((p, i) => '<button class="chip ' + (selectedPeople.has(i) ? 'active' : '') + '" onclick="togglePerson(' + i + ')">' + p[0] + ' ' + p[1] + '<span class="check">✓</span></button>').join('') + '</div><button class="primary" ' + (selectedPeople.size ? '' : 'disabled') + ' onclick="generateForPeople()">Создать вариант</button>'; };
+  window.togglePerson = function (i) { selectedPeople.has(i) ? selectedPeople.delete(i) : selectedPeople.add(i); openPeople(); };
+  window.generateForPeople = function () { generateImprovement('pedestrian', 'Сделай место удобнее для ' + Array.from(selectedPeople).map(i => people[i][1].toLowerCase()).join(', ') + '.'); };
+  window.openBuild = function () { mode = 'build'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Собрать улучшение</button><input class="search" placeholder="🔎  Найти: дерево, переход, лавка…"><div class="category-row"><button class="category active">Все</button><button class="category">Безопасность</button><button class="category">Комфорт</button><button class="category">Зелень</button><button class="category">Передвижение</button></div><div class="solution-list">' + solutions.map((s, i) => '<div class="solution"><span>' + s[0] + '</span><span><strong>' + s[1] + '</strong><small>' + s[2] + '</small></span><button class="add ' + (selectedSolutions.has(i) ? 'active' : '') + '" onclick="toggleSolution(' + i + ')">' + (selectedSolutions.has(i) ? '✓' : '+') + '</button></div>').join('') + '</div><div class="tags">' + Array.from(selectedSolutions).map(i => '<span class="tag">' + solutions[i][1] + ' ×</span>').join('') + '</div><button class="primary" ' + (selectedSolutions.size ? '' : 'disabled') + ' onclick="generateForSolutions()">Создать вариант</button>'; };
+  window.toggleSolution = function (i) { selectedSolutions.has(i) ? selectedSolutions.delete(i) : selectedSolutions.add(i); openBuild(); };
+  window.generateForSolutions = function () { generateImprovement('pedestrian', Array.from(selectedSolutions).map(i => solutions[i][1]).join(', ') + '. Сделай это место удобнее, сохранив реалистичную городскую сцену.'); };
+  window.openDescribe = function () { mode = 'describe'; $('sheet-content').innerHTML = '<button class="back" onclick="back()"><b>‹</b>Опишите, что хотите изменить</button><textarea id="custom-prompt" placeholder="Например:\nХочу больше зелени, тени и чтобы здесь было безопасно гулять с детьми"></textarea><div class="quick-prompts"><button onclick="addQuick(\'Больше зелени\')">+ Больше зелени</button><button onclick="addQuick(\'Безопаснее для детей\')">+ Безопаснее для детей</button><button onclick="addQuick(\'Меньше машин\')">+ Меньше машин</button><button onclick="addQuick(\'Больше места для отдыха\')">+ Больше отдыха</button><button onclick="addQuick(\'Удобнее для велосипеда\')">+ Удобнее для велосипеда</button></div><button class="primary" onclick="generateDescription()">Создать вариант</button>'; };
+  window.addQuick = function (text) { const input = $('custom-prompt'); input.value = input.value ? input.value + ', ' + text.toLowerCase() : text; input.focus(); };
+  window.generateDescription = function () { generateImprovement('austria', $('custom-prompt').value || 'Сделай городское место более красивым, зелёным и удобным для людей.'); };
+  window.openRandom = function () { mode = 'random'; $('sheet-content').innerHTML = '<div class="result"><div class="spark">🎲</div><h2>Создадим неожиданный вариант</h2><p>Система сама выберет, что улучшить</p><button class="primary" onclick="generateImprovement(\'austria\', \'Выбери лучший неожиданный вариант улучшения городской среды\')">Поехали</button><button class="text-button" onclick="back()">Отмена</button></div>'; };
+  async function generateImprovement(promptKey, detail) {
+    if (!panoId) { openModeMenu(); return; }
+    $('after-placeholder').className = 'after-placeholder loading-shimmer';
+    $('after-placeholder').innerHTML = '<div class="spark">⌛</div><strong>Создаём вариант…</strong><small>Это займёт немного времени</small>';
+    try {
+      const auth = await callBackend({ action: 'authorize', lat: selectedLat, lng: selectedLng, clientId: clientId() });
+      if (!auth.ok) throw new Error(auth.error);
+      const reference = country === 'Без референса' ? '' : ' Reference style: ' + country + '.';
+      const result = await callBackend({ action: 'generate', token: auth.token, panoId: panoId, yaw: yaw, pitch: pitch, fov: fov, promptKey: promptKey, detail: (detail + reference).slice(0, 180), clientId: clientId() });
+      if (!result.ok) throw new Error(result.error);
+      $('after-placeholder').style.display = 'none';
+      $('after-image').src = 'data:' + (result.image.media_type || 'image/png') + ';base64,' + result.image.b64_json;
+      $('after-image').style.display = 'block';
+      $('sheet').classList.remove('expanded');
+      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Готово</div><div class="result-chips"><span>Зелень</span><span>Комфорт</span><span>Городская среда</span></div><div class="secondary-actions"><button onclick="openModeMenu()">Изменить</button><button onclick="shareResult()">Поделиться</button></div><button class="primary" onclick="openModeMenu()">Ещё вариант</button></div>';
+    } catch (error) { $('after-placeholder').className = 'after-placeholder'; $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Не получилось создать вариант</strong><small>' + error.message + '</small>'; renderHome(); }
+  }
+  window.generateImprovement = generateImprovement;
+  window.shareResult = function () { if (navigator.share) navigator.share({ title: 'Улучшение городской среды', text: 'Вариант городской среды' }); else alert('Функция поделиться будет подключена в следующей версии.'); };
+
+  map = L.map('map-card', { zoomControl: false }).setView([defaultLat, defaultLng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+  marker = L.marker([defaultLat, defaultLng]).addTo(map);
+  map.on('click', function (event) { selectPoint(event.latlng.lat, event.latlng.lng); });
+  renderHome();
+})();
+</script>
+</body>
+</html>
