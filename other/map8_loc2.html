@@ -373,26 +373,57 @@
   function callBackend(params) {
     return new Promise(function (resolve, reject) {
       if (BACKEND_URL.indexOf('PASTE_') === 0) return reject(new Error('Unesi URL Apps Script backenda.'));
-      const name = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
-      const script = document.createElement('script');
-      const query = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') + '&_cb=' + Date.now() + '_' + Math.random().toString(36).slice(2);
-      const timer = setTimeout(function () { cleanup(); reject(new Error('Backend timeout')); }, 90000);
-      function cleanup() { clearTimeout(timer); delete window[name]; script.remove(); }
-      window[name] = function (data) {
-        cleanup();
-        if (data && data.ok === false) {
-          const error = new Error(data.error || 'Backend error');
-          error.code = data.code || 'SERVER_ERROR';
-          error.stage = data.stage || params.action || 'backend';
-          error.requestId = data.requestId || '';
-          reject(error);
-          return;
+      let attempt = 0;
+      const maxAttempts = 2;
+      function run() {
+        attempt += 1;
+        const name = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+        const script = document.createElement('script');
+        const query = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') + '&_cb=' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        let settled = false;
+        const timer = setTimeout(function () { fail(new Error('Backend timeout after 120 seconds.')); }, 120000);
+        function cleanup() { clearTimeout(timer); delete window[name]; script.remove(); }
+        function finish(callback) {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          callback();
         }
-        resolve(data);
-      };
-      script.onerror = function () { cleanup(); reject(new Error('Backend nije dostupan.')); };
-      script.src = BACKEND_URL + '?callback=' + name + '&' + query;
-      document.body.appendChild(script);
+        function fail(error) {
+          if (settled) return;
+          if (attempt < maxAttempts) {
+            settled = true;
+            cleanup();
+            setTimeout(run, 700);
+            return;
+          }
+          finish(function () { reject(error); });
+        }
+        window[name] = function (data) {
+          finish(function () {
+            if (data && data.ok === false) {
+              const error = new Error(data.error || 'Backend error');
+              error.code = data.code || 'SERVER_ERROR';
+              error.stage = data.stage || params.action || 'backend';
+              error.requestId = data.requestId || '';
+              reject(error);
+              return;
+            }
+            resolve(data);
+          });
+        };
+        script.onload = function () {
+          if (!settled && typeof window[name] === 'function') {
+            setTimeout(function () {
+              if (!settled) fail(new Error('Backend returned no JSONP callback.'));
+            }, 0);
+          }
+        };
+        script.onerror = function () { fail(new Error('Backend JSONP network error.')); };
+        script.src = BACKEND_URL + '?callback=' + name + '&' + query;
+        document.body.appendChild(script);
+      }
+      run();
     });
   }
   function loadOptions() {
@@ -575,7 +606,12 @@
       if (!navigator.geolocation) { reject(new Error('Ovaj pregledač ne podržava lokaciju.')); return; }
       navigator.geolocation.getCurrentPosition(function (position) {
         resolve({ lat: position.coords.latitude, lng: position.coords.longitude });
-      }, function () { reject(new Error('Lokacija nije dostupna. Dozvolite pristup lokaciji i pokušajte ponovo.')); }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+      }, function (error) {
+        const message = error && error.code === 1
+          ? 'Доступ к локации запрещён. Разрешите его в настройках браузера.'
+          : 'Локация не получена быстро. Разрешите доступ и попробуйте ещё раз.';
+        reject(new Error(message));
+      }, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
     });
   }
   window.startLocationFlow = function () {
