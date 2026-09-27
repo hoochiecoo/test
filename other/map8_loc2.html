@@ -50,6 +50,8 @@
     .variant-grid { display: grid; grid-template-columns: 1fr; gap: 0; width: 100%; padding: 0; background: var(--soft); }
     .variant { overflow: hidden; border-radius: 0; background: var(--card); box-shadow: none; }
     .variant-label { display: grid; gap: 3px; padding: 10px 16px; font-size: 13px; font-weight: 700; }
+    .variant-label .variant-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .variant-refresh { min-height: 30px; padding: 0 10px; border-radius: 999px; background: rgba(255,255,255,.78); color: inherit; font-size: 12px; font-weight: 650; }
     .variant-label small { color: var(--muted); font-size: 11px; font-weight: 500; }
     .variant.good .variant-label { color: #355b16; background: #eef8d7; }
     .variant.bad .variant-label { color: #7a2525; background: #fff0f0; }
@@ -249,8 +251,8 @@
       </div>
       <div id="variant-grid" class="variant-grid" style="display:none">
         <article class="variant source"><div class="variant-label"><span>1 · Сейчас</span><small>Исходный вид места</small></div><img id="collage-before" alt="Исходный вид места"></article>
-        <article class="variant good"><div class="variant-label"><span>✓ Dobro</span><small>Mislimo o urbanizmu</small></div><img id="after-image" alt="Dobar urbanistički scenario"></article>
-        <article class="variant bad"><div class="variant-label"><span>× Loše</span><small>Bez urbanističkog razmišljanja</small></div><img id="bad-image" alt="Loš urbanistički scenario"></article>
+        <article class="variant good"><div class="variant-label"><div class="variant-heading"><span>✓ Dobro</span><button class="variant-refresh" type="button" onclick="regenerateVariant('good')">↻ Обновить</button></div><small>Место для людей и города</small></div><img id="after-image" alt="Хороший урбанистический сценарий"></article>
+        <article class="variant bad"><div class="variant-label"><div class="variant-heading"><span>× Плохо</span><button class="variant-refresh" type="button" onclick="regenerateVariant('bad')">↻ Обновить</button></div><small>Место без урбанистического подхода</small></div><img id="bad-image" alt="Плохой урбанистический сценарий"></article>
       </div>
     </article>
   </section>
@@ -342,7 +344,7 @@
       if (BACKEND_URL.indexOf('PASTE_') === 0) return reject(new Error('Unesi URL Apps Script backenda.'));
       const name = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
       const script = document.createElement('script');
-      const query = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+      const query = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') + '&_cb=' + Date.now() + '_' + Math.random().toString(36).slice(2);
       const timer = setTimeout(function () { cleanup(); reject(new Error('Backend timeout')); }, 90000);
       function cleanup() { clearTimeout(timer); delete window[name]; script.remove(); }
       window[name] = function (data) { cleanup(); resolve(data); };
@@ -1074,6 +1076,7 @@
       if (!good.ok) throw new Error(good.error);
       generatedGoodImage = 'data:' + (good.image.media_type || 'image/png') + ';base64,' + good.image.b64_json;
       $('after-image').src = generatedGoodImage;
+      $('after-image').className = '';
       $('after-image').style.display = 'block';
       $('collage-before').src = imageUrl();
       $('collage-before').style.display = 'block';
@@ -1085,6 +1088,29 @@
       $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Коллаж из трёх фото готов</div><div class="result-subtitle">Сверху место, затем хороший и плохой пример. Листайте вертикально.</div><button class="primary" onclick="startLocationFlow()">↻ Обновить коллаж</button></div>';
     } finally { setBusy(false); }
   }
+  window.regenerateVariant = async function (kind) {
+    if (!panoId || locationBusy) return;
+    setBusy(true);
+    try {
+      const request = kind === 'good'
+        ? { detail: 'Improve this exact place with human-scale urbanism: prioritize walking, safety, shade, greenery, public life and a comfortable public space. Preserve the existing street geometry.' }
+        : { negativeProblemId: 'sidewalk_parking', detail: 'Create a visibly poor urban-design outcome: prioritize cars and ignore pedestrians, comfort, safety and public life. Preserve the existing street geometry.' };
+      const result = await generateOneComparison(request);
+      if (!result.ok) throw new Error(result.error);
+      const image = 'data:' + (result.image.media_type || 'image/png') + ';base64,' + result.image.b64_json;
+      if (kind === 'good') {
+        generatedGoodImage = image;
+        $('after-image').src = image;
+        $('after-image').className = '';
+      } else {
+        $('bad-image').src = image;
+      }
+    } catch (error) {
+      alert('Не удалось обновить вариант: ' + error.message);
+    } finally {
+      setBusy(false);
+    }
+  };
   window.generateImprovement = generateImprovement;
   function pageShareUrl() {
     const url = new URL(location.href);
