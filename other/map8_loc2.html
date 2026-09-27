@@ -52,6 +52,9 @@
     .variant-label { display: grid; gap: 3px; padding: 10px 16px; font-size: 13px; font-weight: 700; }
     .variant-label .variant-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .variant-refresh { min-height: 30px; padding: 0 10px; border-radius: 999px; background: rgba(255,255,255,.78); color: inherit; font-size: 12px; font-weight: 650; }
+    .change-list { display: grid; gap: 4px; padding: 9px 16px 12px; background: #fff; color: #555; font-size: 11px; line-height: 1.25; }
+    .change-list div::before { content: '•'; display: inline-block; width: 12px; color: #86ad25; font-weight: 800; }
+    .variant.bad .change-list div::before { color: #b34b4b; }
     .variant-label small { color: var(--muted); font-size: 11px; font-weight: 500; }
     .variant.good .variant-label { color: #355b16; background: #eef8d7; }
     .variant.bad .variant-label { color: #7a2525; background: #fff0f0; }
@@ -259,8 +262,8 @@
       </div>
       <div id="variant-grid" class="variant-grid" style="display:none">
         <article class="variant source"><div class="variant-label"><span>1 · Сейчас</span><small>Исходный вид места</small></div><img id="collage-before" alt="Исходный вид места"></article>
-        <article class="variant good"><div class="variant-label"><div class="variant-heading"><span>✓ Dobro</span><button class="variant-refresh" type="button" onclick="regenerateVariant('good')">↻ Обновить</button></div><small>Место для людей и города</small></div><img id="after-image" alt="Хороший урбанистический сценарий"></article>
-        <article class="variant bad"><div class="variant-label"><div class="variant-heading"><span>× Плохо</span><button class="variant-refresh" type="button" onclick="regenerateVariant('bad')">↻ Обновить</button></div><small>Место без урбанистического подхода</small></div><img id="bad-image" alt="Плохой урбанистический сценарий"></article>
+        <article class="variant good"><div class="variant-label"><div class="variant-heading"><span>✓ Хорошо</span><button class="variant-refresh" type="button" onclick="regenerateVariant('good')">↻ Обновить</button></div><small>Место для людей и города</small></div><img id="after-image" alt="Хороший урбанистический сценарий"><div id="good-changes" class="change-list"></div></article>
+        <article class="variant bad"><div class="variant-label"><div class="variant-heading"><span>× Плохо</span><button class="variant-refresh" type="button" onclick="regenerateVariant('bad')">↻ Обновить</button></div><small>Место без урбанистического подхода</small></div><img id="bad-image" alt="Плохой урбанистический сценарий"><div id="bad-changes" class="change-list"></div></article>
       </div>
     </article>
   </section>
@@ -353,6 +356,14 @@
     if (error && error.stage) parts.push('Faza: ' + error.stage);
     if (error && error.requestId) parts.push('ID: ' + error.requestId);
     return parts.join(' · ');
+  }
+  function renderChanges(elementId, changes) {
+    const element = $(elementId);
+    if (!element) return;
+    const items = Array.isArray(changes) ? changes : [];
+    element.innerHTML = items.map(function (item) {
+      return '<div>' + escapeHtml(item.label || item) + '</div>';
+    }).join('');
   }
   function callBackend(params) {
     return new Promise(function (resolve, reject) {
@@ -498,6 +509,8 @@
     $('after-image').className = 'preview';
     $('after-image').style.display = 'none';
     $('bad-image').style.display = 'none';
+    renderChanges('good-changes', []);
+    renderChanges('bad-changes', []);
     $('after-placeholder').style.display = 'grid';
     $('after-placeholder').innerHTML = '<div class="spark">✨</div><strong>Здесь появятся три фотографии</strong><small>Место, хороший пример и плохой пример</small>';
     renderHome();
@@ -1093,6 +1106,7 @@
       action: 'generate', token: auth.token, panoId: panoId, yaw: yaw, pitch: pitch, fov: fov,
       promptId: 'custom', peopleIds: '[]', improvementIds: '[]', problemIds: '[]', countryId: 'none',
       urbanistId: '', negativeProblemId: String(selections.negativeProblemId || ''), quickChoice: 'false', annotateChanges: 'false',
+      scenarioType: String(selections.scenarioType || ''),
       detail: String(selections.detail || '').slice(0, 180), clientId: clientId()
     });
   }
@@ -1100,18 +1114,20 @@
     setBusy(true);
     locationText('Готовим два сценария…', 'Хороший — с урбанистическим мышлением. Плохой — без него.');
     try {
-      const good = await generateOneComparison({ detail: 'Improve this exact place with human-scale urbanism: prioritize walking, safety, shade, greenery, public life and a comfortable public space. Preserve the existing street geometry.' });
+      const good = await generateOneComparison({ scenarioType: 'good', detail: 'Improve this exact place with human-scale urbanism.' });
       if (!good.ok) throw new Error(good.error);
       generatedGoodImage = 'data:' + (good.image.media_type || 'image/png') + ';base64,' + good.image.b64_json;
       $('after-image').src = generatedGoodImage;
       $('after-image').className = '';
       $('after-image').style.display = 'block';
+      renderChanges('good-changes', good.changes);
       $('collage-before').src = imageUrl();
       $('collage-before').style.display = 'block';
-      const bad = await generateOneComparison({ negativeProblemId: 'sidewalk_parking', detail: 'Create a visibly poor urban-design outcome: prioritize cars and ignore pedestrians, comfort, safety and public life. Preserve the existing street geometry.' });
+      const bad = await generateOneComparison({ scenarioType: 'bad', detail: 'Create a visibly poor urban-design outcome.' });
       if (!bad.ok) throw new Error(bad.error);
       $('bad-image').src = 'data:' + (bad.image.media_type || 'image/png') + ';base64,' + bad.image.b64_json;
       $('bad-image').style.display = 'block';
+      renderChanges('bad-changes', bad.changes);
       $('after-placeholder').style.display = 'none'; $('variant-grid').style.display = 'grid';
       $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Коллаж из трёх фото готов</div><div class="result-subtitle">Сверху место, затем хороший и плохой пример. Листайте вертикально.</div><button class="primary" onclick="startLocationFlow()">↻ Обновить коллаж</button></div>';
     } finally { setBusy(false); }
@@ -1121,8 +1137,8 @@
     setBusy(true);
     try {
       const request = kind === 'good'
-        ? { detail: 'Improve this exact place with human-scale urbanism: prioritize walking, safety, shade, greenery, public life and a comfortable public space. Preserve the existing street geometry.' }
-        : { negativeProblemId: 'sidewalk_parking', detail: 'Create a visibly poor urban-design outcome: prioritize cars and ignore pedestrians, comfort, safety and public life. Preserve the existing street geometry.' };
+        ? { scenarioType: 'good', detail: 'Improve this exact place with human-scale urbanism.' }
+        : { scenarioType: 'bad', detail: 'Create a visibly poor urban-design outcome.' };
       const result = await generateOneComparison(request);
       if (!result.ok) throw new Error(result.error);
       const image = 'data:' + (result.image.media_type || 'image/png') + ';base64,' + result.image.b64_json;
@@ -1130,8 +1146,10 @@
         generatedGoodImage = image;
         $('after-image').src = image;
         $('after-image').className = '';
+        renderChanges('good-changes', result.changes);
       } else {
         $('bad-image').src = image;
+        renderChanges('bad-changes', result.changes);
       }
     } catch (error) {
       alert('Не удалось обновить вариант: ' + errorText(error));
