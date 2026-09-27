@@ -365,6 +365,11 @@
       return '<div>' + escapeHtml(item.label || item) + '</div>';
     }).join('');
   }
+  function renderChangeFailure(elementId, error) {
+    const element = $(elementId);
+    if (!element) return;
+    element.innerHTML = '<div>Не удалось создать этот вариант</div><div>' + escapeHtml(errorText(error)) + '</div>';
+  }
   function callBackend(params) {
     return new Promise(function (resolve, reject) {
       if (BACKEND_URL.indexOf('PASTE_') === 0) return reject(new Error('Unesi URL Apps Script backenda.'));
@@ -530,21 +535,39 @@
         return;
       }
       const service = new google.maps.StreetViewService();
-      let attempts = 0;
-      function tryPoint() {
-        attempts += 1;
-        const spread = attempts === 1 ? 0 : Math.min(0.0035, 0.00045 * attempts);
-        const point = { lat: lat + (Math.random() - .5) * spread, lng: lng + (Math.random() - .5) * spread };
-        service.getPanorama({ location: point, radius: attempts === 1 ? 120 : 350 }, function (data, status) {
+      const candidates = [{ point: { lat: lat, lng: lng }, radius: 120 }];
+      for (let i = 0; i < 5; i += 1) {
+        const spread = 0.0005 + i * 0.00055;
+        candidates.push({
+          point: { lat: lat + (Math.random() - .5) * spread, lng: lng + (Math.random() - .5) * spread },
+          radius: 250 + i * 50
+        });
+      }
+      let finished = false;
+      let pending = candidates.length;
+      const timeout = setTimeout(function () {
+        if (!finished) {
+          finished = true;
+          reject(new Error('Panorama se nije pojavila dovoljno brzo. Pokušajte ponovo.'));
+        }
+      }, 10000);
+      candidates.forEach(function (candidate) {
+        service.getPanorama({ location: candidate.point, radius: candidate.radius }, function (data, status) {
+          if (finished) return;
           if (status === 'OK' && data.location && data.location.pano && data.location.latLng) {
+            finished = true;
+            clearTimeout(timeout);
             resolve({ pano: data.location.pano, lat: data.location.latLng.lat(), lng: data.location.latLng.lng() });
             return;
           }
-          if (attempts < 10) { tryPoint(); return; }
-          reject(new Error('U blizini nije pronađena dostupna panorama.'));
+          pending -= 1;
+          if (pending === 0) {
+            finished = true;
+            clearTimeout(timeout);
+            reject(new Error('U blizini nije pronađena dostupna panorama.'));
+          }
         });
-      }
-      tryPoint();
+      });
     });
   }
   function requestUserLocation() {
@@ -562,6 +585,11 @@
     locationText('Tražimo mesto pored vas…', 'Dozvolite pristup lokaciji, pa biramo najbližu dostupnu panoramu');
     requestUserLocation().then(function (position) {
       const point = validSuboticaPoint(position.lat, position.lng) ? position : { lat: defaultLat, lng: defaultLng };
+      selectedLat = point.lat;
+      selectedLng = point.lng;
+      marker.setLatLng([point.lat, point.lng]);
+      map.setView([point.lat, point.lng], 16, { animate: true });
+      locationText('Lokacija pronađena…', 'Tražimo najbližu dostupnu panoramu');
       return findNearestPanorama(point.lat, point.lng);
     }).then(function (found) {
       selectedLat = found.lat; selectedLng = found.lng; marker.setLatLng([found.lat, found.lng]);
@@ -1114,22 +1142,34 @@
     setBusy(true);
     locationText('Готовим два сценария…', 'Хороший — с урбанистическим мышлением. Плохой — без него.');
     try {
-      const good = await generateOneComparison({ scenarioType: 'good', detail: 'Improve this exact place with human-scale urbanism.' });
-      if (!good.ok) throw new Error(good.error);
-      generatedGoodImage = 'data:' + (good.image.media_type || 'image/png') + ';base64,' + good.image.b64_json;
-      $('after-image').src = generatedGoodImage;
-      $('after-image').className = '';
-      $('after-image').style.display = 'block';
-      renderChanges('good-changes', good.changes);
+      const outcomes = await Promise.allSettled([
+        generateOneComparison({ scenarioType: 'good', detail: 'Improve this exact place with human-scale urbanism.' }),
+        generateOneComparison({ scenarioType: 'bad', detail: 'Create a visibly poor urban-design outcome.' })
+      ]);
+      const good = outcomes[0];
+      const bad = outcomes[1];
       $('collage-before').src = imageUrl();
       $('collage-before').style.display = 'block';
-      const bad = await generateOneComparison({ scenarioType: 'bad', detail: 'Create a visibly poor urban-design outcome.' });
-      if (!bad.ok) throw new Error(bad.error);
-      $('bad-image').src = 'data:' + (bad.image.media_type || 'image/png') + ';base64,' + bad.image.b64_json;
-      $('bad-image').style.display = 'block';
-      renderChanges('bad-changes', bad.changes);
+      if (good.status === 'fulfilled') {
+        generatedGoodImage = 'data:' + (good.value.image.media_type || 'image/png') + ';base64,' + good.value.image.b64_json;
+        $('after-image').src = generatedGoodImage;
+        $('after-image').className = '';
+        $('after-image').style.display = 'block';
+        renderChanges('good-changes', good.value.changes);
+      } else {
+        $('after-image').style.display = 'none';
+        renderChangeFailure('good-changes', good.reason);
+      }
+      if (bad.status === 'fulfilled') {
+        $('bad-image').src = 'data:' + (bad.value.image.media_type || 'image/png') + ';base64,' + bad.value.image.b64_json;
+        $('bad-image').style.display = 'block';
+        renderChanges('bad-changes', bad.value.changes);
+      } else {
+        $('bad-image').style.display = 'none';
+        renderChangeFailure('bad-changes', bad.reason);
+      }
       $('after-placeholder').style.display = 'none'; $('variant-grid').style.display = 'grid';
-      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Коллаж из трёх фото готов</div><div class="result-subtitle">Сверху место, затем хороший и плохой пример. Листайте вертикально.</div><button class="primary" onclick="startLocationFlow()">↻ Обновить коллаж</button></div>';
+      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Коллаж из трёх фото готов</div><div class="result-subtitle">Каждый вариант создаётся отдельным запросом. Ошибка одного не отменяет второй.</div><button class="primary" onclick="startLocationFlow()">↻ Обновить коллаж</button></div>';
     } finally { setBusy(false); }
   }
   window.regenerateVariant = async function (kind) {
