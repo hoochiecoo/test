@@ -1140,36 +1140,46 @@
   }
   async function generateComparison() {
     setBusy(true);
-    locationText('Готовим два сценария…', 'Хороший — с урбанистическим мышлением. Плохой — без него.');
+    generatedGoodImage = '';
+    locationText('Готовим хороший вариант…', 'Сначала отправляем один запрос, затем второй.');
     try {
-      const outcomes = await Promise.allSettled([
-        generateOneComparison({ scenarioType: 'good', detail: 'Improve this exact place with human-scale urbanism.' }),
-        generateOneComparison({ scenarioType: 'bad', detail: 'Create a visibly poor urban-design outcome.' })
-      ]);
-      const good = outcomes[0];
-      const bad = outcomes[1];
+      let good = null;
+      let bad = null;
+      let goodError = null;
+      let badError = null;
       $('collage-before').src = imageUrl();
       $('collage-before').style.display = 'block';
-      if (good.status === 'fulfilled') {
-        generatedGoodImage = 'data:' + (good.value.image.media_type || 'image/png') + ';base64,' + good.value.image.b64_json;
+      try {
+        good = await generateOneComparison({ scenarioType: 'good', detail: 'Improve this exact place with human-scale urbanism.' });
+      } catch (error) {
+        goodError = error;
+      }
+      if (good) {
+        generatedGoodImage = 'data:' + (good.image.media_type || 'image/png') + ';base64,' + good.image.b64_json;
         $('after-image').src = generatedGoodImage;
         $('after-image').className = '';
         $('after-image').style.display = 'block';
-        renderChanges('good-changes', good.value.changes);
+        renderChanges('good-changes', good.changes);
       } else {
         $('after-image').style.display = 'none';
-        renderChangeFailure('good-changes', good.reason);
+        renderChangeFailure('good-changes', goodError);
       }
-      if (bad.status === 'fulfilled') {
-        $('bad-image').src = 'data:' + (bad.value.image.media_type || 'image/png') + ';base64,' + bad.value.image.b64_json;
+      locationText('Готовим плохой вариант…', 'Хороший запрос завершён. Теперь отправляем второй запрос.');
+      try {
+        bad = await generateOneComparison({ scenarioType: 'bad', detail: 'Create a visibly poor urban-design outcome.' });
+      } catch (error) {
+        badError = error;
+      }
+      if (bad) {
+        $('bad-image').src = 'data:' + (bad.image.media_type || 'image/png') + ';base64,' + bad.image.b64_json;
         $('bad-image').style.display = 'block';
-        renderChanges('bad-changes', bad.value.changes);
+        renderChanges('bad-changes', bad.changes);
       } else {
         $('bad-image').style.display = 'none';
-        renderChangeFailure('bad-changes', bad.reason);
+        renderChangeFailure('bad-changes', badError);
       }
       $('after-placeholder').style.display = 'none'; $('variant-grid').style.display = 'grid';
-      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Коллаж из трёх фото готов</div><div class="result-subtitle">Каждый вариант создаётся отдельным запросом. Ошибка одного не отменяет второй.</div><button class="primary" onclick="startLocationFlow()">↻ Обновить коллаж</button></div>';
+      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Коллаж из трёх фото готов</div><div class="result-subtitle">Варианты запрошены по очереди: сначала хороший, затем плохой.</div><button class="primary" onclick="startLocationFlow()">↻ Обновить коллаж</button></div>';
     } finally { setBusy(false); }
   }
   window.regenerateVariant = async function (kind) {
