@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Антиурбанистика</title>
+  <title>Antiurbanistika</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     :root {
@@ -79,18 +79,14 @@
     .setting-toggle input { width: 18px; height: 18px; margin: 0; accent-color: #86ad25; }
     .setting-toggle small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.25; }
     .primary { width: 100%; min-height: 56px; border-radius: 18px; background: var(--accent); color: var(--accent-dark); font-weight: 650; }
-    .idea-card { position: relative; display: grid; gap: 12px; min-height: 190px; margin: 4px 0 10px; padding: 22px 20px 18px; overflow: hidden; border: 1px solid #dce9ae; border-radius: 24px; background: linear-gradient(145deg, #f6ffdc, #fff 68%); box-shadow: 0 8px 22px rgba(77, 105, 24, .09); text-align: left; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
-    .idea-card::after { content: '↔'; position: absolute; right: 18px; top: 15px; color: #86a832; font-size: 20px; opacity: .7; }
-    .idea-card:active { transform: scale(.985); }
-    .idea-card.swiping-left { animation: ideaSwipeLeft .16s ease-in forwards; }
-    .idea-card.swiping-right { animation: ideaSwipeRight .16s ease-in forwards; }
+    .idea-card { position: relative; display: grid; gap: 12px; min-height: 190px; margin: 4px 0 10px; padding: 22px 20px 18px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--card); box-shadow: 0 4px 14px rgba(0,0,0,.07); text-align: left; touch-action: pan-y; user-select: none; -webkit-user-select: none; transition: transform .12s ease, box-shadow .12s ease; }
+    .idea-card:active { box-shadow: 0 2px 8px rgba(0,0,0,.06); transform: scale(.985); }
+    .idea-card.dragging { transition: none; box-shadow: 0 7px 16px rgba(0,0,0,.09); }
     .idea-card .idea-icon { font-size: 34px; line-height: 1; }
     .idea-card strong { display: block; max-width: 85%; font-size: 20px; line-height: 1.12; letter-spacing: -.02em; }
     .idea-card small { display: block; max-width: 90%; color: #617044; font-size: 13px; line-height: 1.35; }
     .idea-card .idea-action { color: #496516; font-size: 12px; font-weight: 650; }
     .idea-hint { margin: 0 0 10px; color: var(--muted); text-align: center; font-size: 12px; }
-    @keyframes ideaSwipeLeft { to { opacity: 0; transform: translateX(-28px); } }
-    @keyframes ideaSwipeRight { to { opacity: 0; transform: translateX(28px); } }
     .random-point { width: 100%; min-height: 48px; margin-top: 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); font-weight: 600; }
     .evaluate-button { width: 100%; min-height: 48px; margin-top: 8px; border: 1px solid #d8b7b7; border-radius: 16px; background: #fff1f1; color: #7a2525; font-weight: 650; }
     .text-button { display: block; margin: 12px auto 0; padding: 5px 8px; background: transparent; color: var(--muted); font-size: 14px; }
@@ -186,7 +182,7 @@
 <body>
 <main class="app">
   <header class="topbar">
-    <div class="brand">Антиурбанистика</div>
+    <div class="brand">Antiurbanistika</div>
     <div class="topbar-actions">
       <button class="header-action" type="button" onclick="chooseRandomPoint()" aria-label="Izaberi slučajnu tačku u Subotici" title="Slučajna tačka u Subotici">🎲</button>
       <button class="header-action" type="button" onclick="sharePage()" aria-label="Podeli stranicu" title="Podeli stranicu">↗</button>
@@ -514,23 +510,41 @@
     let startX = 0;
     let startY = 0;
     let moved = false;
+    let pointerActive = false;
     card.addEventListener('pointerdown', function (event) {
       startX = event.clientX; startY = event.clientY; moved = false;
+      pointerActive = true;
+      card.classList.add('dragging');
       card.setPointerCapture(event.pointerId);
     });
     card.addEventListener('pointermove', function (event) {
-      if (!startX && !startY) return;
-      if (Math.abs(event.clientX - startX) > 10 || Math.abs(event.clientY - startY) > 10) moved = true;
+      if (!pointerActive) return;
+      const deltaX = event.clientX - startX;
+      const deltaY = event.clientY - startY;
+      if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) moved = true;
+      if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+        const offset = Math.max(-28, Math.min(28, deltaX * .2));
+        card.style.transform = 'translateX(' + offset + 'px)';
+      }
     });
     card.addEventListener('pointerup', function (event) {
+      if (!pointerActive) return;
       const deltaX = event.clientX - startX;
       const deltaY = event.clientY - startY;
       startX = 0; startY = 0;
+      pointerActive = false;
+      card.classList.remove('dragging');
+      card.style.transform = '';
       if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY)) return;
       event.preventDefault();
       selectedCardIdea = (selectedCardIdea + (deltaX < 0 ? 1 : -1) + cardIdeas.length) % cardIdeas.length;
-      card.classList.add(deltaX < 0 ? 'swiping-left' : 'swiping-right');
-      setTimeout(renderHome, 160);
+      renderHome();
+    });
+    card.addEventListener('pointercancel', function () {
+      pointerActive = false;
+      card.classList.remove('dragging');
+      card.style.transform = '';
+      startX = 0; startY = 0;
     });
     card.addEventListener('click', function (event) {
       if (moved) { event.preventDefault(); moved = false; return; }
@@ -994,7 +1008,7 @@
   window.sharePage = function () {
     const url = pageShareUrl();
     if (navigator.share) {
-      navigator.share({ title: 'Антиурбанистика', text: 'Погледајте Антиурбанистику', url: url })
+      navigator.share({ title: 'Antiurbanistika', text: 'Pogledajte Antiurbanistiku', url: url })
         .catch(function (error) { if (error.name !== 'AbortError') copyPageUrl(url).then(function () { alert('Link je kopiran.'); }); });
       return;
     }
