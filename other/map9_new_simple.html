@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Antiurbanistika</title>
+  <title>Unapredi mesto</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     :root {
@@ -30,8 +30,9 @@
     .topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; }
     .brand { font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
     .topbar-actions { display: flex; align-items: center; gap: 6px; }
-    .header-action { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); }
+    .header-action, .more { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); }
     .header-action { font-size: 19px; }
+    .more { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); font-size: 18px; }
     .gallery { position: relative; display: grid; gap: 10px; }
     .gallery.processing::after { content: '🚲'; position: absolute; top: 42%; left: -34px; z-index: 8; display: block; font-size: 28px; pointer-events: none; animation: cyclistRide 2.2s ease-in-out infinite; }
     button:disabled { cursor: wait; opacity: .48; }
@@ -62,7 +63,8 @@
     .image-controls .bottom-group { position: absolute; left: 50%; bottom: 10px; display: flex; gap: 5px; transform: translateX(-50%); }
     .image-controls .bottom-group button { position: static; transform: none; width: 38px; height: 38px; }
     .image-controls .bottom-group .down { width: 44px; }
-    .sheet { position: sticky; bottom: 10px; z-index: 10; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); transition: padding .3s ease, max-height .3s ease, transform .3s ease; will-change: transform; }
+    .sheet { position: sticky; bottom: 10px; z-index: 10; max-height: 50dvh; overflow-y: auto; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); scrollbar-width: none; transition: padding .3s ease, max-height .3s ease, transform .3s ease; will-change: transform; }
+    .sheet::-webkit-scrollbar { display: none; }
     .sheet.folded { max-height: 108px; overflow: hidden; }
     .sheet.folded #global-setting, .sheet.folded #sheet-content { display: none; }
     .sheet.processing { transform: translateY(26px); }
@@ -79,14 +81,6 @@
     .setting-toggle input { width: 18px; height: 18px; margin: 0; accent-color: #86ad25; }
     .setting-toggle small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.25; }
     .primary { width: 100%; min-height: 56px; border-radius: 18px; background: var(--accent); color: var(--accent-dark); font-weight: 650; }
-    .idea-card { position: relative; display: grid; gap: 12px; min-height: 190px; margin: 4px 0 10px; padding: 22px 20px 18px; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--card); box-shadow: 0 4px 14px rgba(0,0,0,.07); text-align: left; touch-action: pan-y; user-select: none; -webkit-user-select: none; transition: transform .12s ease, box-shadow .12s ease; }
-    .idea-card:active { box-shadow: 0 2px 8px rgba(0,0,0,.06); transform: scale(.985); }
-    .idea-card.dragging { transition: none; box-shadow: 0 7px 16px rgba(0,0,0,.09); }
-    .idea-card .idea-icon { font-size: 34px; line-height: 1; }
-    .idea-card strong { display: block; max-width: 85%; font-size: 20px; line-height: 1.12; letter-spacing: -.02em; }
-    .idea-card small { display: block; max-width: 90%; color: #617044; font-size: 13px; line-height: 1.35; }
-    .idea-card .idea-action { color: #496516; font-size: 12px; font-weight: 650; }
-    .idea-hint { margin: 0 0 10px; color: var(--muted); text-align: center; font-size: 12px; }
     .random-point { width: 100%; min-height: 48px; margin-top: 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); font-weight: 600; }
     .evaluate-button { width: 100%; min-height: 48px; margin-top: 8px; border: 1px solid #d8b7b7; border-radius: 16px; background: #fff1f1; color: #7a2525; font-weight: 650; }
     .text-button { display: block; margin: 12px auto 0; padding: 5px 8px; background: transparent; color: var(--muted); font-size: 14px; }
@@ -155,6 +149,32 @@
     .reroll { width: 100%; min-height: 44px; border-radius: 15px; background: var(--soft); font-weight: 600; }
     .secondary-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .secondary-actions button { min-height: 48px; border-radius: 16px; background: var(--soft); font-weight: 600; }
+    .choice-carousel { position: relative; overflow: hidden; margin: 0 -14px; }
+    .choice-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+    .choice-track::-webkit-scrollbar { display: none; }
+    .choice-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; padding: 0 14px 4px; }
+    .choice-kicker { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: .02em; text-transform: uppercase; }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .choice-card { display: grid; align-content: center; gap: 5px; min-height: 76px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); box-shadow: 0 3px 12px rgba(0,0,0,.04); text-align: left; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+    .choice-card:active { transform: scale(.98); }
+    .choice-card:hover { border-color: #b5d86c; background: #fcfff4; }
+    .choice-card .choice-emoji { font-size: 22px; line-height: 1; }
+    .choice-card .choice-label { font-size: 13px; font-weight: 650; line-height: 1.16; }
+    .choice-card.c1 { box-shadow: inset 0 3px 0 #c9e4ff, 0 3px 12px rgba(0,0,0,.04); }
+    .choice-card.c2 { box-shadow: inset 0 3px 0 #ffd29b, 0 3px 12px rgba(0,0,0,.04); }
+    .choice-card.c3 { box-shadow: inset 0 3px 0 #c8efb8, 0 3px 12px rgba(0,0,0,.04); }
+    .choice-card.c4 { box-shadow: inset 0 3px 0 #bce8d9, 0 3px 12px rgba(0,0,0,.04); }
+    .choice-card.c5 { box-shadow: inset 0 3px 0 #f7c9d5, 0 3px 12px rgba(0,0,0,.04); }
+    .choice-card.c6 { box-shadow: inset 0 3px 0 #ddd0ff, 0 3px 12px rgba(0,0,0,.04); }
+    .choice-list { display: grid; gap: 7px; }
+    .choice-list-row { display: grid; grid-template-columns: 32px 1fr 20px; align-items: center; gap: 9px; min-height: 56px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); text-align: left; }
+    .choice-list-row .choice-emoji { font-size: 21px; }
+    .choice-list-row .choice-label { font-size: 13px; font-weight: 600; line-height: 1.2; }
+    .choice-list-row .choice-arrow { color: var(--muted); font-size: 19px; }
+    .choice-pager { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+    .choice-dot { width: 6px; height: 6px; padding: 0; border-radius: 50%; background: #c8c8c2; }
+    .choice-dot.active { width: 18px; border-radius: 999px; background: var(--text); }
+    .choice-swipe-hint { margin: 8px 0 0; color: var(--muted); text-align: center; font-size: 12px; }
     .share-modal { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; padding: 16px; background: rgba(22,22,22,.48); backdrop-filter: blur(8px); }
     .share-modal.visible { display: grid; }
     .share-dialog { position: relative; width: min(100%, 398px); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 22px 16px 16px; border-radius: 26px; background: var(--card); box-shadow: 0 18px 60px rgba(0,0,0,.22); }
@@ -182,10 +202,11 @@
 <body>
 <main class="app">
   <header class="topbar">
-    <div class="brand">Antiurbanistika</div>
+    <div class="brand">Unapredi mesto</div>
     <div class="topbar-actions">
       <button class="header-action" type="button" onclick="chooseRandomPoint()" aria-label="Izaberi slučajnu tačku u Subotici" title="Slučajna tačka u Subotici">🎲</button>
       <button class="header-action" type="button" onclick="sharePage()" aria-label="Podeli stranicu" title="Podeli stranicu">↗</button>
+      <button class="more" type="button" onclick="openModeMenu()" aria-label="Otvori opcije">•••</button>
     </div>
   </header>
 
@@ -259,7 +280,7 @@
 (function () {
   'use strict';
 
-  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbx4FJzEjEJIFYd26X577GJh-AFxvCKTJ-lVc8mnVzyHZFX78svH-YpKX949L3dHz-Qd/exec';
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyJMcmKRzpLtsjVVROIlhhuIDFINJHhGRKo8RqE19gZF_S6dEaVt8B4YK70i_SgTKyX/exec';
   const defaultLat = 46.1005;
   const defaultLng = 19.6676;
   let map;
@@ -278,11 +299,10 @@
   let annotateChanges = false;
   let people = [];
   let solutions = [];
-  let cardIdeas = [];
-  let selectedCardIdea = 0;
   let problems = [];
   let countries = [];
   let urbanists = [];
+  let quickProblemGroups = [];
   let negativeProblems = [];
   let negativeProblemCategories = [];
   let selectedNegativeCategory = 'all';
@@ -316,9 +336,8 @@
       if (!data.ok) throw new Error(data.error || 'Opcije nisu dostupne.');
       people = data.people || [];
       solutions = data.improvements || [];
-      cardIdeas = data.cardIdeas || solutions;
-      if (cardIdeas.length) selectedCardIdea = Math.floor(Math.random() * cardIdeas.length);
       solutionCategories = data.improvementCategories || [];
+      quickProblemGroups = data.quickProblemGroups || [];
       problems = data.problems || [];
       countries = data.countries || [];
       urbanists = data.urbanists || [];
@@ -493,74 +512,43 @@
   window.moveDown = function () { pitch = Math.max(-90, pitch - 10); updateBefore(); };
   window.zoomIn = function () { fov = Math.max(20, fov - 10); updateBefore(); };
   window.zoomOut = function () { fov = Math.min(120, fov + 10); updateBefore(); };
-  function renderHome() {
-    const idea = cardIdeas[selectedCardIdea];
-    $('sheet').classList.remove('expanded', 'folded'); $('sheet').style.transform = '';
-    if (!idea) {
-      $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Poboljšaj ovo mesto</h2><p class="sheet-subtitle">Učitavamo ideje…</p><button class="primary" disabled>Sačekajte trenutak</button>';
-      return;
-    }
-    $('sheet-content').innerHTML = '<h2 class="sheet-title">✨ Izaberite ideju</h2><p class="sheet-subtitle">Prevucite levo ili desno za drugu ideju</p><button id="idea-card" class="idea-card" type="button" aria-label="Primeni ideju: ' + escapeHtml(idea.label) + '"><span class="idea-icon">' + escapeHtml(idea.icon || '✨') + '</span><strong>' + escapeHtml(idea.label) + '</strong><small>' + escapeHtml(idea.description) + '</small><span class="idea-action">Dodirnite da primenite →</span></button><p class="idea-hint">' + (selectedCardIdea + 1) + ' / ' + cardIdeas.length + '</p><button class="random-point" type="button" onclick="chooseRandomPoint()">⌖ Izaberi slučajnu tačku u Subotici</button>';
-    bindIdeaCardGesture();
+  function choiceButtonMarkup(choice, list) {
+    const action = "openQuickProblem('" + choice.id + "')";
+    if (list) return '<button class="choice-list-row" type="button" onclick="' + action + '"><span class="choice-emoji">' + choice.icon + '</span><span class="choice-label">' + choice.label + '</span><span class="choice-arrow">›</span></button>';
+    return '<button class="choice-card" type="button" onclick="' + action + '"><span class="choice-emoji">' + choice.icon + '</span><span class="choice-label">' + choice.label + '</span></button>';
   }
-  window.renderHome = renderHome;
-  function bindIdeaCardGesture() {
-    const card = $('idea-card');
-    if (!card) return;
-    let startX = 0;
-    let startY = 0;
-    let moved = false;
-    let pointerActive = false;
-    card.addEventListener('pointerdown', function (event) {
-      startX = event.clientX; startY = event.clientY; moved = false;
-      pointerActive = true;
-      card.classList.add('dragging');
-      card.setPointerCapture(event.pointerId);
-    });
-    card.addEventListener('pointermove', function (event) {
-      if (!pointerActive) return;
-      const deltaX = event.clientX - startX;
-      const deltaY = event.clientY - startY;
-      if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) moved = true;
-      if (Math.abs(deltaX) >= Math.abs(deltaY)) {
-        const offset = Math.max(-28, Math.min(28, deltaX * .2));
-        card.style.transform = 'translateX(' + offset + 'px)';
-      }
-    });
-    card.addEventListener('pointerup', function (event) {
-      if (!pointerActive) return;
-      const deltaX = event.clientX - startX;
-      const deltaY = event.clientY - startY;
-      startX = 0; startY = 0;
-      pointerActive = false;
-      card.classList.remove('dragging');
-      card.style.transform = '';
-      if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY)) return;
-      event.preventDefault();
-      selectedCardIdea = (selectedCardIdea + (deltaX < 0 ? 1 : -1) + cardIdeas.length) % cardIdeas.length;
-      renderHome();
-    });
-    card.addEventListener('pointercancel', function () {
-      pointerActive = false;
-      card.classList.remove('dragging');
-      card.style.transform = '';
-      startX = 0; startY = 0;
-    });
-    card.addEventListener('click', function (event) {
-      if (moved) { event.preventDefault(); moved = false; return; }
-      generateSelectedCard();
-    });
+  function renderQuickChoices() {
+    return '<div class="choice-carousel"><div id="choice-track" class="choice-track"><section class="choice-slide"><div class="choice-kicker">Что из этого происходило с вами?</div><div class="choice-grid">' + quickProblemGroups.slice(0, 6).map(function (choice) { return choiceButtonMarkup(choice, false); }).join('') + '</div><p class="choice-swipe-hint">Свайпните вправо — там все проблемы списком</p></section><section class="choice-slide"><div class="choice-kicker">Все проблемы</div><div class="choice-list">' + quickProblemGroups.map(function (choice) { return choiceButtonMarkup(choice, true); }).join('') + '</div></section></div><div class="choice-pager" aria-label="Страница выбора"><button class="choice-dot active" type="button" aria-label="Быстрый выбор" onclick="showChoicePage(0)"></button><button class="choice-dot" type="button" aria-label="Все проблемы" onclick="showChoicePage(1)"></button></div></div>';
   }
-  window.generateSelectedCard = function () {
-    const idea = cardIdeas[selectedCardIdea];
-    if (!idea) return;
-    generateImprovement('custom', '', { negativeProblemId: idea.id });
+  window.showChoicePage = function (page) {
+    const track = $('choice-track');
+    if (track) track.scrollTo({ left: track.clientWidth * page, behavior: 'smooth' });
   };
+  window.openQuickProblem = function (groupId) {
+    const group = quickProblemGroups.find(function (item) { return item.id === groupId; });
+    if (!group) return;
+    mode = 'quickProblem';
+    $('sheet').classList.add('expanded');
+    $('sheet-content').innerHTML = '<button class="back" type="button" onclick="renderHome()"><b>‹</b>Назад</button><h2>' + group.label + '</h2><p>Что именно происходило с вами?</p><div class="choice-list">' + group.options.map(function (option, index) { return '<button class="choice-list-row" type="button" onclick=\'chooseQuickOption(' + JSON.stringify(group.label + ': ' + option) + ')\'><span class="choice-emoji">' + (index === group.options.length - 1 ? '✍️' : '›') + '</span><span class="choice-label">' + option + '</span><span class="choice-arrow">›</span></button>'; }).join('') + '</div>';
+  };
+  window.chooseQuickOption = function (choiceText) {
+    if (choiceText.endsWith(': Другое')) { openDescribe(); return; }
+    generateImprovement('custom', choiceText, { quickChoice: true });
+  };
+  function renderHome() {
+    $('sheet').classList.remove('expanded', 'folded'); $('sheet').style.transform = '';
+    $('sheet-content').innerHTML = '<h2 class="sheet-title">Что из этого происходило с вами за последнюю неделю?</h2><p class="sheet-subtitle">Выберите знакомую вам ситуацию</p>' + renderQuickChoices() + '<button class="evaluate-button" type="button" onclick="generateImprovement(\'urban_evaluation\', \'\')">🔎 Оценить всё место</button><button class="random-point" type="button" onclick="chooseRandomPoint()">⌖ Выбрать другую точку в Суботице</button><button class="text-button" onclick="openModeMenu()">Другие способы <span class="chevron">⌃</span></button>';
+    const track = $('choice-track');
+    if (track) track.addEventListener('scroll', function () {
+      const page = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
+      document.querySelectorAll('.choice-dot').forEach(function (dot, index) { dot.classList.toggle('active', index === page); });
+    }, { passive: true });
+  }
   window.openModeMenu = function () { $('sheet').classList.remove('folded'); $('sheet').style.transform = ''; $('sheet').classList.add('expanded'); $('sheet-content').innerHTML = '<h2>Šta želite da promenite?</h2><p>Izaberite način poboljšanja mesta</p><div class="mode-list"><button class="mode-row" onclick="openPeople()"><span class="mode-icon">👤</span><span><strong>Za koga</strong><small>Učinite mesto udobnijim za određene ljude</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openBuild()"><span class="mode-icon">🧩</span><span><strong>Sastavi sam</strong><small>Izaberite konkretna poboljšanja</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openDescribe()"><span class="mode-icon">✍️</span><span><strong>Opiši rečima</strong><small>Napišite kako želite da ovo mesto izgleda</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openProblems()"><span class="mode-icon">⚠️</span><span><strong>Problem</strong><small>Izaberite šta trenutno ne radi dobro</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openNegativeProblems()"><span class="mode-icon">🧪</span><span><strong>Test negativnog scenarija</strong><small>Namerno pogoršajte jednu stvar radi testa</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="generateImprovement(\'urban_evaluation\', \'\')"><span class="mode-icon">🔎</span><span><strong>Urbanistička procena</strong><small>Označi probleme na ovoj panorami i potpiši ih</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openUrbanists()"><span class="mode-icon">💬</span><span><strong>Urbanisti</strong><small>Ideje i prioriteti savremenih urbanista</small></span><span class="arrow">›</span></button><button class="mode-row" onclick="openRandom()"><span class="mode-icon">🎲</span><span><strong>Potpuni nasumični izbor</strong><small>Pustite aplikaciju da izabere sve</small></span><span class="arrow">›</span></button></div><button class="mode-row" style="margin-top:16px" onclick="openCountries()"><span class="mode-icon">🌍</span><span><strong>Zemlja i stil</strong><small>' + selectedCountryLabel() + '</small></span><span class="arrow">›</span></button>'; };
   window.selectCountry = function (value) {
     country = value;
     countrySearch = '';
-    if (!panoId || value === 'none') { renderHome(); return; }
+    if (!panoId || value === 'none') { openModeMenu(); return; }
     generateImprovement('custom', 'Maksimalno unaprediti ovo mesto u duhu izabrane zemlje, bez menjanja postojeće geometrije ulice.');
   };
   window.openMapPicker = function () {
@@ -953,7 +941,7 @@
   async function generateImprovement(promptId, detail, selections) {
     selections = selections || {};
     const annotateForRequest = annotateChanges;
-    if (!panoId) { renderHome(); return; }
+    if (!panoId) { openModeMenu(); return; }
     setBusy(true);
     $('after-placeholder').className = 'after-placeholder loading-shimmer';
     $('after-placeholder').innerHTML = '<div class="spark">⌛</div><strong>Kreiramo verziju…</strong><small>Potrajaće samo trenutak</small>';
@@ -966,6 +954,7 @@
         improvementIds: JSON.stringify(selections.improvementIds || []), problemIds: JSON.stringify(selections.problemIds || []), countryId: country,
         urbanistId: String(selections.urbanistId || ''),
         negativeProblemId: String(selections.negativeProblemId || ''),
+        quickChoice: String(selections.quickChoice === true),
         annotateChanges: String(annotateForRequest),
         detail: String(detail || '').slice(0, 180), clientId: clientId()
       });
@@ -976,7 +965,7 @@
       afterImage.className = '';
       afterImage.style.display = 'block';
       $('sheet').classList.remove('expanded');
-      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Gotovo</div><div class="result-subtitle">Kolaž je spreman. Podelite rezultat ili izaberite novu ideju.</div><div class="result-chips"><span>' + escapeHtml(cardIdeas[selectedCardIdea].label) + '</span><span>Gradska sredina</span></div><div class="secondary-actions"><button onclick="shareInstagram()">Instagram</button><button onclick="shareFacebook()">Facebook</button><button onclick="saveCollage()">Sačuvaj</button></div><button class="primary" onclick="renderHome()">Još jedna ideja</button><button class="text-button" onclick="renderHome()">Izabrati drugu ideju</button></div>';
+      $('sheet-content').innerHTML = '<div class="result"><div class="result-title">✨ Gotovo</div><div class="result-subtitle">Kolaž je spreman. Podelite fotografiju ili ga sačuvajte kao JPEG.</div><div class="result-chips"><span>Zelenilo</span><span>Komfor</span><span>Gradska sredina</span></div><div class="secondary-actions"><button onclick="shareInstagram()">Instagram</button><button onclick="shareFacebook()">Facebook</button><button onclick="saveCollage()">Sačuvaj</button></div><button class="primary" onclick="openModeMenu()">Još jedna verzija</button><button class="text-button" onclick="openModeMenu()">Izmeni</button></div>';
       $('sheet').classList.remove('folded', 'processing');
       $('sheet').classList.add('expanded');
       $('gallery').classList.add('controls-muted');
@@ -1008,7 +997,7 @@
   window.sharePage = function () {
     const url = pageShareUrl();
     if (navigator.share) {
-      navigator.share({ title: 'Antiurbanistika', text: 'Pogledajte Antiurbanistiku', url: url })
+      navigator.share({ title: 'Unapredi mesto', text: 'Pogledajte Unapredi mesto', url: url })
         .catch(function (error) { if (error.name !== 'AbortError') copyPageUrl(url).then(function () { alert('Link je kopiran.'); }); });
       return;
     }
