@@ -78,6 +78,10 @@
     .image-controls .bottom-group { position: absolute; left: 50%; bottom: 10px; display: flex; gap: 5px; transform: translateX(-50%); }
     .image-controls .bottom-group button { position: static; transform: none; width: 38px; height: 38px; }
     .image-controls .bottom-group .down { width: 44px; }
+    .location-viewer { position: relative; display: none; overflow: hidden; background: #171717; }
+    .location-viewer img { display: block; width: 100%; aspect-ratio: 16 / 11; object-fit: cover; }
+    .location-viewer .viewer-label { position: absolute; top: 12px; left: 12px; z-index: 2; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.9); font-size: 12px; font-weight: 650; }
+    .location-viewer .image-controls button { background: rgba(255,255,255,.9); }
     .sheet { position: sticky; bottom: 10px; z-index: 10; max-height: 50dvh; overflow-y: auto; margin-top: 14px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); border-radius: 30px; background: rgba(255,255,255,.94); box-shadow: 0 -8px 30px rgba(0,0,0,.1); backdrop-filter: blur(18px); scrollbar-width: none; transition: padding .3s ease, max-height .3s ease, transform .3s ease; will-change: transform; }
     .sheet::-webkit-scrollbar { display: none; }
     .sheet.folded { max-height: 108px; overflow: hidden; }
@@ -230,17 +234,21 @@
     <article class="photo-card" id="before-card">
       <span class="badge">Карта · место рядом</span>
       <div id="map-card" class="photo-map"></div>
-      <img id="before-image" alt="Početna panorama">
-      <div class="image-controls">
-        <button class="left" type="button" onclick="moveLeft()">‹</button>
-        <button class="right" type="button" onclick="moveRight()">›</button>
-        <button class="up" type="button" onclick="moveDown()">⌃</button>
-        <div class="bottom-group">
-          <button type="button" onclick="zoomOut()">−</button>
-          <button class="down" type="button" onclick="moveUp()">⌄</button>
-          <button type="button" onclick="zoomIn()">＋</button>
+      <div id="location-viewer" class="location-viewer">
+        <span class="viewer-label">Обзор выбранной локации</span>
+        <img id="location-preview" alt="Обзор выбранной локации">
+        <div class="image-controls">
+          <button class="left" type="button" onclick="moveLeft()" aria-label="Повернуть влево">‹</button>
+          <button class="right" type="button" onclick="moveRight()" aria-label="Повернуть вправо">›</button>
+          <button class="up" type="button" onclick="moveDown()" aria-label="Посмотреть выше">⌃</button>
+          <div class="bottom-group">
+            <button type="button" onclick="zoomOut()" aria-label="Уменьшить">−</button>
+            <button class="down" type="button" onclick="moveUp()" aria-label="Посмотреть ниже">⌄</button>
+            <button type="button" onclick="zoomIn()" aria-label="Увеличить">＋</button>
+          </div>
         </div>
       </div>
+      <img id="before-image" alt="Početna panorama">
     </article>
     <article class="photo-card" id="after-card">
       <span class="badge badge-after">Коллаж · 3 фото</span>
@@ -300,7 +308,7 @@
 (function () {
   'use strict';
 
-  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyJMcmKRzpLtsjVVROIlhhuIDFINJHhGRKo8RqE19gZF_S6dEaVt8B4YK70i_SgTKyX/exec';
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwGMk_HLTIYbZniLBCBy6VafU4v3_09OGOnlSWU4EScjbqZHLSdbJE4hZenog8-F5ke/exec';
   const defaultLat = 46.1005;
   const defaultLng = 19.6676;
   let map;
@@ -339,6 +347,13 @@
     if (!id) { id = 'client_' + Math.random().toString(36).slice(2); localStorage.setItem('subotica_client_id', id); }
     return id;
   }
+  function errorText(error) {
+    const parts = [error && error.message ? error.message : 'Nepoznata greška'];
+    if (error && error.code) parts.push('Kod: ' + error.code);
+    if (error && error.stage) parts.push('Faza: ' + error.stage);
+    if (error && error.requestId) parts.push('ID: ' + error.requestId);
+    return parts.join(' · ');
+  }
   function callBackend(params) {
     return new Promise(function (resolve, reject) {
       if (BACKEND_URL.indexOf('PASTE_') === 0) return reject(new Error('Unesi URL Apps Script backenda.'));
@@ -347,7 +362,18 @@
       const query = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') + '&_cb=' + Date.now() + '_' + Math.random().toString(36).slice(2);
       const timer = setTimeout(function () { cleanup(); reject(new Error('Backend timeout')); }, 90000);
       function cleanup() { clearTimeout(timer); delete window[name]; script.remove(); }
-      window[name] = function (data) { cleanup(); resolve(data); };
+      window[name] = function (data) {
+        cleanup();
+        if (data && data.ok === false) {
+          const error = new Error(data.error || 'Backend error');
+          error.code = data.code || 'SERVER_ERROR';
+          error.stage = data.stage || params.action || 'backend';
+          error.requestId = data.requestId || '';
+          reject(error);
+          return;
+        }
+        resolve(data);
+      };
       script.onerror = function () { cleanup(); reject(new Error('Backend nije dostupan.')); };
       script.src = BACKEND_URL + '?callback=' + name + '&' + query;
       document.body.appendChild(script);
@@ -461,8 +487,10 @@
     yaw = Math.floor(Math.random() * 360); pitch = Math.floor(-12 + Math.random() * 25); fov = Math.floor(72 + Math.random() * 30);
     syncShareUrl();
     $('map-card').style.display = 'block';
+    $('location-viewer').style.display = 'block';
     $('before-image').src = imageUrl();
     $('before-image').style.display = 'none';
+    $('location-preview').src = imageUrl();
     $('variant-grid').style.display = 'none';
     $('collage-before').src = imageUrl();
     $('collage-before').style.display = 'none';
@@ -529,7 +557,7 @@
       return generateComparison();
     }).catch(function (error) {
       $('after-placeholder').className = 'after-placeholder';
-      $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>' + error.message + '</strong><small>Možete pokušati ponovo jednim pritiskom</small>';
+      $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Nešto nije uspelo</strong><small>' + errorText(error) + '</small>';
       renderHome();
     }).finally(function () { locationBusy = false; setRandomPointBusy(false); });
   };
@@ -590,7 +618,7 @@
     });
     history.replaceState(null, '', location.pathname + '?' + params.toString());
   }
-  function updateBefore() { if (panoId) { $('before-image').src = imageUrl(); syncShareUrl(); } }
+  function updateBefore() { if (panoId) { const url = imageUrl(); $('before-image').src = url; $('location-preview').src = url; $('collage-before').src = url; syncShareUrl(); } }
   window.moveLeft = function () { yaw = (yaw + 345) % 360; updateBefore(); };
   window.moveRight = function () { yaw = (yaw + 15) % 360; updateBefore(); };
   window.moveUp = function () { pitch = Math.min(90, pitch + 10); updateBefore(); };
@@ -1055,7 +1083,7 @@
       $('sheet').classList.add('expanded');
       $('gallery').classList.add('controls-muted');
       openShareModal();
-    } catch (error) { $('after-placeholder').className = 'after-placeholder'; $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Verzija nije kreirana</strong><small>' + error.message + '</small>'; renderHome(); }
+    } catch (error) { $('after-placeholder').className = 'after-placeholder'; $('after-placeholder').innerHTML = '<div class="spark">!</div><strong>Verzija nije kreirana</strong><small>' + errorText(error) + '</small>'; renderHome(); }
     finally { setBusy(false); }
   }
   async function generateOneComparison(selections) {
@@ -1106,7 +1134,7 @@
         $('bad-image').src = image;
       }
     } catch (error) {
-      alert('Не удалось обновить вариант: ' + error.message);
+      alert('Не удалось обновить вариант: ' + errorText(error));
     } finally {
       setBusy(false);
     }
@@ -1227,6 +1255,8 @@
     fov = Math.max(20, Math.min(120, Number(shared.get('fov')) || 90));
     marker.setLatLng([selectedLat, selectedLng]);
     $('map-card').style.display = 'block';
+    $('location-viewer').style.display = 'block';
+    $('location-preview').src = imageUrl();
     $('before-image').src = imageUrl();
     $('before-image').style.display = 'none';
     $('after-image').src = imageUrl();
