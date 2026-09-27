@@ -370,6 +370,20 @@
     if (!element) return;
     element.innerHTML = '<div>Не удалось создать этот вариант</div><div>' + escapeHtml(errorText(error)) + '</div>';
   }
+  function waitForImage(image, source) {
+    return new Promise(function (resolve, reject) {
+      image.onload = function () {
+        if (image.decode) {
+          image.decode().then(resolve).catch(resolve);
+        } else {
+          resolve();
+        }
+      };
+      image.onerror = function () { reject(new Error('Изображение не загрузилось в браузере.')); };
+      image.src = source;
+      if (image.complete && image.naturalWidth > 0) image.onload();
+    });
+  }
   function callBackend(params) {
     return new Promise(function (resolve, reject) {
       if (BACKEND_URL.indexOf('PASTE_') === 0) return reject(new Error('Unesi URL Apps Script backenda.'));
@@ -1192,10 +1206,15 @@
       }
       if (good) {
         generatedGoodImage = 'data:' + (good.image.media_type || 'image/png') + ';base64,' + good.image.b64_json;
-        $('after-image').src = generatedGoodImage;
         $('after-image').className = '';
         $('after-image').style.display = 'block';
-        renderChanges('good-changes', good.changes);
+        try {
+          await waitForImage($('after-image'), generatedGoodImage);
+          renderChanges('good-changes', good.changes);
+        } catch (error) {
+          $('after-image').style.display = 'none';
+          renderChangeFailure('good-changes', error);
+        }
       } else {
         $('after-image').style.display = 'none';
         renderChangeFailure('good-changes', goodError);
@@ -1207,9 +1226,15 @@
         badError = error;
       }
       if (bad) {
-        $('bad-image').src = 'data:' + (bad.image.media_type || 'image/png') + ';base64,' + bad.image.b64_json;
+        const badImage = 'data:' + (bad.image.media_type || 'image/png') + ';base64,' + bad.image.b64_json;
         $('bad-image').style.display = 'block';
-        renderChanges('bad-changes', bad.changes);
+        try {
+          await waitForImage($('bad-image'), badImage);
+          renderChanges('bad-changes', bad.changes);
+        } catch (error) {
+          $('bad-image').style.display = 'none';
+          renderChangeFailure('bad-changes', error);
+        }
       } else {
         $('bad-image').style.display = 'none';
         renderChangeFailure('bad-changes', badError);
@@ -1230,11 +1255,11 @@
       const image = 'data:' + (result.image.media_type || 'image/png') + ';base64,' + result.image.b64_json;
       if (kind === 'good') {
         generatedGoodImage = image;
-        $('after-image').src = image;
         $('after-image').className = '';
+        await waitForImage($('after-image'), image);
         renderChanges('good-changes', result.changes);
       } else {
-        $('bad-image').src = image;
+        await waitForImage($('bad-image'), image);
         renderChanges('bad-changes', result.changes);
       }
     } catch (error) {
