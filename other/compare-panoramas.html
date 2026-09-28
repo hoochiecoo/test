@@ -45,16 +45,19 @@
     .swipe-hint span { display:grid; width:25px; height:25px; place-items:center; border:1px solid rgba(255,255,255,.25); border-radius:50%; background:rgba(0,0,0,.12); }
     .canvas-stage.swipe-hint-playing .collage-current { animation:collage-swipe-peek 1.05s ease both; }
     .canvas-stage.swipe-hint-playing .collage-next { animation:collage-swipe-in 1.05s ease both; }
+
     @keyframes collage-swipe-peek {
       0%,100% { transform:translateX(0); }
       38% { transform:translateX(-24px); }
       68% { transform:translateX(0); }
     }
+
     @keyframes collage-swipe-in {
       0%,100% { transform:translateX(100%); }
       38% { transform:translateX(calc(100% - 24px)); }
       68% { transform:translateX(100%); }
     }
+
     .post-social { padding:12px 14px 15px; background:#080808; color:#fff; }
     .post-social-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .post-account { display:flex; align-items:center; gap:8px; min-width:0; }
@@ -84,6 +87,7 @@
     .post-caption .compare-mark { flex:0 0 auto; }
     .feed-end { padding:4px 0 10px; color:var(--muted); text-align:center; font-size:11px; scroll-snap-align:none; }
     .compare .swipe-note, .compare .pager { display:none; }
+
     .scene { position:relative; overflow:hidden; border-radius:var(--radius); background:#d7ddd2; box-shadow:0 10px 30px rgba(30,40,26,.09); }
     .scene-image { display:block; width:100%; aspect-ratio:16/11; object-fit:cover; background:#dce4d7; }
     .scene-top { position:absolute; inset:12px 12px auto; display:flex; align-items:center; justify-content:space-between; pointer-events:none; }
@@ -100,8 +104,36 @@
 
     .sheet-backdrop { position:fixed; inset:0; z-index:19; background:rgba(0,0,0,.58); opacity:0; pointer-events:none; transition:opacity .22s ease; }
     .sheet-backdrop.visible { opacity:1; pointer-events:auto; }
-    .location-card { position:fixed; left:50%; bottom:0; z-index:20; display:grid; grid-template-rows:auto 1fr; width:min(100%,430px); height:78px; max-height:78px; overflow:hidden; margin:0; padding:5px 8px calc(7px + env(safe-area-inset-bottom)); border-top:1px solid #292929; border-radius:20px 20px 0 0; background:#080808; color:#fff; box-shadow:0 -8px 25px rgba(0,0,0,.38); transform:translateX(-50%); transition:max-height .28s ease,height .28s ease,padding .28s ease; }
-    .location-card.open { height:min(78dvh,650px); max-height:min(78dvh,650px); overflow:hidden; padding:7px 16px calc(12px + env(safe-area-inset-bottom)); }
+
+    .location-card {
+      position:fixed;
+      left:50%;
+      bottom:0;
+      z-index:20;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      width:min(100%,430px);
+      height:78px;
+      max-height:78px;
+      overflow:hidden;
+      margin:0;
+      padding:5px 8px calc(7px + env(safe-area-inset-bottom));
+      border-top:1px solid #292929;
+      border-radius:20px 20px 0 0;
+      background:#080808;
+      color:#fff;
+      box-shadow:0 -8px 25px rgba(0,0,0,.38);
+      transform:translateX(-50%);
+      transition:max-height .28s ease,height .28s ease,padding .28s ease;
+    }
+
+    .location-card.open {
+      height:min(78dvh,650px);
+      max-height:min(78dvh,650px);
+      overflow:hidden;
+      padding:7px 16px calc(12px + env(safe-area-inset-bottom));
+    }
+
     .sheet-grab { width:38px; height:4px; margin:0 auto 4px; border-radius:99px; background:#555; touch-action:none; }
     .sheet-header { display:flex; align-items:center; justify-content:space-between; min-height:34px; }
     .sheet-header strong { font-size:14px; }
@@ -113,16 +145,33 @@
     .bottom-tab:active,.bottom-tab:hover { background:#1c1c1c; color:#fff; }
     .bottom-tab.active { color:var(--accent); }
     .bottom-tab.active b { color:var(--accent); }
-    .sheet-content { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-top:4px; scrollbar-width:none; }
+
+    .sheet-content {
+      min-height:0;
+      overflow-y:auto;
+      overscroll-behavior:contain;
+      padding-top:4px;
+      scrollbar-width:none;
+    }
+
     .sheet-content::-webkit-scrollbar { display:none; }
     .location-card:not(.open) .sheet-header,.location-card:not(.open) .sheet-content { display:none; }
+
     .random-panel { display:none; gap:12px; padding:8px 0 16px; }
     .location-card.random-open .random-panel { display:grid; }
     .location-card.random-open .sheet-content > :not(.random-panel) { display:none; }
+
     .random-kicker { margin:0; color:#9aaa75; font-size:10px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
     .random-title { margin:0; font-size:20px; letter-spacing:-.035em; }
     .random-description { margin:0; color:#999; font-size:11px; line-height:1.4; }
-    .random-pair { display:grid; grid-template-columns:1fr 24px 1fr; gap:7px; align-items:stretch; }
+
+    .random-pair {
+      display:grid;
+      grid-template-columns:1fr 24px 1fr;
+      gap:7px;
+      align-items:stretch;
+    }
+
     .random-city { min-width:0; padding:13px 10px; border:1px solid #303030; border-radius:15px; background:#151515; }
     .random-city small { display:block; overflow:hidden; color:#929292; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
     .random-city strong { display:block; margin-top:5px; overflow:hidden; font-size:14px; text-overflow:ellipsis; white-space:nowrap; }
@@ -130,37 +179,97 @@
     .random-arrow { display:grid; place-items:center; align-self:center; width:24px; height:24px; border-radius:50%; background:#242424; color:#b8e84a; }
     .random-match { margin:0; padding:11px 12px; border-radius:13px; background:#20251a; color:#d9e7b1; font-size:12px; line-height:1.35; }
     .random-match strong { color:#fff; }
+
     .random-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
     .random-actions .random-foreign { grid-column:1 / -1; min-height:36px; border:1px solid #303030; background:#151515; color:#d7d7d7; }
     .random-actions button { min-height:42px; padding:0 10px; border-radius:12px; font-size:11px; }
     .random-next { border:1px solid #363636; background:#1b1b1b; color:#eee; }
     .random-accept { background:var(--accent); color:var(--accent-dark); font-weight:750; }
+
     .random-filter { display:flex; gap:6px; }
     .random-filter button { flex:1; min-height:32px; border:1px solid #303030; border-radius:9px; background:#151515; color:#aaa; font-size:10px; }
     .random-filter button.active { border-color:#829c4c; background:#20251a; color:#e4f2bd; }
+
     .city-presets { display:grid; gap:7px; margin:14px 0 12px; }
     .city-presets-title { margin:0 0 2px; color:#999; font-size:11px; }
     .city-preset { min-height:42px; padding:0 12px; border:1px solid #2c2c2c; border-radius:13px; background:#151515; color:#e7e7e7; text-align:left; font-size:12px; }
     .city-preset.active { border-color:#92aa58; background:#20251a; color:#fff; }
-    .city-suggestion { margin:2px 0 0; padding:10px 12px; border:1px solid #2a2a2a; border-radius:13px; background:#121212; color:#a8a8a8; font-size:11px; line-height:1.35; }
+
+    .city-suggestion {
+      margin:2px 0 0;
+      padding:10px 12px;
+      border:1px solid #2a2a2a;
+      border-radius:13px;
+      background:#121212;
+      color:#a8a8a8;
+      font-size:11px;
+      line-height:1.35;
+    }
+
     .city-suggestion strong { color:#d5e5a6; font-weight:650; }
+
     .city-options { display:grid; gap:6px; margin:10px 0 2px; }
-    .city-option { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; width:100%; padding:9px 11px; border:1px solid #292929; border-radius:12px; background:#181818; color:#eee; text-align:left; }
+
+    .city-option {
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+      width:100%;
+      padding:9px 11px;
+      border:1px solid #292929;
+      border-radius:12px;
+      background:#181818;
+      color:#eee;
+      text-align:left;
+    }
+
     .city-option:active,.city-option.selected { border-color:#80964d; background:#20251a; }
     .city-option small { display:block; margin-top:2px; color:#8e8e8e; font-size:10px; }
     .city-option strong { display:block; font-size:12px; font-weight:650; }
     .city-option em { color:#a9a9a9; font-size:10px; font-style:normal; white-space:nowrap; }
-    .country-list { display:grid; grid-template-columns:1fr; gap:6px; max-height:210px; overflow-y:auto; overscroll-behavior:contain; padding:1px 2px 1px 0; }
+
+    .country-list {
+      display:grid;
+      grid-template-columns:1fr;
+      gap:6px;
+      max-height:210px;
+      overflow-y:auto;
+      overscroll-behavior:contain;
+      padding:1px 2px 1px 0;
+    }
+
     .country-list .city-preset { min-height:36px; font-size:11px; }
     .city-list-title { margin:10px 0 5px; color:#999; font-size:11px; }
-    .city-search { width:100%; min-height:40px; margin:8px 0 2px; padding:0 11px; border:1px solid #303030; border-radius:11px; outline:0; background:#181818; color:#eee; font-size:12px; }
+
+    .city-search {
+      width:100%;
+      min-height:40px;
+      margin:8px 0 2px;
+      padding:0 11px;
+      border:1px solid #303030;
+      border-radius:11px;
+      outline:0;
+      background:#181818;
+      color:#eee;
+      font-size:12px;
+    }
+
     .city-search::placeholder { color:#777; }
     .city-search-results { display:grid; gap:5px; max-height:190px; overflow:auto; }
-    .city-compare-lists { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; margin-top:10px; }
+
+    .city-compare-lists {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+
     .city-column { min-width:0; }
     .city-column-title { margin:0 0 6px; color:#999; font-size:11px; }
     .city-column .city-options { max-height:266px; overflow-y:auto; overscroll-behavior:contain; padding-right:2px; }
     .city-column .city-option { min-height:48px; }
+
     .population-filter { margin:12px 0 10px; padding:11px; border:1px solid #2a2a2a; border-radius:13px; background:#121212; }
     .population-filter-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:8px; }
     .population-filter-head strong { font-size:12px; }
@@ -168,41 +277,102 @@
     .population-controls { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
     .population-controls label { display:grid; gap:4px; color:#858585; font-size:10px; }
     .population-controls select { min-width:0; padding:9px 8px; border:1px solid #303030; border-radius:10px; background:#1a1a1a; color:#eee; font-size:11px; }
+
     .section-label { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
     .section-label strong { font-size:15px; letter-spacing:-.02em; }
     .section-label span { color:var(--muted); font-size:11px; }
+
     .city-pair { display:grid; grid-template-columns:1fr 28px 1fr; align-items:center; gap:8px; }
     .city-select { min-width:0; padding:11px 12px; border:1px solid #2c2c2c; border-radius:16px; background:#151515; color:#eee; text-align:left; }
     .city-select.active { border-color:#80964d; background:#20251a; color:#fff; }
     .city-select small { display:block; margin-bottom:3px; color:#8e8e8e; font-size:10px; }
     .city-select strong { display:block; overflow:hidden; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+
     .swap { width:28px; height:28px; border-radius:50%; background:#1c1c1c; color:#aaa; }
+
     .range-row { margin-top:17px; }
     .range-head { display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px; }
     .range-head span { color:var(--muted); }
-    input[type=range] { width:100%; height:5px; appearance:none; border-radius:10px; background:linear-gradient(90deg,#91aa58 0 36%,#343434 36%); outline:0; }
-    input[type=range]::-webkit-slider-thumb { width:22px; height:22px; appearance:none; border:4px solid #080808; border-radius:50%; background:#a9c66b; box-shadow:0 1px 4px #000; }
+
+    input[type=range] {
+      width:100%;
+      height:5px;
+      appearance:none;
+      border-radius:10px;
+      background:linear-gradient(90deg,#91aa58 0 36%,#343434 36%);
+      outline:0;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      width:22px;
+      height:22px;
+      appearance:none;
+      border:4px solid #080808;
+      border-radius:50%;
+      background:#a9c66b;
+      box-shadow:0 1px 4px #000;
+    }
+
     .hint-row { display:flex; align-items:center; gap:8px; margin-top:13px; color:#929292; font-size:11px; line-height:1.3; }
     .pin { display:grid; flex:0 0 25px; width:25px; height:25px; place-items:center; border-radius:50%; background:#20251a; color:#a9c66b; }
+
     .primary { width:100%; min-height:55px; margin-top:12px; border-radius:18px; background:var(--accent); color:var(--accent-dark); font-weight:750; box-shadow:0 6px 14px rgba(120,160,30,.14); }
     .primary:active { transform:translateY(1px); }
+
     .secondary { width:100%; min-height:48px; margin-top:8px; border:1px solid #2d2d2d; border-radius:16px; background:#171717; color:#eee; font-weight:650; }
+
     .status { min-height:17px; margin:10px 0 0; color:#a9b779; text-align:center; font-size:11px; }
     .footer-note { margin:18px 0 0; color:#9a9a92; text-align:center; font-size:10px; }
-    .scene.is-loading .scene-image { opacity:.42; filter:blur(2px); }
-    .scene.is-loading::after { content:'Загружаем панораму…'; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font-size:12px; font-weight:700; text-shadow:0 1px 5px #222; background:rgba(20,25,20,.16); }
 
-    .toast { position:fixed; left:50%; bottom:22px; z-index:5; max-width:calc(100% - 32px); padding:11px 15px; border-radius:999px; background:#20241e; color:#fff; font-size:12px; box-shadow:0 7px 24px rgba(0,0,0,.2); opacity:0; transform:translate(-50%,12px); pointer-events:none; transition:.25s ease; }
+    .scene.is-loading .scene-image { opacity:.42; filter:blur(2px); }
+
+    .scene.is-loading::after {
+      content:'Загружаем панораму…';
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      color:#fff;
+      font-size:12px;
+      font-weight:700;
+      text-shadow:0 1px 5px #222;
+      background:rgba(20,25,20,.16);
+    }
+
+    .toast {
+      position:fixed;
+      left:50%;
+      bottom:22px;
+      z-index:5;
+      max-width:calc(100% - 32px);
+      padding:11px 15px;
+      border-radius:999px;
+      background:#20241e;
+      color:#fff;
+      font-size:12px;
+      box-shadow:0 7px 24px rgba(0,0,0,.2);
+      opacity:0;
+      transform:translate(-50%,12px);
+      pointer-events:none;
+      transition:.25s ease;
+    }
+
     .toast.visible { opacity:1; transform:translate(-50%,0); }
     body.sheet-open { overflow:hidden; }
-    @media (min-width:700px) { .app { box-shadow:0 0 0 1px rgba(0,0,0,.03); } }
+
+    @media (min-width:700px) {
+      .app { box-shadow:0 0 0 1px rgba(0,0,0,.03); }
+    }
   </style>
 </head>
+
 <body>
   <main class="app">
     <header class="topbar">
       <div class="brand">city <em>↔</em> city</div>
-      <div class="top-actions"><button class="round" type="button" onclick="swapCities()" aria-label="Поменять города местами">⇄</button></div>
+      <div class="top-actions">
+        <button class="round" type="button" onclick="swapCities()" aria-label="Поменять города местами">⇄</button>
+      </div>
     </header>
 
     <section class="intro">
@@ -219,75 +389,207 @@
 
     <section class="location-card" id="locationCard">
       <div class="sheet-grab" id="sheetGrab" aria-hidden="true"></div>
+
       <nav class="bottom-tabs" aria-label="Настройки сравнения">
         <button class="bottom-tab" type="button" onclick="openSettingsSection('radius')"><b>◌</b><span>Радиус</span></button>
         <button class="bottom-tab" type="button" onclick="openRandomPair()"><b>↯</b><span>Рандом</span></button>
         <button class="bottom-tab" type="button" onclick="openSettingsSection('cities')"><b>⌂</b><span>Города</span></button>
       </nav>
-      <div class="sheet-header"><div><strong>Настройки сравнения</strong><span id="pointNumber"> · 1 пост загружен</span></div><button class="sheet-close" type="button" onclick="closeSettings()" aria-label="Закрыть настройки">×</button></div>
+
+      <div class="sheet-header">
+        <div>
+          <strong>Настройки сравнения</strong>
+          <span id="pointNumber"> · 1 пост загружен</span>
+        </div>
+        <button class="sheet-close" type="button" onclick="closeSettings()" aria-label="Закрыть настройки">×</button>
+      </div>
+
       <div class="sheet-content">
-       <div class="random-panel" id="randomPanel">
-        <p class="random-kicker">Быстрый подбор</p>
-        <h2 class="random-title">Случайная пара городов</h2>
-        <p class="random-description">Слева всегда российский город. Справа — город из выбранной страны или из всех стран. Можно искать почти одинаковый размер или сильный контраст.</p>
-        <div class="random-filter" aria-label="Режим подбора">
-          <button id="randomCloseMode" class="active" type="button" onclick="setRandomMode('close')">Похожий размер</button>
-          <button id="randomContrastMode" type="button" onclick="setRandomMode('contrast')">Сильная разница</button>
-        </div>
-        <div class="random-pair">
-          <div class="random-city"><small id="randomRussianCountry">Россия</small><strong id="randomRussianCity">—</strong><em id="randomRussianPopulation">—</em></div>
-          <span class="random-arrow">↔</span>
-          <div class="random-city"><small id="randomForeignCountry">—</small><strong id="randomForeignCity">—</strong><em id="randomForeignPopulation">—</em></div>
-        </div>
-        <p class="random-match" id="randomMatch">Нажмите «Следующая пара».</p>
-        <div class="random-actions"><button class="random-next" type="button" onclick="generateRandomPair()">↻ Новая пара</button><button class="random-accept" type="button" onclick="acceptRandomPair()">✓ Принять пару</button><button class="random-foreign" type="button" onclick="generateRandomForeignCity()">→ Другой город справа</button></div>
-       </div>
-       <div class="city-pair">
-        <button class="city-select active" type="button" onclick="focusCity(0)"><small id="countryA">Город A · Россия</small><strong id="cityA">Владимир</strong></button>
-        <span class="swap" aria-hidden="true">↔</span>
-        <button class="city-select" type="button" onclick="focusCity(1)"><small id="countryB">Город B · Нидерланды</small><strong id="cityB">Гаага</strong></button>
-       </div>
-      <div class="population-filter">
-        <div class="population-filter-head"><strong>Главный фильтр · население</strong><span id="populationFilterValue">10 тыс. — 10 млн</span></div>
-        <div class="population-controls"><label>От<select id="populationMin" onchange="setPopulationFilter()"></select></label><label>До<select id="populationMax" onchange="setPopulationFilter()"></select></label></div>
-      </div>
-      <div class="range-row">
-        <div class="range-head"><strong>Радиус поиска точки</strong><span id="radiusValue">3 км</span></div>
-        <input id="radius" type="range" min="1" max="10" value="3" oninput="setRadius(this.value)">
-      </div>
-      <div class="city-presets">
-        <input class="city-search" id="citySearch" type="search" placeholder="Найти город в любой стране" oninput="renderCitySearch(this.value)">
-        <div class="city-search-results" id="citySearchResults"></div>
-        <p class="city-suggestion" id="citySuggestion">Города подбираются автоматически по близкому населению.</p>
-        <div class="city-compare-lists">
-          <div class="city-column">
-            <p class="city-column-title">Россия · города</p>
-            <div class="city-options" id="russianOptions"></div>
+        <div class="random-panel" id="randomPanel">
+          <p class="random-kicker">Быстрый подбор</p>
+          <h2 class="random-title">Случайная пара городов</h2>
+          <p class="random-description">Слева всегда российский город. Справа — город из выбранной страны или из всех стран. Можно искать почти одинаковый размер или сильный контраст.</p>
+
+          <div class="random-filter" aria-label="Режим подбора">
+            <button id="randomCloseMode" class="active" type="button" onclick="setRandomMode('close')">Похожий размер</button>
+            <button id="randomContrastMode" type="button" onclick="setRandomMode('contrast')">Сильная разница</button>
           </div>
-          <div class="city-column">
-            <p class="city-column-title">Страна сравнения</p>
-            <div class="country-list" id="countryList"></div>
-            <p class="city-column-title" style="margin-top:10px">Города</p>
-            <div class="city-options" id="cityOptions" aria-live="polite"></div>
+
+          <div class="random-pair">
+            <div class="random-city">
+              <small id="randomRussianCountry">Россия</small>
+              <strong id="randomRussianCity">—</strong>
+              <em id="randomRussianPopulation">—</em>
+            </div>
+
+            <span class="random-arrow">↔</span>
+
+            <div class="random-city">
+              <small id="randomForeignCountry">—</small>
+              <strong id="randomForeignCity">—</strong>
+              <em id="randomForeignPopulation">—</em>
+            </div>
+          </div>
+
+          <p class="random-match" id="randomMatch">Нажмите «Следующая пара».</p>
+
+          <div class="random-actions">
+            <button class="random-next" type="button" onclick="generateRandomPair()">↻ Новая пара</button>
+            <button class="random-accept" type="button" onclick="acceptRandomPair()">✓ Принять пару</button>
+            <button class="random-foreign" type="button" onclick="generateRandomForeignCity()">→ Другой город справа</button>
           </div>
         </div>
-      </div>
-      <div class="hint-row"><span class="pin">⌖</span><span>Точка выбирается случайно в заданном радиусе — в обоих городах смотрим один тип места.</span></div>
-      <p class="status" id="status" aria-live="polite">Жилые улицы · спокойный будний день</p>
+
+        <div class="city-pair">
+          <button class="city-select active" type="button" onclick="focusCity(0)">
+            <small id="countryA">Город A · Россия</small>
+            <strong id="cityA">Владимир</strong>
+          </button>
+
+          <span class="swap" aria-hidden="true">↔</span>
+
+          <button class="city-select" type="button" onclick="focusCity(1)">
+            <small id="countryB">Город B · Нидерланды</small>
+            <strong id="cityB">Гаага</strong>
+          </button>
+        </div>
+
+        <div class="population-filter">
+          <div class="population-filter-head">
+            <strong>Главный фильтр · население</strong>
+            <span id="populationFilterValue">10 тыс. — 10 млн</span>
+          </div>
+
+          <div class="population-controls">
+            <label>
+              От
+              <select id="populationMin" onchange="setPopulationFilter()"></select>
+            </label>
+
+            <label>
+              До
+              <select id="populationMax" onchange="setPopulationFilter()"></select>
+            </label>
+          </div>
+        </div>
+
+        <div class="range-row">
+          <div class="range-head">
+            <strong>Радиус поиска точки</strong>
+            <span id="radiusValue">3 км</span>
+          </div>
+
+          <input id="radius" type="range" min="1" max="10" value="3" oninput="setRadius(this.value)">
+        </div>
+
+        <div class="city-presets">
+          <input
+            class="city-search"
+            id="citySearch"
+            type="search"
+            placeholder="Найти город в любой стране"
+            oninput="renderCitySearch(this.value)"
+          >
+
+          <div class="city-search-results" id="citySearchResults"></div>
+
+          <p class="city-suggestion" id="citySuggestion">
+            Города подбираются автоматически по близкому населению.
+          </p>
+
+          <div class="city-compare-lists">
+            <div class="city-column">
+              <p class="city-column-title">Россия · города</p>
+              <div class="city-options" id="russianOptions"></div>
+            </div>
+
+            <div class="city-column">
+              <p class="city-column-title">Страна сравнения</p>
+              <div class="country-list" id="countryList"></div>
+
+              <p class="city-column-title" style="margin-top:10px">Города</p>
+              <div class="city-options" id="cityOptions" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint-row">
+          <span class="pin">⌖</span>
+          <span>Точка выбирается случайно в заданном радиусе — в обоих городах смотрим один тип места.</span>
+        </div>
+
+        <p class="status" id="status" aria-live="polite">
+          Жилые улицы · спокойный будний день
+        </p>
       </div>
     </section>
+
     <p class="footer-note">Города: GeoNames · панорамы показаны как изображения</p>
   </main>
+
   <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSettings()"></div>
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+
   <script>
     const scenes = [
-      { category:'Жилые улицы', time:'спокойный будний день', a:{city:'Владимир',country:'Россия',flag:'🇷🇺',tone:'#c5d4c2',bounds:{minLat:56.065,maxLat:56.185,minLng:40.335,maxLng:40.49}}, b:{city:'Гаага',country:'Нидерланды',flag:'🇳🇱',tone:'#d9cdb9',bounds:{minLat:52.045,maxLat:52.125,minLng:4.245,maxLng:4.395}} },
-      { category:'Городские площади', time:'около полудня', a:{city:'Владимир',country:'Россия',flag:'🇷🇺',tone:'#d9c3a9',bounds:{minLat:56.065,maxLat:56.185,minLng:40.335,maxLng:40.49}}, b:{city:'Гаага',country:'Нидерланды',flag:'🇳🇱',tone:'#c1d1d2',bounds:{minLat:52.045,maxLat:52.125,minLng:4.245,maxLng:4.395}} },
-      { category:'Маршрут к школе', time:'утро · начало занятий', a:{city:'Владимир',country:'Россия',flag:'🇷🇺',tone:'#cad8df',bounds:{minLat:56.065,maxLat:56.185,minLng:40.335,maxLng:40.49}}, b:{city:'Гаага',country:'Нидерланды',flag:'🇳🇱',tone:'#d7cbbb',bounds:{minLat:52.045,maxLat:52.125,minLng:4.245,maxLng:4.395}} }
+      {
+        category:'Жилые улицы',
+        time:'спокойный будний день',
+        a:{
+          city:'Владимир',
+          country:'Россия',
+          flag:'🇷🇺',
+          tone:'#c5d4c2',
+          bounds:{minLat:56.065,maxLat:56.185,minLng:40.335,maxLng:40.49}
+        },
+        b:{
+          city:'Гаага',
+          country:'Нидерланды',
+          flag:'🇳🇱',
+          tone:'#d9cdb9',
+          bounds:{minLat:52.045,maxLat:52.125,minLng:4.245,maxLng:4.395}
+        }
+      },
+      {
+        category:'Городские площади',
+        time:'около полудня',
+        a:{
+          city:'Владимир',
+          country:'Россия',
+          flag:'🇷🇺',
+          tone:'#d9c3a9',
+          bounds:{minLat:56.065,maxLat:56.185,minLng:40.335,maxLng:40.49}
+        },
+        b:{
+          city:'Гаага',
+          country:'Нидерланды',
+          flag:'🇳🇱',
+          tone:'#c1d1d2',
+          bounds:{minLat:52.045,maxLat:52.125,minLng:4.245,maxLng:4.395}
+        }
+      },
+      {
+        category:'Маршрут к школе',
+        time:'утро · начало занятий',
+        a:{
+          city:'Владимир',
+          country:'Россия',
+          flag:'🇷🇺',
+          tone:'#cad8df',
+          bounds:{minLat:56.065,maxLat:56.185,minLng:40.335,maxLng:40.49}
+        },
+        b:{
+          city:'Гаага',
+          country:'Нидерланды',
+          flag:'🇳🇱',
+          tone:'#d7cbbb',
+          bounds:{minLat:52.045,maxLat:52.125,minLng:4.245,maxLng:4.395}
+        }
+      }
     ];
+
     const cityCatalog = {
       RU:[
         {city:'Владимир',country:'Россия',flag:'🇷🇺',population:350000,tone:'#c5d4c2',bounds:{minLat:56.065,maxLat:56.185,minLng:40.335,maxLng:40.49}},
@@ -310,199 +612,2255 @@
         {city:'Уппсала',country:'Швеция',flag:'🇸🇪',population:245000,tone:'#cad8c9',bounds:{minLat:59.75,maxLat:59.92,minLng:17.45,maxLng:17.80}}
       ]
     };
+
     const countryDirectory=[
-      ['AL','🇦🇱','Албания'],['AD','🇦🇩','Андорра'],['AT','🇦🇹','Австрия'],['BY','🇧🇾','Беларусь'],['BE','🇧🇪','Бельгия'],['BA','🇧🇦','Босния и Герцеговина'],['BG','🇧🇬','Болгария'],['HR','🇭🇷','Хорватия'],['CY','🇨🇾','Кипр'],['CZ','🇨🇿','Чехия'],['DK','🇩🇰','Дания'],['EE','🇪🇪','Эстония'],['FI','🇫🇮','Финляндия'],['FR','🇫🇷','Франция'],['DE','🇩🇪','Германия'],['GR','🇬🇷','Греция'],['HU','🇭🇺','Венгрия'],['IS','🇮🇸','Исландия'],['IE','🇮🇪','Ирландия'],['IT','🇮🇹','Италия'],['LV','🇱🇻','Латвия'],['LI','🇱🇮','Лихтенштейн'],['LT','🇱🇹','Литва'],['LU','🇱🇺','Люксембург'],['MT','🇲🇹','Мальта'],['MD','🇲🇩','Молдова'],['MC','🇲🇨','Монако'],['ME','🇲🇪','Черногория'],['NL','🇳🇱','Нидерланды'],['MK','🇲🇰','Северная Македония'],['NO','🇳🇴','Норвегия'],['PL','🇵🇱','Польша'],['PT','🇵🇹','Португалия'],['RO','🇷🇴','Румыния'],['SM','🇸🇲','Сан-Марино'],['RS','🇷🇸','Сербия'],['SK','🇸🇰','Словакия'],['SI','🇸🇮','Словения'],['ES','🇪🇸','Испания'],['SE','🇸🇪','Швеция'],['CH','🇨🇭','Швейцария'],['UA','🇺🇦','Украина'],['GB','🇬🇧','Великобритания'],['VA','🇻🇦','Ватикан'],['US','🇺🇸','США'],['CA','🇨🇦','Канада'],['KR','🇰🇷','Южная Корея'],['JP','🇯🇵','Япония'],['BR','🇧🇷','Бразилия'],['AR','🇦🇷','Аргентина']
+      ['AL','🇦🇱','Албания'],
+      ['AD','🇦🇩','Андорра'],
+      ['AT','🇦🇹','Австрия'],
+      ['BY','🇧🇾','Беларусь'],
+      ['BE','🇧🇪','Бельгия'],
+      ['BA','🇧🇦','Босния и Герцеговина'],
+      ['BG','🇧🇬','Болгария'],
+      ['HR','🇭🇷','Хорватия'],
+      ['CY','🇨🇾','Кипр'],
+      ['CZ','🇨🇿','Чехия'],
+      ['DK','🇩🇰','Дания'],
+      ['EE','🇪🇪','Эстония'],
+      ['FI','🇫🇮','Финляндия'],
+      ['FR','🇫🇷','Франция'],
+      ['DE','🇩🇪','Германия'],
+      ['GR','🇬🇷','Греция'],
+      ['HU','🇭🇺','Венгрия'],
+      ['IS','🇮🇸','Исландия'],
+      ['IE','🇮🇪','Ирландия'],
+      ['IT','🇮🇹','Италия'],
+      ['LV','🇱🇻','Латвия'],
+      ['LI','🇱🇮','Лихтенштейн'],
+      ['LT','🇱🇹','Литва'],
+      ['LU','🇱🇺','Люксембург'],
+      ['MT','🇲🇹','Мальта'],
+      ['MD','🇲🇩','Молдова'],
+      ['MC','🇲🇨','Монако'],
+      ['ME','🇲🇪','Черногория'],
+      ['NL','🇳🇱','Нидерланды'],
+      ['MK','🇲🇰','Северная Македония'],
+      ['NO','🇳🇴','Норвегия'],
+      ['PL','🇵🇱','Польша'],
+      ['PT','🇵🇹','Португалия'],
+      ['RO','🇷🇴','Румыния'],
+      ['SM','🇸🇲','Сан-Марино'],
+      ['RS','🇷🇸','Сербия'],
+      ['SK','🇸🇰','Словакия'],
+      ['SI','🇸🇮','Словения'],
+      ['ES','🇪🇸','Испания'],
+      ['SE','🇸🇪','Швеция'],
+      ['CH','🇨🇭','Швейцария'],
+      ['UA','🇺🇦','Украина'],
+      ['GB','🇬🇧','Великобритания'],
+      ['VA','🇻🇦','Ватикан'],
+      ['US','🇺🇸','США'],
+      ['CA','🇨🇦','Канада'],
+      ['KR','🇰🇷','Южная Корея'],
+      ['JP','🇯🇵','Япония'],
+      ['BR','🇧🇷','Бразилия'],
+      ['AR','🇦🇷','Аргентина']
     ];
-    const defaultCountryCodes=new Set(['AL','AD','AT','BY','BE','BA','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','MD','MC','ME','NL','MK','NO','PL','PT','RO','SM','RS','SK','SI','ES','SE','CH','UA','GB','VA','US','CA','KR','JP']);
+
+    const defaultCountryCodes=new Set([
+      'AL','AD','AT','BY','BE','BA','BG','HR','CY','CZ','DK','EE','FI','FR',
+      'DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','MD','MC','ME',
+      'NL','MK','NO','PL','PT','RO','SM','RS','SK','SI','ES','SE','CH','UA',
+      'GB','VA','US','CA','KR','JP'
+    ]);
+
     let extraCountriesEnabled=false;
-    const countryNames={ALL:'Все страны',...Object.fromEntries(countryDirectory.map(([code,flag,name])=>[code,name]))};
-    const countryFlags=Object.fromEntries(countryDirectory.map(([code,flag])=>[code,flag]));
+
+    const countryNames={
+      ALL:'Все страны',
+      ...Object.fromEntries(countryDirectory.map(([code,flag,name])=>[code,name]))
+    };
+
+    const countryFlags=Object.fromEntries(
+      countryDirectory.map(([code,flag])=>[code,flag])
+    );
+
     const CITIES_JSON_URL='https://raw.githubusercontent.com/lmfmaier/cities-json/master/cities500.json';
     const CITIES_JSON_VERSION='lmfmaier-cities500-v2025-11';
-    const populationSteps=Array.from({length:10},(_,i)=>(i+1)*10000).concat(Array.from({length:9},(_,i)=>(i+2)*100000)).concat(Array.from({length:9},(_,i)=>(i+2)*1000000));
+
+    const populationSteps=
+      Array.from({length:10},(_,i)=>(i+1)*10000)
+      .concat(Array.from({length:9},(_,i)=>(i+2)*100000))
+      .concat(Array.from({length:9},(_,i)=>(i+2)*1000000));
+
     const SETTINGS_VERSION=2;
-    let populationMin=60000, populationMax=2000000, isDefaultPair=true;
-    function addCity(code,city,country,flag,population,lat,lng,tone='#cbd2ca'){ cityCatalog[code]=cityCatalog[code]||[]; cityCatalog[code].push({city,country,flag,population,tone,bounds:{minLat:lat-.06,maxLat:lat+.06,minLng:lng-.08,maxLng:lng+.08}}); }
-    function restoreCityCatalog(){ countryDirectory.forEach(([code])=>{ try{ const cached=JSON.parse(localStorage.getItem(`cityCompareCities:${code}`)||'null'); if(Array.isArray(cached)&&cached.length)cityCatalog[code]=cached; }catch(error){} }); }
-    function cacheCityCatalog(code,cities){ try{ localStorage.setItem(`cityCompareCities:${code}`,JSON.stringify(cities)); }catch(error){} }
-    function openCitiesDb(){ return new Promise((resolve,reject)=>{ if(!window.indexedDB){ resolve(null); return; } const request=indexedDB.open('cityCompareGeoNames',1); request.onupgradeneeded=()=>request.result.createObjectStore('catalog'); request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error); }); }
-    async function readCitiesDb(){ const db=await openCitiesDb(); if(!db)return null; return new Promise((resolve,reject)=>{ const request=db.transaction('catalog','readonly').objectStore('catalog').get(CITIES_JSON_VERSION); request.onsuccess=()=>resolve(request.result||null); request.onerror=()=>reject(request.error); }); }
-    async function writeCitiesDb(cities){ const db=await openCitiesDb(); if(!db)return; return new Promise((resolve,reject)=>{ const request=db.transaction('catalog','readwrite').objectStore('catalog').put(cities,CITIES_JSON_VERSION); request.onsuccess=resolve; request.onerror=()=>reject(request.error); }); }
-    function convertGeoNamesCities(rows){ return rows.filter(row=>row[6]==='P'&&Number(row[14])>0).map(row=>({id:Number(row[0]),city:row[1],asciiName:row[2],countryCode:row[8],country:countryNames[row[8]]||row[8],flag:countryFlags[row[8]]||'🌍',population:Number(row[14]),lat:Number(row[4]),lng:Number(row[5]),tone:'#cbd2ca',bounds:{minLat:Number(row[4])-.06,maxLat:Number(row[4])+.06,minLng:Number(row[5])-.08,maxLng:Number(row[5])+.08}})); }
-    function applyGeoNamesCities(cities){ const grouped={}; cities.forEach(city=>{ (grouped[city.countryCode]||(grouped[city.countryCode]=[])).push(city); }); Object.entries(grouped).forEach(([code,list])=>{ cityCatalog[code]=list.sort((a,b)=>b.population-a.population); if(countryNames[code])cacheCityCatalog(code,cityCatalog[code]); }); }
-    function convertCitiesJson(rows){ return rows.filter(row=>row&&row.country&&Number(row.pop)>0).map(row=>{ const lat=Number(row.lat),lng=Number(row.lon); return {id:Number(row.id),city:row.name,asciiName:row.name,countryCode:row.country,country:countryNames[row.country]||row.country,flag:countryFlags[row.country]||'🌍',population:Number(row.pop),tone:'#cbd2ca',bounds:{minLat:lat-.06,maxLat:lat+.06,minLng:lng-.08,maxLng:lng+.08},lat,lng}; }); }
-    function defaultCityPair(){ const russian=cityCatalog.RU.find(city=>city.city==='Владимир')||cityCatalog.RU[0]; const foreign=cityCatalog.NL.find(city=>city.city==='Гаага')||cityCatalog.NL[0]; setCityPair(russian,foreign); return {russian,foreign,candidates:matchingCandidates('NL',russian)}; }
-    async function loadCities(){ try{ let cachedCities=await readCitiesDb(); if(cachedCities&&cachedCities.length){ applyGeoNamesCities(cachedCities); const pair=isDefaultPair&&selectedCountry==='NL'?defaultCityPair():null; if(pair){ showCitySuggestion(pair); startFeed(); } else refreshMatchedPair(true); renderCitySearch($('citySearch').value); toast(`Каталог городов из кэша · ${cachedCities.length.toLocaleString('ru-RU')}`); return cachedCities; } toast('Загружаем каталог городов…'); const response=await fetch(CITIES_JSON_URL); if(!response.ok)throw new Error(`Cities JSON: HTTP ${response.status}`); const rows=await response.json(); const cities=convertCitiesJson(rows); applyGeoNamesCities(cities); await writeCitiesDb(cities); const pair=isDefaultPair&&selectedCountry==='NL'?defaultCityPair():null; if(pair){ showCitySuggestion(pair); startFeed(); } else refreshMatchedPair(true); renderCitySearch($('citySearch').value); toast(`Каталог загружен · ${cities.length.toLocaleString('ru-RU')} городов`); return cities; }catch(error){ console.warn(error); toast('Не удалось загрузить каталог · используем локальные данные'); return null; } }
+
+    let populationMin=60000;
+    let populationMax=2000000;
+    let isDefaultPair=true;
+
+    function addCity(code,city,country,flag,population,lat,lng,tone='#cbd2ca'){
+      cityCatalog[code]=cityCatalog[code]||[];
+      cityCatalog[code].push({
+        city,
+        country,
+        flag,
+        population,
+        tone,
+        bounds:{
+          minLat:lat-.06,
+          maxLat:lat+.06,
+          minLng:lng-.08,
+          maxLng:lng+.08
+        }
+      });
+    }
+
+    function restoreCityCatalog(){
+      countryDirectory.forEach(([code])=>{
+        try{
+          const cached=JSON.parse(localStorage.getItem(`cityCompareCities:${code}`)||'null');
+          if(Array.isArray(cached)&&cached.length) cityCatalog[code]=cached;
+        }catch(error){}
+      });
+    }
+
+    function cacheCityCatalog(code,cities){
+      try{
+        localStorage.setItem(`cityCompareCities:${code}`,JSON.stringify(cities));
+      }catch(error){}
+    }
+
+    function openCitiesDb(){
+      return new Promise((resolve,reject)=>{
+        if(!window.indexedDB){
+          resolve(null);
+          return;
+        }
+
+        const request=indexedDB.open('cityCompareGeoNames',1);
+
+        request.onupgradeneeded=()=>{
+          request.result.createObjectStore('catalog');
+        };
+
+        request.onsuccess=()=>resolve(request.result);
+        request.onerror=()=>reject(request.error);
+      });
+    }
+
+    async function readCitiesDb(){
+      const db=await openCitiesDb();
+      if(!db)return null;
+
+      return new Promise((resolve,reject)=>{
+        const request=db
+          .transaction('catalog','readonly')
+          .objectStore('catalog')
+          .get(CITIES_JSON_VERSION);
+
+        request.onsuccess=()=>resolve(request.result||null);
+        request.onerror=()=>reject(request.error);
+      });
+    }
+
+    async function writeCitiesDb(cities){
+      const db=await openCitiesDb();
+      if(!db)return;
+
+      return new Promise((resolve,reject)=>{
+        const request=db
+          .transaction('catalog','readwrite')
+          .objectStore('catalog')
+          .put(cities,CITIES_JSON_VERSION);
+
+        request.onsuccess=resolve;
+        request.onerror=()=>reject(request.error);
+      });
+    }
+
+    function convertGeoNamesCities(rows){
+      return rows
+        .filter(row=>row[6]==='P'&&Number(row[14])>0)
+        .map(row=>({
+          id:Number(row[0]),
+          city:row[1],
+          asciiName:row[2],
+          countryCode:row[8],
+          country:countryNames[row[8]]||row[8],
+          flag:countryFlags[row[8]]||'🌍',
+          population:Number(row[14]),
+          lat:Number(row[4]),
+          lng:Number(row[5]),
+          tone:'#cbd2ca',
+          bounds:{
+            minLat:Number(row[4])-.06,
+            maxLat:Number(row[4])+.06,
+            minLng:Number(row[5])-.08,
+            maxLng:Number(row[5])+.08
+          }
+        }));
+    }
+
+    function applyGeoNamesCities(cities){
+      const grouped={};
+
+      cities.forEach(city=>{
+        (grouped[city.countryCode]||(grouped[city.countryCode]=[])).push(city);
+      });
+
+      Object.entries(grouped).forEach(([code,list])=>{
+        cityCatalog[code]=list.sort((a,b)=>b.population-a.population);
+
+        if(countryNames[code]){
+          cacheCityCatalog(code,cityCatalog[code]);
+        }
+      });
+    }
+
+    function convertCitiesJson(rows){
+      return rows
+        .filter(row=>row&&row.country&&Number(row.pop)>0)
+        .map(row=>{
+          const lat=Number(row.lat);
+          const lng=Number(row.lon);
+
+          return {
+            id:Number(row.id),
+            city:row.name,
+            asciiName:row.name,
+            countryCode:row.country,
+            country:countryNames[row.country]||row.country,
+            flag:countryFlags[row.country]||'🌍',
+            population:Number(row.pop),
+            tone:'#cbd2ca',
+            bounds:{
+              minLat:lat-.06,
+              maxLat:lat+.06,
+              minLng:lng-.08,
+              maxLng:lng+.08
+            },
+            lat,
+            lng
+          };
+        });
+    }
+
+    function defaultCityPair(){
+      const russian=
+        cityCatalog.RU.find(city=>city.city==='Владимир')||
+        cityCatalog.RU[0];
+
+      const foreign=
+        cityCatalog.NL.find(city=>city.city==='Гаага')||
+        cityCatalog.NL[0];
+
+      setCityPair(russian,foreign);
+
+      return {
+        russian,
+        foreign,
+        candidates:matchingCandidates('NL',russian)
+      };
+    }
+
+    async function loadCities(){
+      try{
+        let cachedCities=await readCitiesDb();
+
+        if(cachedCities&&cachedCities.length){
+          applyGeoNamesCities(cachedCities);
+
+          /*
+           * Если в URL есть города, после загрузки полного каталога
+           * повторно пытаемся восстановить их.
+           */
+          const restored=restoreCitiesFromQuery();
+
+          let pair;
+
+          if(restored){
+            pair={
+              russian:scenes[0].a,
+              foreign:scenes[0].b,
+              candidates:matchingCandidates(selectedCountry,scenes[0].a)
+            };
+          }else{
+            pair=isDefaultPair&&selectedCountry==='NL'
+              ? defaultCityPair()
+              : null;
+          }
+
+          if(pair){
+            showCitySuggestion(pair);
+            startFeed();
+          }else{
+            refreshMatchedPair(true);
+          }
+
+          renderCountryList();
+          renderCitySearch($('citySearch').value);
+
+          toast(`Каталог городов из кэша · ${cachedCities.length.toLocaleString('ru-RU')}`);
+
+          return cachedCities;
+        }
+
+        toast('Загружаем каталог городов…');
+
+        const response=await fetch(CITIES_JSON_URL);
+
+        if(!response.ok){
+          throw new Error(`Cities JSON: HTTP ${response.status}`);
+        }
+
+        const rows=await response.json();
+        const cities=convertCitiesJson(rows);
+
+        applyGeoNamesCities(cities);
+        await writeCitiesDb(cities);
+
+        const restored=restoreCitiesFromQuery();
+
+        let pair;
+
+        if(restored){
+          pair={
+            russian:scenes[0].a,
+            foreign:scenes[0].b,
+            candidates:matchingCandidates(selectedCountry,scenes[0].a)
+          };
+        }else{
+          pair=isDefaultPair&&selectedCountry==='NL'
+            ? defaultCityPair()
+            : null;
+        }
+
+        if(pair){
+          showCitySuggestion(pair);
+          startFeed();
+        }else{
+          refreshMatchedPair(true);
+        }
+
+        renderCountryList();
+        renderCitySearch($('citySearch').value);
+
+        toast(`Каталог загружен · ${cities.length.toLocaleString('ru-RU')} городов`);
+
+        return cities;
+      }catch(error){
+        console.warn(error);
+        toast('Не удалось загрузить каталог · используем локальные данные');
+        return null;
+      }
+    }
+
     [
-      ['Москва',13000000,55.75,37.62],['Санкт-Петербург',5600000,59.94,30.31],['Новосибирск',1630000,55.03,82.92],['Екатеринбург',1500000,56.84,60.61],['Казань',1300000,55.79,49.12],['Нижний Новгород',1250000,56.33,44.00],['Самара',1170000,53.20,50.15]
-    ].forEach(([city,pop,lat,lng])=>addCity('RU',city,'Россия','🇷🇺',pop,lat,lng));
+      ['Москва',13000000,55.75,37.62],
+      ['Санкт-Петербург',5600000,59.94,30.31],
+      ['Новосибирск',1630000,55.03,82.92],
+      ['Екатеринбург',1500000,56.84,60.61],
+      ['Казань',1300000,55.79,49.12],
+      ['Нижний Новгород',1250000,56.33,44.00],
+      ['Самара',1170000,53.20,50.15]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('RU',city,'Россия','🇷🇺',pop,lat,lng);
+    });
+
     [
-      ['Роттердам',650000,51.92,4.48],['Амстердам',930000,52.37,4.90],['Утрехт',370000,52.09,5.12],['Тилбург',225000,51.56,5.09],['Алмере',220000,52.35,5.22],['Бреда',185000,51.59,4.78],['Неймеген',180000,51.84,5.86]
-    ].forEach(([city,pop,lat,lng])=>addCity('NL',city,'Нидерланды','🇳🇱',pop,lat,lng));
+      ['Роттердам',650000,51.92,4.48],
+      ['Амстердам',930000,52.37,4.90],
+      ['Утрехт',370000,52.09,5.12],
+      ['Тилбург',225000,51.56,5.09],
+      ['Алмере',220000,52.35,5.22],
+      ['Бреда',185000,51.59,4.78],
+      ['Неймеген',180000,51.84,5.86]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('NL',city,'Нидерланды','🇳🇱',pop,lat,lng);
+    });
+
     [
-      ['Берлин',3700000,52.52,13.40],['Гамбург',1900000,53.55,10.00],['Мюнхен',1500000,48.14,11.58],['Кёльн',1080000,50.94,6.96],['Франкфурт',780000,50.11,8.68],['Дюссельдорф',620000,51.23,6.78],['Лейпциг',620000,51.34,12.37]
-    ].forEach(([city,pop,lat,lng])=>addCity('DE',city,'Германия','🇩🇪',pop,lat,lng));
+      ['Берлин',3700000,52.52,13.40],
+      ['Гамбург',1900000,53.55,10.00],
+      ['Мюнхен',1500000,48.14,11.58],
+      ['Кёльн',1080000,50.94,6.96],
+      ['Франкфурт',780000,50.11,8.68],
+      ['Дюссельдорф',620000,51.23,6.78],
+      ['Лейпциг',620000,51.34,12.37]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('DE',city,'Германия','🇩🇪',pop,lat,lng);
+    });
+
     [
-      ['Стокгольм',980000,59.33,18.07],['Гётеборг',590000,57.71,11.97],['Умео',130000,63.83,20.26],['Вестерос',130000,59.61,16.54],['Эребру',126000,59.27,15.21],['Лунд',125000,55.70,13.19],['Хельсингборг',115000,56.05,12.69]
-    ].forEach(([city,pop,lat,lng])=>addCity('SE',city,'Швеция','🇸🇪',pop,lat,lng));
+      ['Стокгольм',980000,59.33,18.07],
+      ['Гётеборг',590000,57.71,11.97],
+      ['Умео',130000,63.83,20.26],
+      ['Вестерос',130000,59.61,16.54],
+      ['Эребру',126000,59.27,15.21],
+      ['Лунд',125000,55.70,13.19],
+      ['Хельсингборг',115000,56.05,12.69]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('SE',city,'Швеция','🇸🇪',pop,lat,lng);
+    });
+
     [
-      ['Нью-Йорк',8400000,40.71,-74.01],['Лос-Анджелес',3900000,34.05,-118.24],['Чикаго',2700000,41.88,-87.63],['Хьюстон',2300000,29.76,-95.37],['Финикс',1600000,33.45,-112.07],['Филадельфия',1500000,39.95,-75.17],['Сан-Антонио',1400000,29.42,-98.49]
-    ].forEach(([city,pop,lat,lng])=>addCity('US',city,'США','🇺🇸',pop,lat,lng));
+      ['Нью-Йорк',8400000,40.71,-74.01],
+      ['Лос-Анджелес',3900000,34.05,-118.24],
+      ['Чикаго',2700000,41.88,-87.63],
+      ['Хьюстон',2300000,29.76,-95.37],
+      ['Финикс',1600000,33.45,-112.07],
+      ['Филадельфия',1500000,39.95,-75.17],
+      ['Сан-Антонио',1400000,29.42,-98.49]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('US',city,'США','🇺🇸',pop,lat,lng);
+    });
+
     [
-      ['Торонто',3000000,43.65,-79.38],['Монреаль',1800000,45.50,-73.57],['Калгари',1300000,51.05,-114.07],['Оттава',1000000,45.42,-75.70],['Эдмонтон',1000000,53.55,-113.49],['Миссиссога',720000,43.59,-79.64],['Виннипег',750000,49.90,-97.14]
-    ].forEach(([city,pop,lat,lng])=>addCity('CA',city,'Канада','🇨🇦',pop,lat,lng));
+      ['Торонто',3000000,43.65,-79.38],
+      ['Монреаль',1800000,45.50,-73.57],
+      ['Калгари',1300000,51.05,-114.07],
+      ['Оттава',1000000,45.42,-75.70],
+      ['Эдмонтон',1000000,53.55,-113.49],
+      ['Миссиссога',720000,43.59,-79.64],
+      ['Виннипег',750000,49.90,-97.14]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('CA',city,'Канада','🇨🇦',pop,lat,lng);
+    });
+
     [
-      ['Сан-Паулу',12300000,-23.55,-46.63],['Рио-де-Жанейро',6700000,-22.91,-43.17],['Бразилиа',3100000,-15.79,-47.88],['Салвадор',2900000,-12.97,-38.50],['Форталеза',2700000,-3.73,-38.53],['Белу-Оризонти',2500000,-19.92,-43.94],['Манаус',2200000,-3.12,-60.02]
-    ].forEach(([city,pop,lat,lng])=>addCity('BR',city,'Бразилия','🇧🇷',pop,lat,lng));
+      ['Сан-Паулу',12300000,-23.55,-46.63],
+      ['Рио-де-Жанейро',6700000,-22.91,-43.17],
+      ['Бразилиа',3100000,-15.79,-47.88],
+      ['Салвадор',2900000,-12.97,-38.50],
+      ['Форталеза',2700000,-3.73,-38.53],
+      ['Белу-Оризонти',2500000,-19.92,-43.94],
+      ['Манаус',2200000,-3.12,-60.02]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('BR',city,'Бразилия','🇧🇷',pop,lat,lng);
+    });
+
     [
-      ['Буэнос-Айрес',3100000,-34.60,-58.38],['Кордова',1500000,-31.42,-64.19],['Росарио',1300000,-32.95,-60.66],['Мендоса',1150000,-32.89,-68.85],['Ла-Плата',800000,-34.92,-57.95],['Тукуман',800000,-26.82,-65.22],['Мар-дель-Плата',650000,-38.00,-57.55]
-    ].forEach(([city,pop,lat,lng])=>addCity('AR',city,'Аргентина','🇦🇷',pop,lat,lng));
+      ['Буэнос-Айрес',3100000,-34.60,-58.38],
+      ['Кордова',1500000,-31.42,-64.19],
+      ['Росарио',1300000,-32.95,-60.66],
+      ['Мендоса',1150000,-32.89,-68.85],
+      ['Ла-Плата',800000,-34.92,-57.95],
+      ['Тукуман',800000,-26.82,-65.22],
+      ['Мар-дель-Плата',650000,-38.00,-57.55]
+    ].forEach(([city,pop,lat,lng])=>{
+      addCity('AR',city,'Аргентина','🇦🇷',pop,lat,lng);
+    });
+
     let selectedCountry='NL';
-    let randomPair=null, randomMode='close';
-    let sceneIndex=0, slideIndex=0, point=0, radius=3, swapped=false, startX=0, loading=false;
+    let randomPair=null;
+    let randomMode='close';
+
+    let sceneIndex=0;
+    let slideIndex=0;
+    let point=0;
+    let radius=3;
+    let swapped=false;
+    let startX=0;
+    let loading=false;
+
     const $ = id => document.getElementById(id);
-    function escapeXml(s){ return String(s).replace(/[<>&'"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c])); }
+
+    function escapeXml(s){
+      return String(s).replace(/[<>&'"]/g,c=>({
+        '<':'&lt;',
+        '>':'&gt;',
+        '&':'&amp;',
+        "'":'&apos;',
+        '"':'&quot;'
+      }[c]));
+    }
+
     function panorama(city, tone, seed){
-      const warm = city === 'Гаага'; const sky = warm ? '#dce8e6' : '#dbe5ec'; const roof = warm ? '#b9795f' : '#8b6870'; const wall = warm ? '#e7d4ad' : '#d9d5c8'; const tree = warm ? '#638766' : '#738d6b'; const n = seed * 17;
-      const houses = Array.from({length:7},(_,i)=>{ const x=i*78-18+(n%13), h=62+(i*17+n)%45; return `<rect x="${x}" y="${166-h}" width="65" height="${h}" rx="2" fill="${i%2?wall:'#c8c7b8'}"/><path d="M${x-6} ${166-h} L${x+31} ${139-h} L${x+71} ${166-h}" fill="${i%3?roof:'#9d765f'}"/><rect x="${x+13}" y="${138-h}" width="10" height="15" fill="#82949a"/><rect x="${x+42}" y="${138-h}" width="10" height="15" fill="#82949a"/>`;}).join('');
-      const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 385"><rect width="560" height="385" fill="${sky}"/><circle cx="455" cy="64" r="29" fill="#f4df9c" opacity=".85"/><path d="M0 188 Q110 156 230 184 T560 171 V250 H0Z" fill="#a9b99f" opacity=".7"/><rect y="166" width="560" height="90" fill="#b1b7ae"/>${houses}<path d="M0 255 Q180 231 360 254 T560 245 V385 H0Z" fill="#6f7771"/><path d="M0 306 Q150 285 290 306 T560 297 V385 H0Z" fill="#4d5653"/><path d="M280 385 L315 255 L355 255 L405 385Z" fill="#969d96"/><path d="M40 263 h130 M430 260 h80" stroke="#e9ddad" stroke-width="4" stroke-dasharray="19 13"/><circle cx="88" cy="203" r="33" fill="${tree}"/><circle cx="116" cy="197" r="27" fill="${tree}"/><rect x="100" y="214" width="9" height="45" fill="#665548"/><circle cx="495" cy="197" r="29" fill="#587a61"/><circle cx="520" cy="204" r="24" fill="#6f8f70"/><rect x="505" y="222" width="8" height="38" fill="#665548"/><rect x="0" y="251" width="560" height="8" fill="#c9c2ac" opacity=".8"/><rect x="34" y="283" width="72" height="5" rx="2" fill="#d7d8cd"/><rect x="455" y="279" width="62" height="5" rx="2" fill="#d7d8cd"/></svg>`;
+      const warm = city === 'Гаага';
+      const sky = warm ? '#dce8e6' : '#dbe5ec';
+      const roof = warm ? '#b9795f' : '#8b6870';
+      const wall = warm ? '#e7d4ad' : '#d9d5c8';
+      const tree = warm ? '#638766' : '#738d6b';
+      const n = seed * 17;
+
+      const houses = Array.from({length:7},(_,i)=>{
+        const x=i*78-18+(n%13);
+        const h=62+(i*17+n)%45;
+
+        return `
+          <rect x="${x}" y="${166-h}" width="65" height="${h}" rx="2" fill="${i%2?wall:'#c8c7b8'}"/>
+          <path d="M${x-6} ${166-h} L${x+31} ${139-h} L${x+71} ${166-h}" fill="${i%3?roof:'#9d765f'}"/>
+          <rect x="${x+13}" y="${138-h}" width="10" height="15" fill="#82949a"/>
+          <rect x="${x+42}" y="${138-h}" width="10" height="15" fill="#82949a"/>
+        `;
+      }).join('');
+
+      const svg=`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 385">
+          <rect width="560" height="385" fill="${sky}"/>
+          <circle cx="455" cy="64" r="29" fill="#f4df9c" opacity=".85"/>
+          <path d="M0 188 Q110 156 230 184 T560 171 V250 H0Z" fill="#a9b99f" opacity=".7"/>
+          <rect y="166" width="560" height="90" fill="#b1b7ae"/>
+          ${houses}
+          <path d="M0 255 Q180 231 360 254 T560 245 V385 H0Z" fill="#6f7771"/>
+          <path d="M0 306 Q150 285 290 306 T560 297 V385 H0Z" fill="#4d5653"/>
+          <path d="M280 385 L315 255 L355 255 L405 385Z" fill="#969d96"/>
+          <path d="M40 263 h130 M430 260 h80" stroke="#e9ddad" stroke-width="4" stroke-dasharray="19 13"/>
+          <circle cx="88" cy="203" r="33" fill="${tree}"/>
+          <circle cx="116" cy="197" r="27" fill="${tree}"/>
+          <rect x="100" y="214" width="9" height="45" fill="#665548"/>
+          <circle cx="495" cy="197" r="29" fill="#587a61"/>
+          <circle cx="520" cy="204" r="24" fill="#6f8f70"/>
+          <rect x="505" y="222" width="8" height="38" fill="#665548"/>
+          <rect x="0" y="251" width="560" height="8" fill="#c9c2ac" opacity=".8"/>
+          <rect x="34" y="283" width="72" height="5" rx="2" fill="#d7d8cd"/>
+          <rect x="455" y="279" width="62" height="5" rx="2" fill="#d7d8cd"/>
+        </svg>
+      `;
+
       return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
     }
-    function cityData(){ const s=scenes[sceneIndex]; return swapped ? [s.b,s.a] : [s.a,s.b]; }
-    function imageUrl(panoId,yaw){ return 'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?cb_client=maps_sv.tactile&w=1200&h=825&panoid='+encodeURIComponent(panoId)+'&yaw='+(yaw||178)+'&pitch=0&thumbfov=90'; }
-    function imageSrc(city, seed){ return city.panoId ? imageUrl(city.panoId,city.yaw) : panorama(city.city,city.tone,seed); }
+
+    function cityData(){
+      const s=scenes[sceneIndex];
+      return swapped ? [s.b,s.a] : [s.a,s.b];
+    }
+
+    function imageUrl(panoId,yaw){
+      return 'https://streetviewpixels-pa.googleapis.com/v1/thumbnail'
+        +'?cb_client=maps_sv.tactile'
+        +'&w=1200'
+        +'&h=825'
+        +'&panoid='+encodeURIComponent(panoId)
+        +'&yaw='+(yaw||178)
+        +'&pitch=0'
+        +'&thumbfov=90';
+    }
+
+    function imageSrc(city, seed){
+      return city.panoId
+        ? imageUrl(city.panoId,city.yaw)
+        : panorama(city.city,city.tone,seed);
+    }
+
     const FEED_AHEAD=3;
     const MAX_PANORAMA_ATTEMPTS=10;
+
     let posts=[];
-    function createPost(){ point+=1; return {number:point,cities:cityData().map(city=>Object.assign({},city,{panoId:'',yaw:178})),loading:false,loaded:false,element:null}; }
-    function postMarkup(post,index){ return `<article class="feed-post" data-post-index="${index}"><div class="post-head"><div class="post-place"><span class="number">${String(post.number).padStart(2,'0')}</span><span>${scenes[sceneIndex].category}</span></div><small>${scenes[sceneIndex].time}</small></div><div class="post-collage ${post.loading?'is-loading':''}"><div class="canvas-stage"><canvas class="collage-canvas collage-current" width="1200" height="1650" aria-label="Коллаж двух городов"></canvas><canvas class="collage-canvas collage-buffer collage-prev" width="1200" height="1650" aria-hidden="true"></canvas><canvas class="collage-canvas collage-buffer collage-next" width="1200" height="1650" aria-hidden="true"></canvas></div></div><div class="post-social"><div class="post-social-head"><div class="post-account"><span class="post-avatar">↔</span><span><strong>city ↔ city</strong><small>Россия · ${countryNames[selectedCountry]} · пост ${String(post.number).padStart(2,'0')}</small></span></div><div class="post-social-actions"><button type="button" onclick="copyLocation(${index})" aria-label="Скопировать локацию" title="Скопировать локацию">⌖</button><button type="button" onclick="copyPostLink(${index})" aria-label="Скопировать ссылку" title="Скопировать ссылку">↗</button></div></div><p class="post-social-caption">${scenes[sceneIndex].category} · ${sizeCaption(post)} · города близкого размера</p></div></article>`; }
-    function updateFeedMeta(){ const first=posts[0]||{cities:cityData()}; $('cityA').textContent=first.cities[0].city; $('cityB').textContent=first.cities[1].city; $('countryA').textContent=`Город A · ${first.cities[0].country}`; $('countryB').textContent=`Город B · ${first.cities[1].country}`; $('pointNumber').textContent=`${posts.length} пост${posts.length===1?'':'а'} загружено`; $('status').textContent=`${scenes[sceneIndex].category} · следующие панорамы подгружаются автоматически`; }
-    function updatePostElement(post,index){ if(!post.element)return; post.element.querySelectorAll('.post-frame').forEach((frame,i)=>{ frame.classList.toggle('is-loading',post.loading); const city=post.cities[i]; const stage=frame.querySelector('.pan-stage'); const current=stage.querySelector('.current-image'); const previous=stage.querySelector('.pan-prev'); const next=stage.querySelector('.pan-next'); current.src=imageSrc(city,index+i+post.number); previous.src=city.panoId?imageUrl(city.panoId,(city.yaw-60+360)%360):''; next.src=city.panoId?imageUrl(city.panoId,(city.yaw+60+360)%360):''; current.style.transition='none'; current.style.transform='translateX(0)'; previous.style.transition='none'; previous.style.transform='translateX(-100%)'; next.style.transition='none'; next.style.transform='translateX(100%)'; }); const caption=post.element.querySelector('.post-social-caption'); if(caption)caption.textContent=`${scenes[sceneIndex].category} · ${sizeCaption(post)} · города близкого размера`; }
-    function loadImage(src){ return new Promise(resolve=>{ const image=new Image(); image.onload=()=>resolve(image); image.onerror=()=>resolve(null); image.src=src; }); }
-    function cityAngle(city,delta){ return (city.yaw+delta+360)%360; }
-    function drawCollage(post,canvas,delta,index,token){ if(!canvas)return; const context=canvas.getContext('2d'); context.clearRect(0,0,1200,1650); if(post.loading)return; post.cities.forEach((city,i)=>{ const yaw=cityAngle(city,delta); const image=city.cache&&city.cache[yaw]; if(image)context.drawImage(image,0,i*825,1200,825); else if(!city.panoId){ const drawToken=token||post.renderToken; loadImage(panorama(city.city,city.tone,index+i+post.number)).then(loaded=>{ if(loaded&&post.renderToken===drawToken&&!post.loading){ city.cache=city.cache||{}; city.cache[yaw]=loaded; drawCollage(post,canvas,delta,index,drawToken); } }); } }); }
-    function updatePostElement(post,index){ if(!post.element)return; const collage=post.element.querySelector('.post-collage'); collage.classList.toggle('is-loading',post.loading); drawCollage(post,post.element.querySelector('.collage-current'),0,index); drawCollage(post,post.element.querySelector('.collage-prev'),-60,index); drawCollage(post,post.element.querySelector('.collage-next'),60,index); const current=post.element.querySelector('.collage-current'); const previous=post.element.querySelector('.collage-prev'); const next=post.element.querySelector('.collage-next'); current.style.transition='none'; current.style.transform='translateX(0)'; previous.style.transition='none'; previous.style.transform='translateX(-100%)'; next.style.transition='none'; next.style.transform='translateX(100%)'; const caption=post.element.querySelector('.post-social-caption'); if(caption)caption.textContent=`${scenes[sceneIndex].category} · ${sizeCaption(post)} · города близкого размера`; }
-    function appendPost(post,index){ const holder=document.createElement('div'); holder.innerHTML=postMarkup(post,index); post.element=holder.firstElementChild; $('feedList').appendChild(post.element); updatePostElement(post,index); updateFeedMeta(); }
-    function setSettingsOpen(open){ const card=$('locationCard'); const backdrop=$('sheetBackdrop'); card.classList.toggle('open',open); card.classList.toggle('random-open',open&&randomPair!==null); backdrop.classList.toggle('visible',open); document.body.classList.toggle('sheet-open',open); if(!open){ card.querySelector('.sheet-content').scrollTop=0; randomPair=null; card.classList.remove('random-open'); } }
-    function toggleSettings(){ setSettingsOpen(!$('locationCard').classList.contains('open')); }
-    function closeSettings(){ setSettingsOpen(false); }
-    function openSettingsSection(section){ randomPair=null; $('locationCard').classList.remove('random-open'); setSettingsOpen(true); const target=section==='radius'?$('radius'):section==='cities'?document.querySelector('.city-presets'):null; if(target)setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'center'}),80); }
-    function setRandomMode(mode){ randomMode=mode; $('randomCloseMode').classList.toggle('active',mode==='close'); $('randomContrastMode').classList.toggle('active',mode==='contrast'); generateRandomPair(); }
-    function randomForeignCities(){ return (selectedCountry==='ALL'?allSearchCities():filteredCities(selectedCountry)).filter(city=>city.countryCode!=='RU'&&city.country!=='Россия'); }
-    function randomDifferencePercent(russian,foreign){ return Math.round(Math.abs(foreign.population-russian.population)/Math.max(1,russian.population)*100); }
-    function randomSimilarityPercent(russian,foreign){ return Math.round(Math.min(russian.population,foreign.population)/Math.max(russian.population,foreign.population)*100); }
+
+    function createPost(){
+      point+=1;
+
+      return {
+        number:point,
+        cities:cityData().map(city=>Object.assign({},city,{
+          panoId:'',
+          yaw:178
+        })),
+        loading:false,
+        loaded:false,
+        element:null
+      };
+    }
+
+    function updateFeedMeta(){
+      const first=posts[0]||{cities:cityData()};
+
+      $('cityA').textContent=first.cities[0].city;
+      $('cityB').textContent=first.cities[1].city;
+
+      $('countryA').textContent=`Город A · ${first.cities[0].country}`;
+      $('countryB').textContent=`Город B · ${first.cities[1].country}`;
+
+      $('pointNumber').textContent=
+        `${posts.length} пост${posts.length===1?'':'а'} загружено`;
+
+      $('status').textContent=
+        `${scenes[sceneIndex].category} · следующие панорамы подгружаются автоматически`;
+    }
+
+    function loadImage(src){
+      return new Promise(resolve=>{
+        const image=new Image();
+
+        image.onload=()=>resolve(image);
+        image.onerror=()=>resolve(null);
+        image.src=src;
+      });
+    }
+
+    function cityAngle(city,delta){
+      return (city.yaw+delta+360)%360;
+    }
+
+    function drawCollage(post,canvas,delta,index,token){
+      if(!canvas)return;
+
+      const context=canvas.getContext('2d');
+      context.clearRect(0,0,1200,1650);
+
+      if(post.loading)return;
+
+      post.cities.forEach((city,i)=>{
+        const yaw=cityAngle(city,delta);
+        const image=city.cache&&city.cache[yaw];
+
+        if(image){
+          context.drawImage(image,0,i*825,1200,825);
+        }else if(!city.panoId){
+          const drawToken=token||post.renderToken;
+
+          loadImage(
+            panorama(city.city,city.tone,index+i+post.number)
+          ).then(loaded=>{
+            if(
+              loaded &&
+              post.renderToken===drawToken &&
+              !post.loading
+            ){
+              city.cache=city.cache||{};
+              city.cache[yaw]=loaded;
+              drawCollage(post,canvas,delta,index,drawToken);
+            }
+          });
+        }
+      });
+    }
+
+    function appendPost(post,index){
+      const holder=document.createElement('div');
+      holder.innerHTML=postMarkup(post,index);
+
+      post.element=holder.firstElementChild;
+
+      $('feedList').appendChild(post.element);
+
+      updatePostElement(post,index);
+      updateFeedMeta();
+    }
+
+    function setSettingsOpen(open){
+      const card=$('locationCard');
+      const backdrop=$('sheetBackdrop');
+
+      card.classList.toggle('open',open);
+      card.classList.toggle('random-open',open&&randomPair!==null);
+      backdrop.classList.toggle('visible',open);
+      document.body.classList.toggle('sheet-open',open);
+
+      if(!open){
+        card.querySelector('.sheet-content').scrollTop=0;
+        randomPair=null;
+        card.classList.remove('random-open');
+      }
+    }
+
+    function toggleSettings(){
+      setSettingsOpen(!$('locationCard').classList.contains('open'));
+    }
+
+    function closeSettings(){
+      setSettingsOpen(false);
+    }
+
+    function openSettingsSection(section){
+      randomPair=null;
+      $('locationCard').classList.remove('random-open');
+      setSettingsOpen(true);
+
+      const target=
+        section==='radius'
+          ? $('radius')
+          : section==='cities'
+            ? document.querySelector('.city-presets')
+            : null;
+
+      if(target){
+        setTimeout(()=>{
+          target.scrollIntoView({
+            behavior:'smooth',
+            block:'center'
+          });
+        },80);
+      }
+    }
+
+    function setRandomMode(mode){
+      randomMode=mode;
+
+      $('randomCloseMode').classList.toggle('active',mode==='close');
+      $('randomContrastMode').classList.toggle('active',mode==='contrast');
+
+      generateRandomPair();
+    }
+
+    function randomForeignCities(){
+      return (
+        selectedCountry==='ALL'
+          ? allSearchCities()
+          : filteredCities(selectedCountry)
+      ).filter(city=>city.countryCode!=='RU'&&city.country!=='Россия');
+    }
+
+    function randomDifferencePercent(russian,foreign){
+      return Math.round(
+        Math.abs(foreign.population-russian.population)/
+        Math.max(1,russian.population)*100
+      );
+    }
+
+    function randomSimilarityPercent(russian,foreign){
+      return Math.round(
+        Math.min(russian.population,foreign.population)/
+        Math.max(russian.population,foreign.population)*100
+      );
+    }
+
     function renderRandomPair(){
       if(!randomPair)return;
+
       const {russian,foreign}=randomPair;
-      $('randomRussianCountry').textContent=`${russian.flag||'🇷🇺'} ${russian.country||'Россия'}`;
+
+      $('randomRussianCountry').textContent=
+        `${russian.flag||'🇷🇺'} ${russian.country||'Россия'}`;
+
       $('randomRussianCity').textContent=russian.city;
       $('randomRussianPopulation').textContent=populationText(russian.population);
-      $('randomForeignCountry').textContent=`${foreign.flag||'🌍'} ${foreign.country||countryNames[foreign.countryCode]||'Другая страна'}`;
+
+      $('randomForeignCountry').textContent=
+        `${foreign.flag||'🌍'} ${foreign.country||countryNames[foreign.countryCode]||'Другая страна'}`;
+
       $('randomForeignCity').textContent=foreign.city;
       $('randomForeignPopulation').textContent=populationText(foreign.population);
+
       const similarity=randomSimilarityPercent(russian,foreign);
       const difference=randomDifferencePercent(russian,foreign);
-      $('randomMatch').innerHTML=randomMode==='close'?`Население похоже на <strong>${similarity}%</strong>. Разница — <strong>${difference}%</strong>.`:`Контраст по населению: города похожи только на <strong>${similarity}%</strong>, разница — <strong>${difference}%</strong>.`;
+
+      $('randomMatch').innerHTML=
+        randomMode==='close'
+          ? `Население похоже на <strong>${similarity}%</strong>. Разница — <strong>${difference}%</strong>.`
+          : `Контраст по населению: города похожи только на <strong>${similarity}%</strong>, разница — <strong>${difference}%</strong>.`;
     }
+
     function pickRandomForeign(russian,excludeCity=''){
-      const foreignPool=randomForeignCities().filter(city=>city.city!==excludeCity);
+      const foreignPool=
+        randomForeignCities().filter(city=>city.city!==excludeCity);
+
       if(!foreignPool.length)return null;
-      const ranked=foreignPool.slice().sort((a,b)=>randomMode==='close'?Math.abs(Math.log(a.population/russian.population))-Math.abs(Math.log(b.population/russian.population)):Math.abs(Math.log(b.population/russian.population))-Math.abs(Math.log(a.population/russian.population)));
-      const pool=randomMode==='close'?ranked.slice(0,Math.min(8,ranked.length)):ranked.slice(0,Math.min(12,ranked.length));
+
+      const ranked=foreignPool.slice().sort((a,b)=>
+        randomMode==='close'
+          ? Math.abs(Math.log(a.population/russian.population))-
+            Math.abs(Math.log(b.population/russian.population))
+          : Math.abs(Math.log(b.population/russian.population))-
+            Math.abs(Math.log(a.population/russian.population))
+      );
+
+      const pool=
+        randomMode==='close'
+          ? ranked.slice(0,Math.min(8,ranked.length))
+          : ranked.slice(0,Math.min(12,ranked.length));
+
       return pool[Math.floor(Math.random()*pool.length)];
     }
+
     function generateRandomPair(){
       const russianPool=filteredCities('RU');
-      if(!russianPool.length||!randomForeignCities().length){ $('randomMatch').textContent='Для текущих фильтров недостаточно городов.'; randomPair=null; return; }
-      const russian=russianPool[Math.floor(Math.random()*russianPool.length)];
+
+      if(!russianPool.length||!randomForeignCities().length){
+        $('randomMatch').textContent='Для текущих фильтров недостаточно городов.';
+        randomPair=null;
+        return;
+      }
+
+      const russian=
+        russianPool[Math.floor(Math.random()*russianPool.length)];
+
       const foreign=pickRandomForeign(russian);
-      if(!foreign){ $('randomMatch').textContent='Для текущих фильтров недостаточно городов.'; randomPair=null; return; }
+
+      if(!foreign){
+        $('randomMatch').textContent='Для текущих фильтров недостаточно городов.';
+        randomPair=null;
+        return;
+      }
+
       randomPair={russian,foreign};
+
       $('locationCard').classList.add('random-open');
+
       renderRandomPair();
     }
+
     function generateRandomForeignCity(){
-      if(!randomPair){ generateRandomPair(); return; }
-      const foreign=pickRandomForeign(randomPair.russian,randomPair.foreign.city);
-      if(!foreign){ $('randomMatch').textContent='Других городов для текущего фильтра не найдено.'; return; }
+      if(!randomPair){
+        generateRandomPair();
+        return;
+      }
+
+      const foreign=
+        pickRandomForeign(randomPair.russian,randomPair.foreign.city);
+
+      if(!foreign){
+        $('randomMatch').textContent='Других городов для текущего фильтра не найдено.';
+        return;
+      }
+
       randomPair.foreign=foreign;
       renderRandomPair();
     }
-    function openRandomPair(){ randomPair=null; setSettingsOpen(true); generateRandomPair(); }
-    function acceptRandomPair(){ if(!randomPair)return; isDefaultPair=false; const code=randomPair.foreign.countryCode||selectedCountry; if(code&&code!=='ALL'&&countryNames[code])selectedCountry=code; setCityPair(randomPair.russian,randomPair.foreign); showCitySuggestion({russian:randomPair.russian,foreign:randomPair.foreign,candidates:matchingCandidates(selectedCountry,randomPair.russian)}); renderCountryList(); saveSettings(); startFeed(); closeSettings(); toast(`${randomPair.russian.city} · ${randomPair.foreign.city}`); }
-    function populationText(value){ return value>=1000000?(value/1000000).toFixed(1).replace('.',',')+' млн':Math.round(value/1000)+' тыс.'; }
-    function formatPopulationOption(value){ return value>=1000000?`${value/1000000} млн`:populationText(value); }
-    function saveSettings(){ try{ localStorage.setItem('cityCompareSettings',JSON.stringify({version:SETTINGS_VERSION,selectedCountry,populationMin,populationMax,radius})); }catch(error){} }
-    function restoreSettings(){ try{ const saved=JSON.parse(localStorage.getItem('cityCompareSettings')||'null'); if(!saved)return; if(saved.selectedCountry==='ALL'||countryNames[saved.selectedCountry]){ selectedCountry=saved.selectedCountry; if(selectedCountry!=='ALL'&&!defaultCountryCodes.has(selectedCountry))extraCountriesEnabled=true; } if(saved.version===SETTINGS_VERSION){ if(Number.isFinite(saved.populationMin))populationMin=saved.populationMin; if(Number.isFinite(saved.populationMax))populationMax=saved.populationMax; } if(Number.isFinite(saved.radius))radius=saved.radius; }catch(error){} }
-    function renderPopulationFilter(){ const min=$('populationMin'),max=$('populationMax'); const optionMarkup=populationSteps.map(value=>`<option value="${value}">${formatPopulationOption(value)}</option>`).join(''); min.innerHTML=optionMarkup; max.innerHTML=optionMarkup; min.value=String(populationMin); max.value=String(populationMax); $('populationFilterValue').textContent=`${populationText(populationMin)} — ${populationText(populationMax)}`; }
-    function filteredCities(code){ return (cityCatalog[code]||[]).filter(city=>city.population>=populationMin&&city.population<=populationMax); }
-    function matchingCandidates(code,russian){ const source=code==='ALL'?allSearchCities():filteredCities(code).map(city=>Object.assign({},city,{countryCode:city.countryCode||code})); return source.filter(city=>city.population>=populationMin&&city.population<=populationMax).sort((a,b)=>Math.abs(Math.log(a.population/russian.population))-Math.abs(Math.log(b.population/russian.population))); }
-    function setPopulationFilter(){ populationMin=Number($('populationMin').value); populationMax=Math.max(populationMin,Number($('populationMax').value)); $('populationMax').value=String(populationMax); $('populationFilterValue').textContent=`${populationText(populationMin)} — ${populationText(populationMax)}`; isDefaultPair=false; saveSettings(); refreshMatchedPair(false); renderCitySearch($('citySearch').value); }
-    function setCityPair(russian,foreign){ scenes.forEach(scene=>{ scene.a=Object.assign({},russian); scene.b=Object.assign({},foreign); }); }
-    function applyMatchedPair(countryCode){ const russianPool=filteredCities('RU'); const russian=russianPool[Math.floor(Math.random()*russianPool.length)]||cityCatalog.RU[0]; const candidates=matchingCandidates(countryCode,russian); const foreign=candidates[0]||null; if(foreign)setCityPair(russian,foreign); return {russian,foreign,candidates}; }
-    function refreshMatchedPair(restart=true){ const russian=filteredCities('RU').find(city=>city.city===scenes[0].a.city)||filteredCities('RU')[0]||cityCatalog.RU[0]; const candidates=matchingCandidates(selectedCountry,russian); if(!candidates.length){ showCitySuggestion({russian,foreign:russian,candidates:[]}); updateFeedMeta(); toast('В этом диапазоне нет городов'); return; } setCityPair(russian,candidates[0]); showCitySuggestion({russian,foreign:candidates[0],candidates}); updateFeedMeta(); if(restart)startFeed(); }
-    function renderCountryList(){ const visibleCountries=countryDirectory.filter(([code])=>extraCountriesEnabled||defaultCountryCodes.has(code)); const allLabel=extraCountriesEnabled?'🌍 Все страны':'🌍 Основные страны'; const allButton=`<button class="city-preset ${selectedCountry==='ALL'?'active':''}" type="button" data-country="ALL" onclick="selectCountry('ALL')">${allLabel}</button>`; const countryButtons=visibleCountries.map(([code,flag,name])=>`<button class="city-preset ${code===selectedCountry?'active':''}" type="button" data-country="${code}" onclick="selectCountry('${code}')">${flag} ${name}</button>`).join(''); const hasExtra=countryDirectory.some(([code])=>!defaultCountryCodes.has(code)); const extraButton=hasExtra?`<button class="city-preset extra-countries" type="button" onclick="toggleExtraCountries()">${extraCountriesEnabled?'↑ Скрыть остальные страны':'＋ Остальные страны'}</button>`:''; $('countryList').innerHTML=allButton+countryButtons+extraButton; }
-    function toggleExtraCountries(){ extraCountriesEnabled=!extraCountriesEnabled; renderCountryList(); }
-    function cityButton(city,code,reference,selected){ const actualCode=city.countryCode||code; const ratioText=reference?`${Math.round(Math.abs(city.population-reference.population)/reference.population*100)}% к опорному`:'случайный выбор'; return `<button class="city-option ${selected?'selected':''}" type="button" onclick="chooseListedCity('${actualCode}','${city.city.replace(/'/g,"\\'")}')"><span><strong>${city.flag} ${city.city}</strong><small>${countryNames[actualCode]||city.country} · ${ratioText}</small></span><em>${populationText(city.population)}</em></button>`; }
-    function allSearchCities(){ const allowed=extraCountriesEnabled?null:defaultCountryCodes; return Object.entries(cityCatalog).filter(([code])=>code!=='RU'&&(!allowed||allowed.has(code))).flatMap(([code,cities])=>cities.map(city=>Object.assign({},city,{countryCode:city.countryCode||code}))).filter(city=>city.population>=populationMin&&city.population<=populationMax); }
-    function renderCitySearch(query=''){ const value=query.trim().toLocaleLowerCase('ru'); if(!value){ $('citySearchResults').innerHTML=''; return; } const results=allSearchCities().filter(city=>`${city.city} ${city.asciiName||''} ${city.country}`.toLocaleLowerCase('ru').includes(value)).sort((a,b)=>b.population-a.population).slice(0,20); $('citySearchResults').innerHTML=results.map(city=>cityButton(city,city.countryCode,null,false)).join('')||'<small style="color:#777;padding:8px 2px">Город не найден</small>'; }
-    function cacheVisibleLists(russianCities,foreignCities){ try{ localStorage.setItem('cityCompareVisibleLists',JSON.stringify({country:selectedCountry,min:populationMin,max:populationMax,russian:russianCities.slice(0,100),foreign:foreignCities.slice(0,100)})); }catch(error){} }
-    function showCitySuggestion(pair){ const russianCities=filteredCities('RU').slice(0,100); const foreignCities=pair.candidates.slice(0,100); $('russianOptions').innerHTML=russianCities.map(city=>cityButton(city,'RU',null,city.city===pair.russian.city)).join(''); cacheVisibleLists(russianCities,foreignCities); if(!pair.candidates.length||!pair.foreign){ $('citySuggestion').innerHTML=`Для диапазона <strong>${populationText(populationMin)} — ${populationText(populationMax)}</strong> нет городов в выбранной стране.`; $('cityOptions').innerHTML=''; return; } const ratio=Math.max(pair.russian.population,pair.foreign.population)/Math.min(pair.russian.population,pair.foreign.population); $('citySuggestion').innerHTML=`Подбор по населению: <strong>${pair.russian.city} ↔ ${pair.foreign.city}</strong><br>Самый близкий вариант отличается примерно в ${ratio.toFixed(1).replace('.',',')} раза.`; $('cityOptions').innerHTML=foreignCities.map(city=>cityButton(city,selectedCountry,pair.russian,city.city===pair.foreign.city)).join(''); }
-    function suggestMatchedCities(){ isDefaultPair=false; const pair=applyMatchedPair(selectedCountry); showCitySuggestion(pair); if(pair.foreign)startFeed(); openSettingsSection('cities'); toast(pair.foreign?`${pair.russian.city} · ${pair.foreign.city} предложены`:'В этом диапазоне нет городов'); }
-    function chooseListedCity(code,cityName){ const russian=code==='RU'?cityCatalog.RU.find(city=>city.city===cityName):scenes[0].a; const foreign=code==='RU'?scenes[0].b:cityCatalog[code]&&cityCatalog[code].find(city=>city.city===cityName); if(!russian||!foreign)return; isDefaultPair=false; setCityPair(russian,foreign); const candidates=matchingCandidates(selectedCountry,russian); showCitySuggestion({russian,foreign,candidates}); startFeed(); closeSettings(); toast(`${russian.city} · ${foreign.city}`); }
-    async function selectCountry(code){ selectedCountry=code; isDefaultPair=false; renderCountryList(); const pair=applyMatchedPair(code); showCitySuggestion(pair); renderCitySearch($('citySearch').value); if(pair.foreign)startFeed(); saveSettings(); toast(`${countryNames[code]} · фильтр применён`); if(code!=='ALL'&&!cityCatalog[code])await loadCities(); if(!pair.foreign&&((code==='ALL'&&allSearchCities().length)||cityCatalog[code]))refreshMatchedPair(true); }
-    function sizeCaption(post){ const a=post.cities[0].population||0; const b=post.cities[1].population||0; if(!a||!b)return 'Размер города проверяется'; return `${populationText(a)} · ${populationText(b)}`; }
-    function postMarkup(post,index){ return `<article class="feed-post" data-post-index="${index}"><div class="post-head"></div><div class="post-collage ${post.loading?'is-loading':''} ${post.failed?'is-failed':''}"><div class="canvas-stage"><canvas class="collage-canvas collage-current" width="1200" height="1650" aria-label="Коллаж двух городов"></canvas><canvas class="collage-canvas collage-buffer collage-prev" width="1200" height="1650" aria-hidden="true"></canvas><canvas class="collage-canvas collage-buffer collage-next" width="1200" height="1650" aria-hidden="true"></canvas><div class="swipe-hint" aria-hidden="true"><span>‹</span><span>›</span></div></div><div class="post-failure"><span>Панорамы не найдены.</span><button type="button" onclick="replaceFailedCities(${index})">Заменить не найденный город</button></div></div><div class="post-social"><div class="post-social-head"><div class="post-account"><span class="post-avatar">↔</span><span><strong>${post.cities[0].city} · ${post.cities[1].city}</strong><small>Россия · ${countryNames[selectedCountry]} · пост ${String(post.number).padStart(2,'0')}</small></span></div><div class="post-social-actions"><button type="button" onclick="copyLocation(${index})" aria-label="Скопировать локацию" title="Скопировать локацию">⌖</button><button type="button" onclick="copyPostLink(${index})" aria-label="Скопировать ссылку" title="Скопировать ссылку">↗</button></div></div><p class="post-social-caption">${sizeCaption(post)} · сопоставимый размер</p></div></article>`; }
-    function updatePostElement(post,index){ if(!post.element)return; post.renderToken=(post.renderToken||0)+1; const token=post.renderToken; const collage=post.element.querySelector('.post-collage'); collage.classList.toggle('is-loading',post.loading); collage.classList.toggle('is-failed',post.failed&&!post.loading); const failure=post.element.querySelector('.post-failure span'); if(failure)failure.textContent=post.failedCities&&post.failedCities.length?`Не найдена панорама: ${post.failedCities.join(', ')}. После ${MAX_PANORAMA_ATTEMPTS} попыток.`:'Панорамы не найдены.'; drawCollage(post,post.element.querySelector('.collage-current'),0,index,token); drawCollage(post,post.element.querySelector('.collage-prev'),-60,index,token); drawCollage(post,post.element.querySelector('.collage-next'),60,index,token); const current=post.element.querySelector('.collage-current'); const previous=post.element.querySelector('.collage-prev'); const next=post.element.querySelector('.collage-next'); current.style.transition='none'; current.style.transform='translateX(0)'; previous.style.transition='none'; previous.style.transform='translateX(-100%)'; next.style.transition='none'; next.style.transform='translateX(100%)'; const caption=post.element.querySelector('.post-social-caption'); if(caption)caption.textContent=`${sizeCaption(post)} · сопоставимый размер`; }
-    let swipeHintPlays=0, swipeHintTimer=null, swipeHintStopped=false;
+
+    function openRandomPair(){
+      randomPair=null;
+      setSettingsOpen(true);
+      generateRandomPair();
+    }
+
+    function acceptRandomPair(){
+      if(!randomPair)return;
+
+      isDefaultPair=false;
+
+      const code=randomPair.foreign.countryCode||selectedCountry;
+
+      if(code&&code!=='ALL'&&countryNames[code]){
+        selectedCountry=code;
+      }
+
+      setCityPair(randomPair.russian,randomPair.foreign);
+
+      // сохраняем выбранную пару в URL
+      updateCitiesQuery(randomPair.russian,randomPair.foreign);
+
+      showCitySuggestion({
+        russian:randomPair.russian,
+        foreign:randomPair.foreign,
+        candidates:matchingCandidates(selectedCountry,randomPair.russian)
+      });
+
+      renderCountryList();
+      saveSettings();
+      startFeed();
+      closeSettings();
+
+      toast(`${randomPair.russian.city} · ${randomPair.foreign.city}`);
+    }
+
+    function populationText(value){
+      return value>=1000000
+        ? (value/1000000).toFixed(1).replace('.',',')+' млн'
+        : Math.round(value/1000)+' тыс.';
+    }
+
+    function formatPopulationOption(value){
+      return value>=1000000
+        ? `${value/1000000} млн`
+        : populationText(value);
+    }
+
+    function saveSettings(){
+      try{
+        localStorage.setItem(
+          'cityCompareSettings',
+          JSON.stringify({
+            version:SETTINGS_VERSION,
+            selectedCountry,
+            populationMin,
+            populationMax,
+            radius
+          })
+        );
+      }catch(error){}
+    }
+
+    /*
+     * QUERY PARAMS:
+     *
+     * ?a=Владимир&aCountry=RU&b=Гаага&bCountry=NL
+     */
+    function updateCitiesQuery(russian,foreign){
+      if(!russian||!foreign)return;
+
+      const url=new URL(window.location.href);
+
+      const russianCode=
+        russian.countryCode ||
+        Object.entries(cityCatalog).find(([,cities])=>
+          cities.some(city=>city===russian||city.city===russian.city)
+        )?.[0] ||
+        'RU';
+
+      const foreignCode=
+        foreign.countryCode ||
+        Object.entries(cityCatalog).find(([,cities])=>
+          cities.some(city=>city===foreign||city.city===foreign.city)
+        )?.[0] ||
+        selectedCountry;
+
+      url.searchParams.set('a',russian.city);
+      url.searchParams.set('aCountry',russianCode);
+      url.searchParams.set('b',foreign.city);
+      url.searchParams.set('bCountry',foreignCode);
+
+      history.replaceState(
+        null,
+        '',
+        url.pathname + url.search + url.hash
+      );
+    }
+
+    function restoreCitiesFromQuery(){
+      const params=new URLSearchParams(window.location.search);
+
+      const aName=params.get('a');
+      const aCode=params.get('aCountry')||'RU';
+
+      const bName=params.get('b');
+      const bCode=params.get('bCountry');
+
+      if(!aName||!bName||!bCode){
+        return false;
+      }
+
+      const russian=(cityCatalog[aCode]||[]).find(
+        city=>city.city===aName
+      );
+
+      const foreign=(cityCatalog[bCode]||[]).find(
+        city=>city.city===bName
+      );
+
+      if(!russian||!foreign){
+        return false;
+      }
+
+      selectedCountry=bCode;
+      isDefaultPair=false;
+
+      if(
+        selectedCountry!=='ALL' &&
+        !defaultCountryCodes.has(selectedCountry)
+      ){
+        extraCountriesEnabled=true;
+      }
+
+      setCityPair(russian,foreign);
+
+      return true;
+    }
+
+    function restoreSettings(){
+      try{
+        const saved=
+          JSON.parse(localStorage.getItem('cityCompareSettings')||'null');
+
+        if(!saved)return;
+
+        if(
+          saved.selectedCountry==='ALL' ||
+          countryNames[saved.selectedCountry]
+        ){
+          selectedCountry=saved.selectedCountry;
+
+          if(
+            selectedCountry!=='ALL' &&
+            !defaultCountryCodes.has(selectedCountry)
+          ){
+            extraCountriesEnabled=true;
+          }
+        }
+
+        if(saved.version===SETTINGS_VERSION){
+          if(Number.isFinite(saved.populationMin)){
+            populationMin=saved.populationMin;
+          }
+
+          if(Number.isFinite(saved.populationMax)){
+            populationMax=saved.populationMax;
+          }
+        }
+
+        if(Number.isFinite(saved.radius)){
+          radius=saved.radius;
+        }
+      }catch(error){}
+    }
+
+    function renderPopulationFilter(){
+      const min=$('populationMin');
+      const max=$('populationMax');
+
+      const optionMarkup=populationSteps.map(value=>
+        `<option value="${value}">${formatPopulationOption(value)}</option>`
+      ).join('');
+
+      min.innerHTML=optionMarkup;
+      max.innerHTML=optionMarkup;
+
+      min.value=String(populationMin);
+      max.value=String(populationMax);
+
+      $('populationFilterValue').textContent=
+        `${populationText(populationMin)} — ${populationText(populationMax)}`;
+    }
+
+    function filteredCities(code){
+      return (cityCatalog[code]||[]).filter(city=>
+        city.population>=populationMin &&
+        city.population<=populationMax
+      );
+    }
+
+    function matchingCandidates(code,russian){
+      const source=
+        code==='ALL'
+          ? allSearchCities()
+          : filteredCities(code).map(city=>Object.assign({},city,{
+              countryCode:city.countryCode||code
+            }));
+
+      return source
+        .filter(city=>
+          city.population>=populationMin &&
+          city.population<=populationMax
+        )
+        .sort((a,b)=>
+          Math.abs(Math.log(a.population/russian.population))-
+          Math.abs(Math.log(b.population/russian.population))
+        );
+    }
+
+    function setPopulationFilter(){
+      populationMin=Number($('populationMin').value);
+      populationMax=Math.max(
+        populationMin,
+        Number($('populationMax').value)
+      );
+
+      $('populationMax').value=String(populationMax);
+
+      $('populationFilterValue').textContent=
+        `${populationText(populationMin)} — ${populationText(populationMax)}`;
+
+      isDefaultPair=false;
+
+      saveSettings();
+      refreshMatchedPair(false);
+      renderCitySearch($('citySearch').value);
+    }
+
+    function setCityPair(russian,foreign){
+      scenes.forEach(scene=>{
+        scene.a=Object.assign({},russian);
+        scene.b=Object.assign({},foreign);
+      });
+    }
+
+    function applyMatchedPair(countryCode){
+      const russianPool=filteredCities('RU');
+
+      const russian=
+        russianPool[Math.floor(Math.random()*russianPool.length)]||
+        cityCatalog.RU[0];
+
+      const candidates=matchingCandidates(countryCode,russian);
+      const foreign=candidates[0]||null;
+
+      if(foreign){
+        setCityPair(russian,foreign);
+      }
+
+      return {
+        russian,
+        foreign,
+        candidates
+      };
+    }
+
+    function refreshMatchedPair(restart=true){
+      const russian=
+        filteredCities('RU').find(city=>city.city===scenes[0].a.city)||
+        filteredCities('RU')[0]||
+        cityCatalog.RU[0];
+
+      const candidates=matchingCandidates(selectedCountry,russian);
+
+      if(!candidates.length){
+        showCitySuggestion({
+          russian,
+          foreign:russian,
+          candidates:[]
+        });
+
+        updateFeedMeta();
+        toast('В этом диапазоне нет городов');
+        return;
+      }
+
+      setCityPair(russian,candidates[0]);
+
+      showCitySuggestion({
+        russian,
+        foreign:candidates[0],
+        candidates
+      });
+
+      updateFeedMeta();
+
+      if(restart){
+        startFeed();
+      }
+    }
+
+    function renderCountryList(){
+      const visibleCountries=countryDirectory.filter(([code])=>
+        extraCountriesEnabled||defaultCountryCodes.has(code)
+      );
+
+      const allLabel=
+        extraCountriesEnabled
+          ? '🌍 Все страны'
+          : '🌍 Основные страны';
+
+      const allButton=`
+        <button
+          class="city-preset ${selectedCountry==='ALL'?'active':''}"
+          type="button"
+          data-country="ALL"
+          onclick="selectCountry('ALL')"
+        >${allLabel}</button>
+      `;
+
+      const countryButtons=visibleCountries.map(([code,flag,name])=>`
+        <button
+          class="city-preset ${code===selectedCountry?'active':''}"
+          type="button"
+          data-country="${code}"
+          onclick="selectCountry('${code}')"
+        >${flag} ${name}</button>
+      `).join('');
+
+      const hasExtra=
+        countryDirectory.some(([code])=>!defaultCountryCodes.has(code));
+
+      const extraButton=hasExtra
+        ? `
+          <button
+            class="city-preset extra-countries"
+            type="button"
+            onclick="toggleExtraCountries()"
+          >
+            ${extraCountriesEnabled?'↑ Скрыть остальные страны':'＋ Остальные страны'}
+          </button>
+        `
+        : '';
+
+      $('countryList').innerHTML=
+        allButton+countryButtons+extraButton;
+    }
+
+    function toggleExtraCountries(){
+      extraCountriesEnabled=!extraCountriesEnabled;
+      renderCountryList();
+    }
+
+    function cityButton(city,code,reference,selected){
+      const actualCode=city.countryCode||code;
+
+      const ratioText=reference
+        ? `${Math.round(
+            Math.abs(city.population-reference.population)/
+            reference.population*100
+          )}% к опорному`
+        : 'случайный выбор';
+
+      return `
+        <button
+          class="city-option ${selected?'selected':''}"
+          type="button"
+          onclick="chooseListedCity('${actualCode}','${city.city.replace(/'/g,"\\'")}')"
+        >
+          <span>
+            <strong>${city.flag} ${city.city}</strong>
+            <small>${countryNames[actualCode]||city.country} · ${ratioText}</small>
+          </span>
+          <em>${populationText(city.population)}</em>
+        </button>
+      `;
+    }
+
+    function allSearchCities(){
+      const allowed=
+        extraCountriesEnabled
+          ? null
+          : defaultCountryCodes;
+
+      return Object.entries(cityCatalog)
+        .filter(([code])=>
+          code!=='RU' &&
+          (!allowed||allowed.has(code))
+        )
+        .flatMap(([code,cities])=>
+          cities.map(city=>Object.assign({},city,{
+            countryCode:city.countryCode||code
+          }))
+        )
+        .filter(city=>
+          city.population>=populationMin &&
+          city.population<=populationMax
+        );
+    }
+
+    function renderCitySearch(query=''){
+      const value=query.trim().toLocaleLowerCase('ru');
+
+      if(!value){
+        $('citySearchResults').innerHTML='';
+        return;
+      }
+
+      const results=allSearchCities()
+        .filter(city=>
+          `${city.city} ${city.asciiName||''} ${city.country}`
+            .toLocaleLowerCase('ru')
+            .includes(value)
+        )
+        .sort((a,b)=>b.population-a.population)
+        .slice(0,20);
+
+      $('citySearchResults').innerHTML=
+        results.map(city=>
+          cityButton(city,city.countryCode,null,false)
+        ).join('')||
+        '<small style="color:#777;padding:8px 2px">Город не найден</small>';
+    }
+
+    function cacheVisibleLists(russianCities,foreignCities){
+      try{
+        localStorage.setItem(
+          'cityCompareVisibleLists',
+          JSON.stringify({
+            country:selectedCountry,
+            min:populationMin,
+            max:populationMax,
+            russian:russianCities.slice(0,100),
+            foreign:foreignCities.slice(0,100)
+          })
+        );
+      }catch(error){}
+    }
+
+    function showCitySuggestion(pair){
+      const russianCities=filteredCities('RU').slice(0,100);
+      const foreignCities=pair.candidates.slice(0,100);
+
+      $('russianOptions').innerHTML=
+        russianCities.map(city=>
+          cityButton(
+            city,
+            'RU',
+            null,
+            city.city===pair.russian.city
+          )
+        ).join('');
+
+      cacheVisibleLists(russianCities,foreignCities);
+
+      if(!pair.candidates.length||!pair.foreign){
+        $('citySuggestion').innerHTML=
+          `Для диапазона <strong>${populationText(populationMin)} — ${populationText(populationMax)}</strong> нет городов в выбранной стране.`;
+
+        $('cityOptions').innerHTML='';
+        return;
+      }
+
+      const ratio=
+        Math.max(pair.russian.population,pair.foreign.population)/
+        Math.min(pair.russian.population,pair.foreign.population);
+
+      $('citySuggestion').innerHTML=
+        `Подбор по населению: <strong>${pair.russian.city} ↔ ${pair.foreign.city}</strong><br>`+
+        `Самый близкий вариант отличается примерно в ${ratio.toFixed(1).replace('.',',')} раза.`;
+
+      $('cityOptions').innerHTML=
+        foreignCities.map(city=>
+          cityButton(
+            city,
+            selectedCountry,
+            pair.russian,
+            city.city===pair.foreign.city
+          )
+        ).join('');
+    }
+
+    function suggestMatchedCities(){
+      isDefaultPair=false;
+
+      const pair=applyMatchedPair(selectedCountry);
+
+      showCitySuggestion(pair);
+
+      if(pair.foreign){
+        startFeed();
+      }
+
+      openSettingsSection('cities');
+
+      toast(
+        pair.foreign
+          ? `${pair.russian.city} · ${pair.foreign.city} предложены`
+          : 'В этом диапазоне нет городов'
+      );
+    }
+
+    function chooseListedCity(code,cityName){
+      const russian=
+        code==='RU'
+          ? cityCatalog.RU.find(city=>city.city===cityName)
+          : scenes[0].a;
+
+      const foreign=
+        code==='RU'
+          ? scenes[0].b
+          : cityCatalog[code]&&
+            cityCatalog[code].find(city=>city.city===cityName);
+
+      if(!russian||!foreign)return;
+
+      isDefaultPair=false;
+
+      if(code!=='RU'){
+        selectedCountry=code;
+      }
+
+      setCityPair(russian,foreign);
+
+      // сохраняем выбранную пару в query params
+      updateCitiesQuery(russian,foreign);
+
+      const candidates=
+        matchingCandidates(selectedCountry,russian);
+
+      showCitySuggestion({
+        russian,
+        foreign,
+        candidates
+      });
+
+      renderCountryList();
+      saveSettings();
+      startFeed();
+      closeSettings();
+
+      toast(`${russian.city} · ${foreign.city}`);
+    }
+
+    async function selectCountry(code){
+      selectedCountry=code;
+      isDefaultPair=false;
+
+      renderCountryList();
+
+      const pair=applyMatchedPair(code);
+
+      showCitySuggestion(pair);
+      renderCitySearch($('citySearch').value);
+
+      if(pair.foreign){
+        startFeed();
+      }
+
+      saveSettings();
+
+      toast(`${countryNames[code]} · фильтр применён`);
+
+      if(code!=='ALL'&&!cityCatalog[code]){
+        await loadCities();
+      }
+
+      if(
+        !pair.foreign &&
+        (
+          (code==='ALL'&&allSearchCities().length) ||
+          cityCatalog[code]
+        )
+      ){
+        refreshMatchedPair(true);
+      }
+    }
+
+    function sizeCaption(post){
+      const a=post.cities[0].population||0;
+      const b=post.cities[1].population||0;
+
+      if(!a||!b){
+        return 'Размер города проверяется';
+      }
+
+      return `${populationText(a)} · ${populationText(b)}`;
+    }
+
+    function postMarkup(post,index){
+      return `
+        <article class="feed-post" data-post-index="${index}">
+          <div class="post-head"></div>
+
+          <div class="post-collage ${post.loading?'is-loading':''} ${post.failed?'is-failed':''}">
+            <div class="canvas-stage">
+              <canvas
+                class="collage-canvas collage-current"
+                width="1200"
+                height="1650"
+                aria-label="Коллаж двух городов"
+              ></canvas>
+
+              <canvas
+                class="collage-canvas collage-buffer collage-prev"
+                width="1200"
+                height="1650"
+                aria-hidden="true"
+              ></canvas>
+
+              <canvas
+                class="collage-canvas collage-buffer collage-next"
+                width="1200"
+                height="1650"
+                aria-hidden="true"
+              ></canvas>
+
+              <div class="swipe-hint" aria-hidden="true">
+                <span>‹</span>
+                <span>›</span>
+              </div>
+            </div>
+
+            <div class="post-failure">
+              <span>Панорамы не найдены.</span>
+              <button type="button" onclick="replaceFailedCities(${index})">
+                Заменить не найденный город
+              </button>
+            </div>
+          </div>
+
+          <div class="post-social">
+            <div class="post-social-head">
+              <div class="post-account">
+                <span class="post-avatar">↔</span>
+
+                <span>
+                  <strong>${post.cities[0].city} · ${post.cities[1].city}</strong>
+                  <small>
+                    Россия · ${countryNames[selectedCountry]} ·
+                    пост ${String(post.number).padStart(2,'0')}
+                  </small>
+                </span>
+              </div>
+
+              <div class="post-social-actions">
+                <button
+                  type="button"
+                  onclick="copyLocation(${index})"
+                  aria-label="Скопировать локацию"
+                  title="Скопировать локацию"
+                >⌖</button>
+
+                <button
+                  type="button"
+                  onclick="copyPostLink(${index})"
+                  aria-label="Скопировать ссылку"
+                  title="Скопировать ссылку"
+                >↗</button>
+              </div>
+            </div>
+
+            <p class="post-social-caption">
+              ${sizeCaption(post)} · сопоставимый размер
+            </p>
+          </div>
+        </article>
+      `;
+    }
+
+    function updatePostElement(post,index){
+      if(!post.element)return;
+
+      post.renderToken=(post.renderToken||0)+1;
+
+      const token=post.renderToken;
+      const collage=post.element.querySelector('.post-collage');
+
+      collage.classList.toggle('is-loading',post.loading);
+      collage.classList.toggle('is-failed',post.failed&&!post.loading);
+
+      const failure=post.element.querySelector('.post-failure span');
+
+      if(failure){
+        failure.textContent=
+          post.failedCities&&post.failedCities.length
+            ? `Не найдена панорама: ${post.failedCities.join(', ')}. После ${MAX_PANORAMA_ATTEMPTS} попыток.`
+            : 'Панорамы не найдены.';
+      }
+
+      drawCollage(
+        post,
+        post.element.querySelector('.collage-current'),
+        0,
+        index,
+        token
+      );
+
+      drawCollage(
+        post,
+        post.element.querySelector('.collage-prev'),
+        -60,
+        index,
+        token
+      );
+
+      drawCollage(
+        post,
+        post.element.querySelector('.collage-next'),
+        60,
+        index,
+        token
+      );
+
+      const current=post.element.querySelector('.collage-current');
+      const previous=post.element.querySelector('.collage-prev');
+      const next=post.element.querySelector('.collage-next');
+
+      current.style.transition='none';
+      current.style.transform='translateX(0)';
+
+      previous.style.transition='none';
+      previous.style.transform='translateX(-100%)';
+
+      next.style.transition='none';
+      next.style.transform='translateX(100%)';
+
+      const caption=
+        post.element.querySelector('.post-social-caption');
+
+      if(caption){
+        caption.textContent=
+          `${sizeCaption(post)} · сопоставимый размер`;
+      }
+    }
+
+    let swipeHintPlays=0;
+    let swipeHintTimer=null;
+    let swipeHintStopped=false;
+
     function playSwipeHint(postIndex){
-      if(postIndex!==0||swipeHintStopped||swipeHintPlays>=3)return;
-      const stage=document.querySelector(`[data-post-index="${postIndex}"] .canvas-stage`);
+      if(
+        postIndex!==0 ||
+        swipeHintStopped ||
+        swipeHintPlays>=3
+      )return;
+
+      const stage=
+        document.querySelector(
+          `[data-post-index="${postIndex}"] .canvas-stage`
+        );
+
       if(!stage)return;
+
       swipeHintPlays+=1;
+
       stage.classList.remove('swipe-hint-playing');
       void stage.offsetWidth;
       stage.classList.add('swipe-hint-playing');
+
       clearTimeout(swipeHintTimer);
-      swipeHintTimer=setTimeout(()=>{ stage.classList.remove('swipe-hint-playing'); if(swipeHintPlays<3&&!swipeHintStopped)playSwipeHint(postIndex); },1350);
+
+      swipeHintTimer=setTimeout(()=>{
+        stage.classList.remove('swipe-hint-playing');
+
+        if(
+          swipeHintPlays<3 &&
+          !swipeHintStopped
+        ){
+          playSwipeHint(postIndex);
+        }
+      },1350);
     }
-    function focusCity(i){ const frame=document.querySelector(`[data-post-index="0"] .post-frame:nth-child(${i+1})`); if(frame) frame.scrollIntoView({behavior:'smooth',block:'start'}); }
-    function copyText(value,message){ if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(value).then(()=>toast(message)); return; } const input=document.createElement('textarea'); input.value=value; input.style.position='fixed'; input.style.opacity='0'; document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove(); toast(message); }
-    function copyLocation(index){ const post=posts[index]; if(!post)return; const locations=post.cities.map(city=>city.lat&&city.lng?`${city.city}: https://www.google.com/maps/search/?api=1&query=${city.lat},${city.lng}`:`${city.city}: pano ${city.panoId||'не найден'}`).join('\n'); copyText(locations,'Локации скопированы'); }
-    function copyPostLink(index){ const post=posts[index]; if(!post)return; const params=new URLSearchParams({post:String(post.number),aPano:post.cities[0].panoId||'',aYaw:String(post.cities[0].yaw||178),bPano:post.cities[1].panoId||'',bYaw:String(post.cities[1].yaw||178)}); copyText(`${location.href.split('#')[0]}#${params.toString()}`,'Ссылка на этот пост скопирована'); }
-    function rotatePost(postIndex,delta){ const post=posts[postIndex]; if(!post)return; post.cities.forEach(city=>{ if(city.panoId){ city.yaw=(city.yaw+delta+360)%360; preloadPanoramaAngles(city); } }); updatePostElement(post,postIndex); }
-    function preloadPanoramaAngles(city){ if(!city.panoId)return; [-60,0,60].forEach(delta=>{ const image=new Image(); image.src=imageUrl(city.panoId,(city.yaw+delta+360)%360); }); }
-    function animatePostTurn(postIndex,delta,direction){ const post=posts[postIndex]; const article=document.querySelector(`[data-post-index="${postIndex}"]`); if(!post||!article||post.cities.some(city=>!city.panoId))return false; article.querySelectorAll('.post-frame').forEach(frame=>{ const stage=frame.querySelector('.pan-stage'); const current=stage.querySelector('.current-image'); const incoming=stage.querySelector(direction<0?'.pan-next':'.pan-prev'); if(!incoming||!incoming.src)return; current.style.transition='transform .2s ease'; current.style.transform=`translateX(${direction*100}%)`; incoming.style.transform='translateX(0)'; }); setTimeout(()=>rotatePost(postIndex,delta),220); return true; }
-    function rotatePost(postIndex,delta){ const post=posts[postIndex]; if(!post)return; post.cities.forEach(city=>{ if(city.panoId){ city.yaw=(city.yaw+delta+360)%360; preloadPanoramaAngles(city); } }); updatePostElement(post,postIndex); }
-    function preloadPanoramaAngles(city){ if(!city.panoId)return; city.cache=city.cache||{}; [-60,0,60].forEach(delta=>{ const yaw=cityAngle(city,delta); if(city.cache[yaw])return; loadImage(imageUrl(city.panoId,yaw)).then(image=>{ if(image)city.cache[yaw]=image; }); }); }
-    function animatePostTurn(postIndex,delta,direction){ const post=posts[postIndex]; const article=document.querySelector(`[data-post-index="${postIndex}"]`); if(!post||!article||post.cities.some(city=>!city.panoId||!city.cache||!city.cache[cityAngle(city,delta)]))return false; const current=article.querySelector('.collage-current'); const incoming=article.querySelector(direction<0?'.collage-next':'.collage-prev'); current.style.transition='transform .2s ease'; incoming.style.transition='transform .2s ease'; current.style.transform=`translateX(${direction*100}%)`; incoming.style.transform='translateX(0)'; setTimeout(()=>rotatePost(postIndex,delta),220); return true; }
-    function findPanoramaAttempt(city){ return new Promise(resolve=>{ if(typeof google==='undefined'||!google.maps||!google.maps.StreetViewService){ resolve(null); return; } const service=new google.maps.StreetViewService(); const point={lat:city.bounds.minLat+Math.random()*(city.bounds.maxLat-city.bounds.minLat),lng:city.bounds.minLng+Math.random()*(city.bounds.maxLng-city.bounds.minLng)}; service.getPanorama({location:point,radius:350},function(data,status){ if(status==='OK'&&data.location&&data.location.pano&&data.location.latLng){ resolve({pano:data.location.pano,lat:data.location.latLng.lat(),lng:data.location.latLng.lng()}); return; } resolve(null); }); }); }
-    function checkThumbnail(panoId,yaw){ return new Promise(resolve=>{ const image=new Image(); image.onload=()=>resolve(true); image.onerror=()=>resolve(false); image.src=imageUrl(panoId,yaw); }); }
-    async function loadPost(index){ const post=posts[index]; if(!post||post.loading||post.loaded)return; post.loading=true; post.failed=false; updatePostElement(post,index); let results=[]; let valid=false; for(let attempt=0;attempt<12&&!valid;attempt+=1){ results=await Promise.all(post.cities.map(findPanorama)); if(!results.every(Boolean))continue; const angles=[-60,0,60]; const checks=await Promise.all(results.flatMap(result=>angles.map(delta=>checkThumbnail(result.pano,(178+delta+360)%360)))); valid=checks.every(Boolean); } if(valid){ results.forEach((result,i)=>{ post.cities[i].panoId=result.pano; post.cities[i].lat=result.lat; post.cities[i].lng=result.lng; post.cities[i].yaw=178; preloadPanoramaAngles(post.cities[i]); }); } else { post.failed=true; post.cities.forEach(city=>{ city.panoId=''; }); } post.loading=false; post.loaded=true; updatePostElement(post,index); if(index<FEED_AHEAD)ensurePost(index+1); }
-    async function resolveCityPanorama(city){ const angles=[-60,0,60]; for(let attempt=0;attempt<MAX_PANORAMA_ATTEMPTS;attempt+=1){ const result=await findPanoramaAttempt(city); if(!result)continue; const checks=await Promise.all(angles.map(delta=>checkThumbnail(result.pano,(178+delta+360)%360))); if(!checks.every(Boolean))continue; const loaded=await Promise.all(angles.map(delta=>loadImage(imageUrl(result.pano,(178+delta+360)%360)))); if(!loaded.every(Boolean))continue; return {result,loaded,angles}; } return null; }
-    async function loadPost(index){ const post=posts[index]; if(!post||post.loading||post.loaded)return; post.loading=true; post.failed=false; post.failedCities=[]; updatePostElement(post,index); const resolved=await Promise.all(post.cities.map(city=>resolveCityPanorama(city))); resolved.forEach((entry,i)=>{ const city=post.cities[i]; if(!entry){ city.panoId=''; city.cache={}; post.failedCities.push(city.city); return; } city.panoId=entry.result.pano; city.lat=entry.result.lat; city.lng=entry.result.lng; city.yaw=178; city.cache={}; entry.angles.forEach((delta,j)=>{ city.cache[(178+delta+360)%360]=entry.loaded[j]; }); }); post.failed=post.failedCities.length>0; post.loading=false; post.loaded=true; updatePostElement(post,index); if(index===0&&!post.failed)setTimeout(()=>playSwipeHint(0),500); }
-    function replaceFailedCities(index){ const post=posts[index]; if(!post||post.loading||!post.failedCities.length||post.replacements>=MAX_PANORAMA_ATTEMPTS)return; post.replacements=(post.replacements||0)+1; post.failedCities.forEach(name=>{ const city=post.cities.find(item=>item.city===name); if(city){ const pool=Object.values(cityCatalog).flat().filter(item=>item.country===city.country&&item.city!==name); const replacement=pool[Math.floor(Math.random()*pool.length)]; if(replacement)Object.assign(city,replacement,{panoId:'',cache:{},yaw:178}); } }); post.loaded=false; loadPost(index); }
-    function retryPost(index){ replaceFailedCities(index); }
-    function ensurePost(index){ if(posts[index]){ loadPost(index); return; } const post=createPost(); posts.push(post); appendPost(post,index); loadPost(index); }
-    async function loadInitialPosts(){ for(let index=0;index<=FEED_AHEAD;index+=1)await loadPost(index); }
-    function startFeed(){ posts=[]; point=0; $('feed').scrollTop=0; $('feedList').replaceChildren(); for(let index=0;index<=FEED_AHEAD;index+=1){ const post=createPost(); posts.push(post); appendPost(post,index); } updateFeedMeta(); loadInitialPosts(); }
-    function nextPoint(){ ensurePost(posts.length); }
-    function swapCities(){ swapped=!swapped; startFeed(); toast('Города поменяны местами'); }
-    function setRadius(value){ radius=Number(value); $('radiusValue').textContent=`${radius} км`; $('radius').style.background=`linear-gradient(90deg,#91aa58 0 ${((radius-1)/9)*100}%,#343434 ${((radius-1)/9)*100}%)`; saveSettings(); }
-    function toast(text){ const el=$('toast'); el.textContent=text; el.classList.add('visible'); clearTimeout(window.toastTimer); window.toastTimer=setTimeout(()=>el.classList.remove('visible'),1900); }
+
+    function focusCity(i){
+      const frame=
+        document.querySelector(
+          `[data-post-index="0"] .post-frame:nth-child(${i+1})`
+        );
+
+      if(frame){
+        frame.scrollIntoView({
+          behavior:'smooth',
+          block:'start'
+        });
+      }
+    }
+
+    function copyText(value,message){
+      if(navigator.clipboard&&window.isSecureContext){
+        navigator.clipboard.writeText(value).then(()=>{
+          toast(message);
+        });
+
+        return;
+      }
+
+      const input=document.createElement('textarea');
+
+      input.value=value;
+      input.style.position='fixed';
+      input.style.opacity='0';
+
+      document.body.appendChild(input);
+
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+
+      toast(message);
+    }
+
+    function copyLocation(index){
+      const post=posts[index];
+      if(!post)return;
+
+      const locations=post.cities.map(city=>
+        city.lat&&city.lng
+          ? `${city.city}: https://www.google.com/maps/search/?api=1&query=${city.lat},${city.lng}`
+          : `${city.city}: pano ${city.panoId||'не найден'}`
+      ).join('\n');
+
+      copyText(
+        locations,
+        'Локации скопированы'
+      );
+    }
+
+    function copyPostLink(index){
+      const post=posts[index];
+      if(!post)return;
+
+      const params=new URLSearchParams({
+        post:String(post.number),
+        aPano:post.cities[0].panoId||'',
+        aYaw:String(post.cities[0].yaw||178),
+        bPano:post.cities[1].panoId||'',
+        bYaw:String(post.cities[1].yaw||178)
+      });
+
+      copyText(
+        `${location.href.split('#')[0]}#${params.toString()}`,
+        'Ссылка на этот пост скопирована'
+      );
+    }
+
+    function rotatePost(postIndex,delta){
+      const post=posts[postIndex];
+      if(!post)return;
+
+      post.cities.forEach(city=>{
+        if(city.panoId){
+          city.yaw=(city.yaw+delta+360)%360;
+          preloadPanoramaAngles(city);
+        }
+      });
+
+      updatePostElement(post,postIndex);
+    }
+
+    function preloadPanoramaAngles(city){
+      if(!city.panoId)return;
+
+      city.cache=city.cache||{};
+
+      [-60,0,60].forEach(delta=>{
+        const yaw=cityAngle(city,delta);
+
+        if(city.cache[yaw])return;
+
+        loadImage(
+          imageUrl(city.panoId,yaw)
+        ).then(image=>{
+          if(image){
+            city.cache[yaw]=image;
+          }
+        });
+      });
+    }
+
+    function animatePostTurn(postIndex,delta,direction){
+      const post=posts[postIndex];
+
+      const article=
+        document.querySelector(
+          `[data-post-index="${postIndex}"]`
+        );
+
+      if(
+        !post ||
+        !article ||
+        post.cities.some(city=>
+          !city.panoId ||
+          !city.cache ||
+          !city.cache[cityAngle(city,delta)]
+        )
+      ){
+        return false;
+      }
+
+      const current=
+        article.querySelector('.collage-current');
+
+      const incoming=
+        article.querySelector(
+          direction<0
+            ? '.collage-next'
+            : '.collage-prev'
+        );
+
+      current.style.transition='transform .2s ease';
+      incoming.style.transition='transform .2s ease';
+
+      current.style.transform=
+        `translateX(${direction*100}%)`;
+
+      incoming.style.transform='translateX(0)';
+
+      setTimeout(()=>{
+        rotatePost(postIndex,delta);
+      },220);
+
+      return true;
+    }
+
+    function findPanoramaAttempt(city){
+      return new Promise(resolve=>{
+        if(
+          typeof google==='undefined' ||
+          !google.maps ||
+          !google.maps.StreetViewService
+        ){
+          resolve(null);
+          return;
+        }
+
+        const service=new google.maps.StreetViewService();
+
+        const point={
+          lat:
+            city.bounds.minLat+
+            Math.random()*(city.bounds.maxLat-city.bounds.minLat),
+
+          lng:
+            city.bounds.minLng+
+            Math.random()*(city.bounds.maxLng-city.bounds.minLng)
+        };
+
+        service.getPanorama(
+          {
+            location:point,
+            radius:350
+          },
+          function(data,status){
+            if(
+              status==='OK' &&
+              data.location &&
+              data.location.pano &&
+              data.location.latLng
+            ){
+              resolve({
+                pano:data.location.pano,
+                lat:data.location.latLng.lat(),
+                lng:data.location.latLng.lng()
+              });
+
+              return;
+            }
+
+            resolve(null);
+          }
+        );
+      });
+    }
+
+    function checkThumbnail(panoId,yaw){
+      return new Promise(resolve=>{
+        const image=new Image();
+
+        image.onload=()=>resolve(true);
+        image.onerror=()=>resolve(false);
+        image.src=imageUrl(panoId,yaw);
+      });
+    }
+
+    async function resolveCityPanorama(city){
+      const angles=[-60,0,60];
+
+      for(
+        let attempt=0;
+        attempt<MAX_PANORAMA_ATTEMPTS;
+        attempt+=1
+      ){
+        const result=await findPanoramaAttempt(city);
+
+        if(!result)continue;
+
+        const checks=await Promise.all(
+          angles.map(delta=>
+            checkThumbnail(
+              result.pano,
+              (178+delta+360)%360
+            )
+          )
+        );
+
+        if(!checks.every(Boolean))continue;
+
+        const loaded=await Promise.all(
+          angles.map(delta=>
+            loadImage(
+              imageUrl(
+                result.pano,
+                (178+delta+360)%360
+              )
+            )
+          )
+        );
+
+        if(!loaded.every(Boolean))continue;
+
+        return {
+          result,
+          loaded,
+          angles
+        };
+      }
+
+      return null;
+    }
+
+    async function loadPost(index){
+      const post=posts[index];
+
+      if(
+        !post ||
+        post.loading ||
+        post.loaded
+      )return;
+
+      post.loading=true;
+      post.failed=false;
+      post.failedCities=[];
+
+      updatePostElement(post,index);
+
+      const resolved=await Promise.all(
+        post.cities.map(city=>
+          resolveCityPanorama(city)
+        )
+      );
+
+      resolved.forEach((entry,i)=>{
+        const city=post.cities[i];
+
+        if(!entry){
+          city.panoId='';
+          city.cache={};
+          post.failedCities.push(city.city);
+          return;
+        }
+
+        city.panoId=entry.result.pano;
+        city.lat=entry.result.lat;
+        city.lng=entry.result.lng;
+        city.yaw=178;
+        city.cache={};
+
+        entry.angles.forEach((delta,j)=>{
+          city.cache[(178+delta+360)%360]=entry.loaded[j];
+        });
+      });
+
+      post.failed=post.failedCities.length>0;
+      post.loading=false;
+      post.loaded=true;
+
+      updatePostElement(post,index);
+
+      if(index===0&&!post.failed){
+        setTimeout(()=>{
+          playSwipeHint(0);
+        },500);
+      }
+    }
+
+    function replaceFailedCities(index){
+      const post=posts[index];
+
+      if(
+        !post ||
+        post.loading ||
+        !post.failedCities.length ||
+        post.replacements>=MAX_PANORAMA_ATTEMPTS
+      )return;
+
+      post.replacements=(post.replacements||0)+1;
+
+      post.failedCities.forEach(name=>{
+        const city=
+          post.cities.find(item=>item.city===name);
+
+        if(city){
+          const pool=
+            Object.values(cityCatalog)
+              .flat()
+              .filter(item=>
+                item.country===city.country &&
+                item.city!==name
+              );
+
+          const replacement=
+            pool[Math.floor(Math.random()*pool.length)];
+
+          if(replacement){
+            Object.assign(
+              city,
+              replacement,
+              {
+                panoId:'',
+                cache:{},
+                yaw:178
+              }
+            );
+          }
+        }
+      });
+
+      post.loaded=false;
+      loadPost(index);
+    }
+
+    function retryPost(index){
+      replaceFailedCities(index);
+    }
+
+    function ensurePost(index){
+      if(posts[index]){
+        loadPost(index);
+        return;
+      }
+
+      const post=createPost();
+
+      posts.push(post);
+      appendPost(post,index);
+      loadPost(index);
+    }
+
+    async function loadInitialPosts(){
+      for(
+        let index=0;
+        index<=FEED_AHEAD;
+        index+=1
+      ){
+        await loadPost(index);
+      }
+    }
+
+    function startFeed(){
+      posts=[];
+      point=0;
+
+      $('feed').scrollTop=0;
+      $('feedList').replaceChildren();
+
+      for(
+        let index=0;
+        index<=FEED_AHEAD;
+        index+=1
+      ){
+        const post=createPost();
+
+        posts.push(post);
+        appendPost(post,index);
+      }
+
+      updateFeedMeta();
+      loadInitialPosts();
+    }
+
+    function nextPoint(){
+      ensurePost(posts.length);
+    }
+
+    function swapCities(){
+      swapped=!swapped;
+      startFeed();
+      toast('Города поменяны местами');
+    }
+
+    function setRadius(value){
+      radius=Number(value);
+
+      $('radiusValue').textContent=
+        `${radius} км`;
+
+      $('radius').style.background=
+        `linear-gradient(90deg,#91aa58 0 ${((radius-1)/9)*100}%,#343434 ${((radius-1)/9)*100}%)`;
+
+      saveSettings();
+    }
+
+    function toast(text){
+      const el=$('toast');
+
+      el.textContent=text;
+      el.classList.add('visible');
+
+      clearTimeout(window.toastTimer);
+
+      window.toastTimer=setTimeout(()=>{
+        el.classList.remove('visible');
+      },1900);
+    }
+
     let scrollAppendPending=false;
-    $('feed').addEventListener('scroll',()=>{ if(scrollAppendPending)return; if($('feed').scrollTop+$('feed').clientHeight>=$('feed').scrollHeight-260){ scrollAppendPending=true; requestAnimationFrame(()=>{ scrollAppendPending=false; if($('feed').scrollTop+$('feed').clientHeight>=$('feed').scrollHeight-260)ensurePost(posts.length); }); } },{passive:true});
-    let panTouch=null, lastPanAt=0;
-    $('feed').addEventListener('touchstart',event=>{ const stage=event.target.closest('.canvas-stage'); if(!stage)return; swipeHintStopped=true; clearTimeout(swipeHintTimer); stage.classList.remove('swipe-hint-playing'); const post=stage.closest('.feed-post'); panTouch={x:event.changedTouches[0].screenX,y:event.changedTouches[0].screenY,post:Number(post.dataset.postIndex),stage:stage,axis:null}; },{passive:true});
-    function resetPanDrag(article){ const current=article.querySelector('.collage-current'); const previous=article.querySelector('.collage-prev'); const next=article.querySelector('.collage-next'); [current,previous,next].forEach(canvas=>canvas.style.transition='transform .18s ease'); current.style.transform='translateX(0)'; previous.style.transform='translateX(-100%)'; next.style.transform='translateX(100%)'; }
-    $('feed').addEventListener('touchmove',event=>{ if(!panTouch)return; const dx=event.changedTouches[0].screenX-panTouch.x; const dy=event.changedTouches[0].screenY-panTouch.y; if(!panTouch.axis&&Math.hypot(dx,dy)>12)panTouch.axis=Math.abs(dx)>Math.abs(dy)?'x':'y'; if(panTouch.axis!=='x')return; const article=document.querySelector(`[data-post-index="${panTouch.post}"]`); const direction=dx<0?-1:1; const current=article.querySelector('.collage-current'); const incoming=article.querySelector(direction<0?'.collage-next':'.collage-prev'); current.style.transition='none'; incoming.style.transition='none'; current.style.transform=`translateX(${dx}px)`; incoming.style.transform=direction<0?`translateX(calc(100% + ${dx}px))`:`translateX(calc(-100% + ${dx}px))`; },{passive:true});
-    $('feed').addEventListener('touchend',event=>{ if(!panTouch)return; const active=panTouch; const dx=event.changedTouches[0].screenX-active.x; const dy=event.changedTouches[0].screenY-active.y; const article=document.querySelector(`[data-post-index="${active.post}"]`); if(active.axis==='x'&&Math.abs(dx)>35&&Math.abs(dx)>Math.abs(dy)){ const direction=dx<0?-1:1; lastPanAt=Date.now(); if(!animatePostTurn(active.post,dx<0?60:-60,direction))resetPanDrag(article); } else if(active.axis==='x')resetPanDrag(article); panTouch=null; },{passive:true});
-    $('feed').addEventListener('click',event=>{ if(Date.now()-lastPanAt<300)return; const stage=event.target.closest('.canvas-stage'); if(!stage)return; const post=stage.closest('.feed-post'); const rect=stage.getBoundingClientRect(); const right=event.clientX>=rect.left+rect.width/2; animatePostTurn(Number(post.dataset.postIndex),right?60:-60,right?1:-1); });
+
+    $('feed').addEventListener('scroll',()=>{
+      if(scrollAppendPending)return;
+
+      if(
+        $('feed').scrollTop+
+        $('feed').clientHeight >=
+        $('feed').scrollHeight-260
+      ){
+        scrollAppendPending=true;
+
+        requestAnimationFrame(()=>{
+          scrollAppendPending=false;
+
+          if(
+            $('feed').scrollTop+
+            $('feed').clientHeight >=
+            $('feed').scrollHeight-260
+          ){
+            ensurePost(posts.length);
+          }
+        });
+      }
+    },{passive:true});
+
+    let panTouch=null;
+    let lastPanAt=0;
+
+    $('feed').addEventListener('touchstart',event=>{
+      const stage=event.target.closest('.canvas-stage');
+
+      if(!stage)return;
+
+      swipeHintStopped=true;
+      clearTimeout(swipeHintTimer);
+      stage.classList.remove('swipe-hint-playing');
+
+      const post=stage.closest('.feed-post');
+
+      panTouch={
+        x:event.changedTouches[0].screenX,
+        y:event.changedTouches[0].screenY,
+        post:Number(post.dataset.postIndex),
+        stage:stage,
+        axis:null
+      };
+    },{passive:true});
+
+    function resetPanDrag(article){
+      const current=
+        article.querySelector('.collage-current');
+
+      const previous=
+        article.querySelector('.collage-prev');
+
+      const next=
+        article.querySelector('.collage-next');
+
+      [current,previous,next].forEach(canvas=>{
+        canvas.style.transition='transform .18s ease';
+      });
+
+      current.style.transform='translateX(0)';
+      previous.style.transform='translateX(-100%)';
+      next.style.transform='translateX(100%)';
+    }
+
+    $('feed').addEventListener('touchmove',event=>{
+      if(!panTouch)return;
+
+      const dx=
+        event.changedTouches[0].screenX-panTouch.x;
+
+      const dy=
+        event.changedTouches[0].screenY-panTouch.y;
+
+      if(
+        !panTouch.axis &&
+        Math.hypot(dx,dy)>12
+      ){
+        panTouch.axis=
+          Math.abs(dx)>Math.abs(dy)
+            ? 'x'
+            : 'y';
+      }
+
+      if(panTouch.axis!=='x')return;
+
+      const article=
+        document.querySelector(
+          `[data-post-index="${panTouch.post}"]`
+        );
+
+      const direction=dx<0?-1:1;
+
+      const current=
+        article.querySelector('.collage-current');
+
+      const incoming=
+        article.querySelector(
+          direction<0
+            ? '.collage-next'
+            : '.collage-prev'
+        );
+
+      current.style.transition='none';
+      incoming.style.transition='none';
+
+      current.style.transform=
+        `translateX(${dx}px)`;
+
+      incoming.style.transform=
+        direction<0
+          ? `translateX(calc(100% + ${dx}px))`
+          : `translateX(calc(-100% + ${dx}px))`;
+    },{passive:true});
+
+    $('feed').addEventListener('touchend',event=>{
+      if(!panTouch)return;
+
+      const active=panTouch;
+
+      const dx=
+        event.changedTouches[0].screenX-active.x;
+
+      const dy=
+        event.changedTouches[0].screenY-active.y;
+
+      const article=
+        document.querySelector(
+          `[data-post-index="${active.post}"]`
+        );
+
+      if(
+        active.axis==='x' &&
+        Math.abs(dx)>35 &&
+        Math.abs(dx)>Math.abs(dy)
+      ){
+        const direction=dx<0?-1:1;
+
+        lastPanAt=Date.now();
+
+        if(
+          !animatePostTurn(
+            active.post,
+            dx<0?60:-60,
+            direction
+          )
+        ){
+          resetPanDrag(article);
+        }
+      }else if(active.axis==='x'){
+        resetPanDrag(article);
+      }
+
+      panTouch=null;
+    },{passive:true});
+
+    $('feed').addEventListener('click',event=>{
+      if(Date.now()-lastPanAt<300)return;
+
+      const stage=
+        event.target.closest('.canvas-stage');
+
+      if(!stage)return;
+
+      const post=
+        stage.closest('.feed-post');
+
+      const rect=
+        stage.getBoundingClientRect();
+
+      const right=
+        event.clientX>=rect.left+rect.width/2;
+
+      animatePostTurn(
+        Number(post.dataset.postIndex),
+        right?60:-60,
+        right?1:-1
+      );
+    });
+
     let sheetDragStartY=0;
-    $('sheetGrab').addEventListener('touchstart',event=>{ sheetDragStartY=event.changedTouches[0].screenY; },{passive:true});
-    $('sheetGrab').addEventListener('touchend',event=>{ if(event.changedTouches[0].screenY-sheetDragStartY>28)closeSettings(); },{passive:true});
-    document.addEventListener('keydown',event=>{ if(event.key==='Escape'&&$('locationCard').classList.contains('open'))closeSettings(); });
-    restoreSettings(); restoreCityCatalog(); renderPopulationFilter(); const initialPair=selectedCountry==='NL'?defaultCityPair():applyMatchedPair(selectedCountry); renderCountryList(); showCitySuggestion(initialPair); setRadius(radius); startFeed(); loadCities();
+
+    $('sheetGrab').addEventListener('touchstart',event=>{
+      sheetDragStartY=
+        event.changedTouches[0].screenY;
+    },{passive:true});
+
+    $('sheetGrab').addEventListener('touchend',event=>{
+      if(
+        event.changedTouches[0].screenY-
+        sheetDragStartY>28
+      ){
+        closeSettings();
+      }
+    },{passive:true});
+
+    document.addEventListener('keydown',event=>{
+      if(
+        event.key==='Escape' &&
+        $('locationCard').classList.contains('open')
+      ){
+        closeSettings();
+      }
+    });
+
+    restoreSettings();
+    restoreCityCatalog();
+    renderPopulationFilter();
+
+    /*
+     * Query params имеют приоритет над localStorage/default pair.
+     */
+    const restoredFromQuery=restoreCitiesFromQuery();
+
+    const initialPair=restoredFromQuery
+      ? {
+          russian:scenes[0].a,
+          foreign:scenes[0].b,
+          candidates:matchingCandidates(
+            selectedCountry,
+            scenes[0].a
+          )
+        }
+      : selectedCountry==='NL'
+        ? defaultCityPair()
+        : applyMatchedPair(selectedCountry);
+
+    renderCountryList();
+    showCitySuggestion(initialPair);
+    setRadius(radius);
+    startFeed();
+    loadCities();
   </script>
 </body>
 </html>
