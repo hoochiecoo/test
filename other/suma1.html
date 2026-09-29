@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Subotica Drive · Real City Map</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="preconnect" href="https://tile.openstreetmap.org" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynH1zF65L57vAmG5Vpjt98AF9g3s=" crossorigin="" />
+  <style>
+    :root{
+      --cream:#f3ead8; --ink:#241c14; --teal:#1f7a72; --teal-dark:#14352e;
+      --gold:#d9a53f; --red:#c4572e; --glass:rgba(20,53,46,.94); --line:#f2c14e;
+    }
+    *{box-sizing:border-box}
+    html,body,#map{height:100%;width:100%;margin:0}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:#15231f;color:var(--cream);overflow:hidden}
+    #map{position:fixed;inset:0;background:#d7d2c3}
+    .leaflet-container{font:13px/1.35 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    .leaflet-control-attribution{font-size:10px!important;background:rgba(255,255,255,.78)!important}
+    .leaflet-control-zoom a{background:var(--cream)!important;color:var(--teal-dark)!important;border-color:rgba(20,53,46,.25)!important}
+
+    .brand{
+      position:fixed;z-index:800;top:16px;left:58px;max-width:min(520px,calc(100vw - 80px));
+      background:var(--glass);backdrop-filter:blur(14px);border:1px solid rgba(217,165,63,.68);
+      box-shadow:0 12px 35px rgba(0,0,0,.22);border-radius:16px;padding:12px 14px 11px;
+      pointer-events:none
+    }
+    .eyebrow{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#d8c79e;font-weight:800}
+    .brand h1{margin:2px 0 0;font-size:22px;line-height:1;letter-spacing:.04em;font-weight:850}
+    .brand p{margin:6px 0 0;font-size:12px;color:#d7dfd9;line-height:1.35}
+
+    .panel{
+      position:fixed;z-index:800;top:112px;left:16px;width:300px;max-height:calc(100vh - 142px);overflow:auto;
+      background:var(--glass);backdrop-filter:blur(14px);border:1px solid rgba(217,165,63,.58);
+      box-shadow:0 12px 35px rgba(0,0,0,.24);border-radius:16px;padding:14px
+    }
+    .panel h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;color:#ead79f}
+    .section{padding:11px 0;border-top:1px solid rgba(243,234,216,.12)}
+    .section:first-of-type{border-top:0;padding-top:0}
+    .row{display:flex;gap:8px;align-items:center;margin:7px 0}
+    .row label{font-size:12px;line-height:1.25;flex:1;color:#e7eee9}
+    .toggle{width:18px;height:18px;accent-color:var(--gold)}
+    select,button{
+      border:1px solid rgba(217,165,63,.55);background:#183f37;color:var(--cream);border-radius:9px;
+      padding:8px 9px;font:inherit;outline:none
+    }
+    select{width:100%}
+    button{cursor:pointer;font-weight:750;transition:.15s ease}
+    button:hover{background:#205349;transform:translateY(-1px)}
+    button:active{transform:translateY(0)}
+    button.primary{background:var(--cream);color:var(--teal-dark);border-color:var(--gold)}
+    button.primary:hover{background:#fff8e8}
+    .btns{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .status{font-size:11px;line-height:1.4;color:#c8d3cc;background:rgba(0,0,0,.16);border-radius:10px;padding:8px 9px;margin-top:8px}
+    .status strong{color:#fff2c8}
+    .legend{display:grid;grid-template-columns:14px 1fr;gap:6px 8px;align-items:center;font-size:11px;color:#d6e0da}
+    .swatch{height:4px;border-radius:4px;background:var(--gold)}
+    .swatch.stop{height:10px;width:10px;border-radius:50%;background:#1f7a72;border:2px solid #fff}
+    .swatch.lane{background:#d83c66}
+    .small{font-size:10px;color:#aebeb5;line-height:1.45}
+
+    .coords{
+      position:fixed;z-index:800;right:14px;bottom:28px;background:rgba(20,53,46,.9);color:#f2ead8;
+      border:1px solid rgba(217,165,63,.5);border-radius:10px;padding:7px 9px;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+      box-shadow:0 8px 22px rgba(0,0,0,.16);pointer-events:none
+    }
+    .source-note{
+      position:fixed;z-index:800;left:50%;bottom:26px;transform:translateX(-50%);max-width:min(680px,calc(100vw - 330px));
+      background:rgba(20,53,46,.88);color:#dce6df;border:1px solid rgba(217,165,63,.42);border-radius:999px;
+      padding:7px 13px;font-size:10px;text-align:center;backdrop-filter:blur(10px);pointer-events:none
+    }
+    .route-label{background:var(--teal-dark);border:2px solid #fff;color:#fff;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.24);font-weight:900;font-size:11px;padding:1px 7px;white-space:nowrap}
+    .stop-dot{width:11px;height:11px;border-radius:50%;background:var(--teal);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+    .landmark-pin{width:22px;height:22px;border-radius:50% 50% 50% 0;background:var(--gold);border:2px solid #fff;transform:rotate(-45deg);box-shadow:0 3px 9px rgba(0,0,0,.28)}
+    .landmark-pin:after{content:"";position:absolute;width:6px;height:6px;background:var(--teal-dark);border-radius:50%;left:6px;top:6px}
+    .bus-icon{font-size:17px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+
+    .busy::after{content:"";display:inline-block;width:8px;height:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;margin-left:6px;vertical-align:-1px;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media(max-width:760px){
+      .brand{left:52px;right:10px;max-width:none;top:10px;padding:10px 12px}.brand h1{font-size:18px}.brand p{display:none}
+      .panel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:44vh;padding:11px;border-radius:14px}
+      .panel h2{margin-bottom:6px}.section{padding:8px 0}.source-note{display:none}.coords{display:none}
+      .leaflet-control-attribution{max-width:55vw;white-space:normal!important}
+    }
+  </style>
+</head>
+<body>
+  <div id="map" aria-label="Real map of Subotica"></div>
+
+  <div class="brand">
+    <div class="eyebrow">46°06′ N · 19°40′ E · real street network</div>
+    <h1>SUBOTICA · SZABADKA</h1>
+    <p>Leaflet + OpenStreetMap, with public-transport routes/stops and OSM-tagged bus-lane infrastructure.</p>
+  </div>
+
+  <aside class="panel">
+    <h2>Transit / saobraćaj</h2>
+
+    <div class="section">
+      <div class="row"><label for="showRoutes">Bus lines / autobuske linije</label><input id="showRoutes" class="toggle" type="checkbox" checked></div>
+      <div class="row"><label for="showStops">Bus stops / stajališta</label><input id="showStops" class="toggle" type="checkbox" checked></div>
+      <div class="row"><label for="showLanes">OSM bus-lane tags</label><input id="showLanes" class="toggle" type="checkbox" checked></div>
+      <div class="row"><label for="showLandmarks">Landmarks</label><input id="showLandmarks" class="toggle" type="checkbox" checked></div>
+    </div>
+
+    <div class="section">
+      <label class="small" for="lineFilter">Filter one transit line</label>
+      <select id="lineFilter"><option value="all">All available lines</option></select>
+      <div class="btns" style="margin-top:8px">
+        <button class="primary" id="fitBtn">Fit network</button>
+        <button id="reloadBtn">Reload data</button>
+      </div>
+      <div id="status" class="status"><strong>Loading…</strong> official GTFS + OpenStreetMap transit data.</div>
+    </div>
+
+    <div class="section">
+      <div class="legend">
+        <span class="swatch"></span><span>bus route geometry</span>
+        <span class="swatch stop"></span><span>bus stop / platform</span>
+        <span class="swatch lane"></span><span>dedicated / tagged bus-lane way</span>
+      </div>
+    </div>
+
+    <div class="section small">
+      Base map: OpenStreetMap. Transit geometry is attempted first from the City of Subotica GTFS GeoJSON, then OpenStreetMap/Overpass as fallback. “Bus lanes” only shows ways that are explicitly tagged in OSM; it does not invent lanes from bus routes.
+    </div>
+  </aside>
+
+  <div id="coords" class="coords">46.1000, 19.6670 · EPSG:3857</div>
+  <div class="source-note">Real map tiles © OpenStreetMap contributors · public transport: Subotica GTFS / OSM</div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+  (() => {
+    'use strict';
+
+    const CENTER = [46.10037, 19.66759];
+    const SUBOTICA_BOUNDS = L.latLngBounds([45.995, 19.50], [46.205, 19.96]);
+    const GTFS_ROUTES = 'https://data.gov.rs/s/resources/gtfs-subotitsa/20220207-031116/subotica-gtfs-route-lin.geojson';
+    const GTFS_STOPS  = 'https://data.gov.rs/s/resources/gtfs-subotitsa/20220207-031138/subotica-gtfs-stops-tac.geojson';
+    const OVERPASS = 'https://overpass-api.de/api/interpreter';
+
+    const map = L.map('map', {
+      center: CENTER,
+      zoom: 14,
+      minZoom: 10,
+      maxZoom: 19,
+      zoomControl: true,
+      preferCanvas: true
+    });
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    L.control.scale({imperial:false, position:'bottomright'}).addTo(map);
+
+    const paneRoute = map.createPane('routesPane'); paneRoute.style.zIndex = 410;
+    const paneLane = map.createPane('lanesPane'); paneLane.style.zIndex = 420;
+    const paneStops = map.createPane('stopsPane'); paneStops.style.zIndex = 430;
+
+    const routeGroup = L.featureGroup().addTo(map);
+    const stopGroup = L.featureGroup().addTo(map);
+    const laneGroup = L.featureGroup().addTo(map);
+    const landmarkGroup = L.featureGroup().addTo(map);
+
+    const showRoutes = document.getElementById('showRoutes');
+    const showStops = document.getElementById('showStops');
+    const showLanes = document.getElementById('showLanes');
+    const showLandmarks = document.getElementById('showLandmarks');
+    const lineFilter = document.getElementById('lineFilter');
+    const statusEl = document.getElementById('status');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const fitBtn = document.getElementById('fitBtn');
+    const coordsEl = document.getElementById('coords');
+
+    let routeFeatures = [];
+    let routeSource = '—';
+    let stopSource = '—';
+    let laneCount = 0;
+    let stopCount = 0;
+
+    const palette = ['#d9a53f','#1f7a72','#c4572e','#6b5bd2','#3a86a8','#9b5f96','#71933b','#db7a31','#3d6f50','#8b6c45','#c94d74','#5775b9'];
+    const colorFor = value => {
+      const s = String(value || 'bus');
+      let h = 0; for (let i=0;i<s.length;i++) h = ((h<<5)-h+s.charCodeAt(i))|0;
+      return palette[Math.abs(h) % palette.length];
+    };
+
+    function setStatus(html){ statusEl.innerHTML = html; }
+    function clean(v){ return String(v ?? '').trim(); }
+    function routeRef(props={}){
+      const keys = ['route_short_name','route_id','ref','line','linija','name','shape_id'];
+      for (const k of keys){ if (props[k] != null && clean(props[k])) return clean(props[k]); }
+      return 'bus';
+    }
+    function routeName(props={}){
+      return clean(props.route_long_name || props.name || props.trip_headsign || props.shape_id || routeRef(props));
+    }
+    function normalizeLine(ref){
+      const m = clean(ref).match(/(?:Linija[_\s-]*)?([0-9]+[A-Za-z]?)/i);
+      return m ? m[1].toUpperCase() : clean(ref).toUpperCase();
+    }
+
+    function popupForRoute(ref, name, source){
+      return `<b>Line ${escapeHtml(ref)}</b><br>${escapeHtml(name)}<br><small>${escapeHtml(source)}</small>`;
+    }
+    function escapeHtml(s){
+      return String(s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    }
+
+    function addGeoJsonRoutes(geojson, source){
+      const feats = Array.isArray(geojson?.features) ? geojson.features : [];
+      const added = [];
+      for (const f of feats){
+        const g = f?.geometry; if (!g) continue;
+        const props = f.properties || {};
+        const refRaw = routeRef(props);
+        const ref = normalizeLine(refRaw);
+        const name = routeName(props);
+        const color = /^#[0-9A-F]{6}$/i.test(clean(props.route_color)) ? clean(props.route_color) : colorFor(ref);
+        const style = {pane:'routesPane', color, weight:5, opacity:.78, lineCap:'round', lineJoin:'round'};
+        let layer;
+        try { layer = L.geoJSON(f, {style}); } catch(e) { continue; }
+        layer.eachLayer(l => {
+          l._suboticaLine = ref;
+          l.bindPopup(popupForRoute(ref, name, source));
+        });
+        added.push({ref, name, layer, source});
+        layer.addTo(routeGroup);
+      }
+      routeFeatures.push(...added);
+      return added.length;
+    }
+
+    function addGeoJsonStops(geojson, source){
+      const feats = Array.isArray(geojson?.features) ? geojson.features : [];
+      let n=0;
+      for (const f of feats){
+        if (f?.geometry?.type !== 'Point') continue;
+        const [lng,lat] = f.geometry.coordinates || [];
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+        const p=f.properties||{};
+        const name=clean(p.stop_name || p.name || p.stop_id || 'Bus stop');
+        const icon=L.divIcon({className:'',html:'<div class="stop-dot"></div>',iconSize:[11,11],iconAnchor:[5.5,5.5]});
+        L.marker([lat,lng],{icon,pane:'stopsPane'}).bindPopup(`<b>${escapeHtml(name)}</b><br><small>${escapeHtml(source)}</small>`).addTo(stopGroup);
+        n++;
+      }
+      stopCount += n;
+      return n;
+    }
+
+    async function fetchJson(url, options={}){
+      const r=await fetch(url,{cache:'no-store',...options});
+      if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+      return r.json();
+    }
+
+    async function loadOfficialGtfs(){
+      let routeN=0, stopN=0;
+      try{
+        const [routes,stops] = await Promise.all([fetchJson(GTFS_ROUTES),fetchJson(GTFS_STOPS)]);
+        routeN=addGeoJsonRoutes(routes,'City of Subotica GTFS');
+        stopN=addGeoJsonStops(stops,'City of Subotica GTFS');
+        if(routeN) routeSource='official GTFS';
+        if(stopN) stopSource='official GTFS';
+      }catch(err){
+        console.warn('Official GTFS GeoJSON unavailable in this browser:',err);
+      }
+      return {routeN,stopN};
+    }
+
+    function routeRelationToLatLngs(rel){
+      const lines=[];
+      for(const m of rel.members||[]){
+        if(m.type!=='way' || !Array.isArray(m.geometry) || m.geometry.length<2) continue;
+        const pts=m.geometry.map(p=>[p.lat,p.lon]).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));
+        if(pts.length>1) lines.push(pts);
+      }
+      return lines;
+    }
+
+    async function loadOsmBusRoutes(){
+      const q=`[out:json][timeout:35];relation(45.995,19.50,46.205,19.96)["route"="bus"];out tags geom;`;
+      const data=await fetchJson(OVERPASS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q)});
+      let n=0;
+      for(const rel of data.elements||[]){
+        const lines=routeRelationToLatLngs(rel); if(!lines.length) continue;
+        const tags=rel.tags||{};
+        const ref=normalizeLine(tags.ref || tags.name || 'bus');
+        const name=tags.name || `${tags.from||''} → ${tags.to||''}` || `Bus ${ref}`;
+        const color=/^#[0-9A-F]{6}$/i.test(tags.colour||'')?tags.colour:colorFor(ref);
+        const layer=L.polyline(lines,{pane:'routesPane',color,weight:5,opacity:.78,lineCap:'round',lineJoin:'round'});
+        layer._suboticaLine=ref;
+        layer.bindPopup(popupForRoute(ref,name,'OpenStreetMap route relation'));
+        layer.addTo(routeGroup);
+        routeFeatures.push({ref,name,layer,source:'OSM'}); n++;
+      }
+      if(n) routeSource='OpenStreetMap';
+      return n;
+    }
+
+    async function loadOsmStops(){
+      const q=`[out:json][timeout:30];(nwr(45.995,19.50,46.205,19.96)["highway"="bus_stop"];nwr(45.995,19.50,46.205,19.96)["public_transport"="platform"]["bus"="yes"];);out center tags;`;
+      const data=await fetchJson(OVERPASS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q)});
+      const seen=new Set(); let n=0;
+      for(const el of data.elements||[]){
+        const lat=el.lat ?? el.center?.lat, lng=el.lon ?? el.center?.lon;
+        if(!Number.isFinite(lat)||!Number.isFinite(lng))continue;
+        const key=`${lat.toFixed(5)},${lng.toFixed(5)}`; if(seen.has(key))continue; seen.add(key);
+        const name=el.tags?.name || el.tags?.ref || 'Bus stop';
+        const icon=L.divIcon({className:'',html:'<div class="stop-dot"></div>',iconSize:[11,11],iconAnchor:[5.5,5.5]});
+        L.marker([lat,lng],{icon,pane:'stopsPane'}).bindPopup(`<b>${escapeHtml(name)}</b><br><small>OpenStreetMap</small>`).addTo(stopGroup); n++;
+      }
+      stopCount += n; if(n) stopSource='OpenStreetMap'; return n;
+    }
+
+    async function loadBusLanes(){
+      laneGroup.clearLayers(); laneCount=0;
+      const q=`[out:json][timeout:30];(way(45.995,19.50,46.205,19.96)["highway"="busway"];way(45.995,19.50,46.205,19.96)["busway"];way(45.995,19.50,46.205,19.96)["bus:lanes"];way(45.995,19.50,46.205,19.96)["psv:lanes"];);out tags geom;`;
+      try{
+        const data=await fetchJson(OVERPASS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q)});
+        for(const w of data.elements||[]){
+          if(!Array.isArray(w.geometry)||w.geometry.length<2)continue;
+          const pts=w.geometry.map(p=>[p.lat,p.lon]);
+          const tags=w.tags||{};
+          L.polyline(pts,{pane:'lanesPane',color:'#d83c66',weight:8,opacity:.84,dashArray:'10 6'})
+            .bindPopup(`<b>OSM bus-lane infrastructure</b><br>${escapeHtml(tags.name||'unnamed way')}<br><small>${escapeHtml(JSON.stringify(tags))}</small>`)
+            .addTo(laneGroup); laneCount++;
+        }
+      }catch(err){ console.warn('Bus-lane Overpass query failed:',err); }
+      return laneCount;
+    }
+
+    function addLandmarks(){
+      landmarkGroup.clearLayers();
+      const landmarks=[
+        ['Gradska kuća / City Hall',46.10029,19.66762],
+        ['Sinagoga / Synagogue',46.09910,19.66270],
+        ['Železnička stanica / Railway station',46.10520,19.66570],
+        ['Autobuska stanica / Bus station',46.09652,19.65799],
+        ['Palić lake',46.10285,19.75895]
+      ];
+      const icon=L.divIcon({className:'',html:'<div class="landmark-pin"></div>',iconSize:[22,22],iconAnchor:[11,22]});
+      for(const [name,lat,lng] of landmarks){ L.marker([lat,lng],{icon}).bindPopup(`<b>${escapeHtml(name)}</b><br><small>${lat.toFixed(5)}, ${lng.toFixed(5)}</small>`).addTo(landmarkGroup); }
+    }
+
+    function rebuildLineFilter(){
+      const previous=lineFilter.value;
+      const refs=[...new Set(routeFeatures.map(x=>x.ref).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+      lineFilter.innerHTML='<option value="all">All available lines</option>'+refs.map(r=>`<option value="${escapeHtml(r)}">Line ${escapeHtml(r)}</option>`).join('');
+      lineFilter.value=refs.includes(previous)?previous:'all';
+    }
+
+    function applyLineFilter(){
+      const wanted=lineFilter.value;
+      for(const rf of routeFeatures){
+        const shouldShow = wanted==='all' || rf.ref===wanted;
+        if(showRoutes.checked && shouldShow){ if(!routeGroup.hasLayer(rf.layer)) routeGroup.addLayer(rf.layer); }
+        else { if(routeGroup.hasLayer(rf.layer)) routeGroup.removeLayer(rf.layer); }
+      }
+      if(wanted!=='all'){
+        const chosen=routeFeatures.filter(r=>r.ref===wanted).map(r=>r.layer);
+        if(chosen.length){ const fg=L.featureGroup(chosen); if(fg.getBounds().isValid()) map.fitBounds(fg.getBounds(),{padding:[35,35],maxZoom:15}); }
+      }
+    }
+
+    function syncVisibility(){
+      if(showRoutes.checked){ if(!map.hasLayer(routeGroup)) routeGroup.addTo(map); } else if(map.hasLayer(routeGroup)) map.removeLayer(routeGroup);
+      if(showStops.checked){ if(!map.hasLayer(stopGroup)) stopGroup.addTo(map); } else if(map.hasLayer(stopGroup)) map.removeLayer(stopGroup);
+      if(showLanes.checked){ if(!map.hasLayer(laneGroup)) laneGroup.addTo(map); } else if(map.hasLayer(laneGroup)) map.removeLayer(laneGroup);
+      if(showLandmarks.checked){ if(!map.hasLayer(landmarkGroup)) landmarkGroup.addTo(map); } else if(map.hasLayer(landmarkGroup)) map.removeLayer(landmarkGroup);
+      if(showRoutes.checked) applyLineFilter();
+    }
+
+    function updateStatus(){
+      const routeRefs=[...new Set(routeFeatures.map(r=>r.ref))].length;
+      const lanes = laneCount ? `${laneCount} OSM-tagged bus-lane ways` : 'no OSM-tagged dedicated bus-lane ways found in query';
+      setStatus(`<strong>${routeRefs} line refs</strong> · ${stopCount} stops · ${lanes}<br>Routes: ${escapeHtml(routeSource)} · stops: ${escapeHtml(stopSource)}`);
+    }
+
+    async function loadAll(){
+      reloadBtn.classList.add('busy'); reloadBtn.disabled=true;
+      setStatus('<strong>Loading…</strong> real transit geometry and stops.');
+      routeGroup.clearLayers(); stopGroup.clearLayers(); laneGroup.clearLayers(); routeFeatures=[]; stopCount=0; laneCount=0; routeSource='—'; stopSource='—';
+      try{
+        const official=await loadOfficialGtfs();
+        if(!official.routeN){ try{await loadOsmBusRoutes();}catch(e){console.warn(e);} }
+        if(!official.stopN){ try{await loadOsmStops();}catch(e){console.warn(e);} }
+        await loadBusLanes();
+        rebuildLineFilter(); applyLineFilter(); syncVisibility(); updateStatus();
+      }finally{
+        reloadBtn.classList.remove('busy'); reloadBtn.disabled=false;
+      }
+    }
+
+    addLandmarks();
+    loadAll();
+
+    [showRoutes,showStops,showLanes,showLandmarks].forEach(el=>el.addEventListener('change',syncVisibility));
+    lineFilter.addEventListener('change',applyLineFilter);
+    reloadBtn.addEventListener('click',loadAll);
+    fitBtn.addEventListener('click',()=>{
+      const layers=[];
+      if(showRoutes.checked) routeGroup.eachLayer(l=>layers.push(l));
+      if(showStops.checked) stopGroup.eachLayer(l=>layers.push(l));
+      if(showLanes.checked) laneGroup.eachLayer(l=>layers.push(l));
+      const fg=L.featureGroup(layers);
+      if(layers.length && fg.getBounds().isValid()) map.fitBounds(fg.getBounds(),{padding:[40,40],maxZoom:14});
+      else map.fitBounds(SUBOTICA_BOUNDS,{padding:[20,20]});
+    });
+
+    map.on('mousemove',e=>{coordsEl.textContent=`${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)} · EPSG:3857`;});
+    map.on('click',e=>{coordsEl.textContent=`${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)} · copied view point`;});
+  })();
+  </script>
+</body>
+</html>
