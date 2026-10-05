@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quick Image Saver</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #111;
+      color: #eee;
+    }
+    #dropzone {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      box-sizing: border-box;
+      border: 4px dashed #555;
+      transition: 0.15s ease;
+      user-select: none;
+    }
+    #dropzone.active {
+      border-color: #fff;
+      background: #1c1c1c;
+    }
+    .box {
+      padding: 32px;
+    }
+    .big {
+      font-size: clamp(28px, 5vw, 64px);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .small {
+      font-size: clamp(14px, 2vw, 22px);
+      opacity: 0.65;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 16px;
+      opacity: 0.8;
+      min-height: 1.4em;
+    }
+  </style>
+</head>
+<body>
+  <div id="dropzone">
+    <div class="box">
+      <div class="big">Ctrl+V или перетащите картинку</div>
+      <div class="small">Файл сразу отправится в загрузки браузера</div>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const status = document.getElementById('status');
+
+    function extFromType(type) {
+      const map = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+        'image/bmp': 'bmp'
+      };
+      return map[type] || 'png';
+    }
+
+    function makeName(type) {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const ms = String(d.getMilliseconds()).padStart(3, '0');
+      return `screenshot_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}-${ms}.${extFromType(type)}`;
+    }
+
+    function saveBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      status.textContent = `Сохранено: ${filename}`;
+    }
+
+    function saveFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        status.textContent = 'Это не изображение.';
+        return;
+      }
+      saveBlob(file, makeName(file.type));
+    }
+
+    document.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items || [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            saveFile(file);
+            return;
+          }
+        }
+      }
+      status.textContent = 'В буфере обмена нет изображения.';
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      document.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('active');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      document.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('active');
+      });
+    });
+
+    document.addEventListener('drop', (e) => {
+      const files = [...(e.dataTransfer?.files || [])];
+      const image = files.find(f => f.type.startsWith('image/'));
+      if (image) saveFile(image);
+      else status.textContent = 'Перетащите файл изображения.';
+    });
+
+    window.focus();
+  </script>
+</body>
+</html>
