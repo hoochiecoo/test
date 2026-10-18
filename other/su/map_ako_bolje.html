@@ -1458,7 +1458,7 @@
       const descriptions=['Učitavamo panoramu i podešavanja…','Pravimo konkretnu bolju verziju ulice…','Čuvamo prepoznatljive zgrade i perspektivu…'];
       let i=0;
       $('loadingDescription').textContent=descriptions[i];
-      phaseTimer=setInterval(()=>{$('loadingDescription').textContent=descriptions[++i%descriptions.length];},6500);
+      phaseTimer=setInterval(()=>$('loadingDescription').textContent=descriptions[++i%descriptions.length],6500);
     }
   }
   async function generate(){
@@ -1796,13 +1796,13 @@
     showToast('Panorama je otvorena. Sada izaberite poboljšanje.');
   }
 
-  /*
-   * Community archive adapter. Default is deliberately empty: no invented visitors.
-   * Later Google Apps Script/Sheets/Drive can call:
-   *   window.WhatIfCommunity.setEntries([{id, lat, lng, panoId, yaw, pitch,
-   *     fov, scenarioId, title, author, createdAt, beforeUrl, afterUrl}]);
-   * One row = one frame, not just one geographic point. No API requests yet.
-   */
+ /*
+  * Community archive adapter. Default is deliberately empty: no invented visitors.
+  * Later Google Apps Script/Sheets/Drive can call:
+  *   window.WhatIfCommunity.setEntries([{id, lat, lng, panoId, yaw, pitch,
+  *     fov, scenarioId, title, author, createdAt, beforeUrl, afterUrl}]);
+  * One row = one frame, not just one geographic point. No API requests yet.
+  */
   const communitySample = [
     {id:'demo-1',lat:START.lat,lng:START.lng,panoId:START.pano,yaw:238,pitch:0,fov:40,scenarioId:'clear_sidewalks',title:'Trotoari bez parkiranih automobila',author:'Demo',isDemo:true},
     {id:'demo-2',lat:START.lat,lng:START.lng,panoId:START.pano,yaw:283,pitch:0,fov:58,scenarioId:'layered_greenery',title:'Više drveća i hladovine',author:'Demo',isDemo:true},
@@ -2639,6 +2639,43 @@
     ideaReveal=clamp(value,2,98);
     $('ideaStage').style.setProperty('--story-reveal',ideaReveal+'%');
   }
+
+  // Entrance comparison only: automatic curtain movement on the opening screen.
+  // Existing result and community comparison animations are unchanged.
+  let ideaAutoFrame=null, ideaAutoRunning=false;
+  function stopIdeaAutoReveal(){
+    ideaAutoRunning=false;
+    if(ideaAutoFrame!==null)cancelAnimationFrame(ideaAutoFrame);
+    ideaAutoFrame=null;
+  }
+  function startIdeaAutoReveal(){
+    stopIdeaAutoReveal();
+    if(!ideaOverlay.classList.contains('is-open') || document.hidden ||
+       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+    ideaAutoRunning=true;
+    setIdeaReveal(53);
+    const stages=[
+      [53,97,1400], [97,97,500], [97,3,2400],
+      [3,3,500], [3,97,2400], [97,97,500]
+    ];
+    let stageIndex=0,stageStart=null;
+    const tick=now=>{
+      if(!ideaAutoRunning || !ideaOverlay.classList.contains('is-open'))return;
+      if(stageStart===null)stageStart=now;
+      let elapsed=now-stageStart;
+      while(elapsed>=stages[stageIndex][2]){
+        elapsed-=stages[stageIndex][2];
+        stageIndex=(stageIndex+1)%stages.length;
+        stageStart=now-elapsed;
+      }
+      const [from,to,duration]=stages[stageIndex];
+      const t=clamp(elapsed/duration,0,1);
+      setIdeaReveal(from+(to-from)*(1-Math.cos(Math.PI*t))/2);
+      ideaAutoFrame=requestAnimationFrame(tick);
+    };
+    ideaAutoFrame=requestAnimationFrame(tick);
+  }
+
   // Crtež je odmah vidljiv; fotografija ga zamenjuje samo ako je uspešno učitana.
   // Serial sprečava da zakasnela fotografija prethodne kartice zameni novu.
   function paintIdeaArt(node,key,bad,serial){
@@ -2671,6 +2708,7 @@
     $('ideaNext').textContent=ideaPosition===ideaSlides.length-1?'↻':'›';
     $('ideaNext').setAttribute('aria-label',ideaPosition===ideaSlides.length-1?'Ponovo prva priča':'Sledeća priča');
     setIdeaReveal(53);
+    startIdeaAutoReveal();
   }
   function goIdea(i){ideaPosition=(i+ideaSlides.length)%ideaSlides.length;renderIdea();}
   function openIdeas(){
@@ -2682,8 +2720,10 @@
     document.body.classList.add('no-scroll');
     ideaOverlay.scrollTop=0;
     $('ideasSkip').focus({preventScroll:true});
+    startIdeaAutoReveal();
   }
   function closeIdeas(select){
+    stopIdeaAutoReveal();
     ideaOverlay.classList.remove('is-open');
     ideaOverlay.setAttribute('aria-hidden','true');
     document.body.classList.remove('no-scroll');
@@ -2713,6 +2753,7 @@
   // Inside a card: grabbing the split line compares two realities. A swipe elsewhere advances the story.
   $('ideaCard').addEventListener('pointerdown',e=>{
     if(e.target.closest('button') || e.button!==0)return;
+    stopIdeaAutoReveal();
     const bounds=$('ideaStage').getBoundingClientRect();
     const inStage=e.clientY>=bounds.top&&e.clientY<=bounds.bottom;
     const xPct=(e.clientX-bounds.left)/bounds.width*100;
@@ -2741,6 +2782,7 @@
   }
   $('ideaCard').addEventListener('pointerup',onIdeaPointerEnd);
   $('ideaCard').addEventListener('pointercancel',()=>{ideaPointer=null;});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)stopIdeaAutoReveal();});
   renderIdea();
   document.body.classList.add('no-scroll');
   $('ideasSkip').focus({preventScroll:true});
