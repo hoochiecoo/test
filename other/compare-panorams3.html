@@ -1261,10 +1261,14 @@ function startGoogleMaps(){
 function streetviewSearch(city){
  return new Promise(resolve=>{
   if(!googleReady()){resolve(null);return;}
-  const point={
-   lat:city.lat+(Math.random()-.5)*Math.min(10,radius)*.012,
-   lng:city.lng+(Math.random()-.5)*Math.min(10,radius)*.016
-  };
+const distanceKm=radius*Math.sqrt(Math.random());
+const bearing=Math.random()*Math.PI*2;
+const latRad=city.lat*Math.PI/180;
+
+const point={
+ lat:city.lat+(distanceKm/111.32)*Math.cos(bearing),
+ lng:city.lng+(distanceKm/(111.32*Math.max(.01,Math.cos(latRad))))*Math.sin(bearing)
+};
   try{
    const service=new google.maps.StreetViewService();
    // Use the unrestricted search and 350m neighbourhood from the original.
@@ -1297,7 +1301,7 @@ async function fetchPanoramas(post){
    await Promise.all([-60,60].map(async delta=>{
     const ang=(angle+delta+360)%360;
     const im=await getImage(imageUrl(fixedPano,ang));
-    if(im&&post.epoch===feedEpoch){post.views[i][ang]=im;renderPost(post);}
+    if(im&&post.epoch===feedEpoch&&post.generation===generation){post.views[i][ang]=im;renderPost(post);}
    }));
    return;
   }
@@ -1320,7 +1324,7 @@ async function fetchPanoramas(post){
    await Promise.all([-60,60].map(async delta=>{
     const ang=(angle+delta+360)%360;
     const im=await getImage(imageUrl(found.pano,ang));
-    if(im&&post.epoch===feedEpoch){post.views[i][ang]=im;renderPost(post);}
+    if(im&&post.epoch===feedEpoch&&post.generation===generation){post.views[i][ang]=im;renderPost(post);}
    }));
    return;
   }
@@ -1755,7 +1759,7 @@ $('feedList').addEventListener('touchcancel',()=>{touch=null},{passive:true});
 document.querySelectorAll('[data-panel]').forEach(btn=>btn.addEventListener('click',()=>openPanel(btn.dataset.panel)));
 $('backdrop').addEventListener('click',closeSheet);$('closeSheet').addEventListener('click',closeSheet);
 $('heroMap').addEventListener('click',()=>openPanel('map'));
-$('radiusInput').addEventListener('input',e=>{radius=Number(e.target.value);$('radiusValue').textContent=radius+' km';try{localStorage.setItem('city-compare-radius',String(radius))}catch(e){}});
+$('radiusInput').addEventListener('input',e=>{ radius=Number(e.target.value); $('radiusValue').textContent=radius+' km'; try{localStorage.setItem('city-compare-radius',String(radius))}catch(e){} }); $('radiusInput').addEventListener('change',()=>{ userInteracted=true; for(let i=currentIndex;i<posts.length;i++){ const post=posts[i]; if(!post)continue; post.generation=(post.generation||0)+1; post.ready=false; post.loading=false; post.views=[null,null]; post.panoIds=['','']; post.points=[null,null]; post.pinnedPanoramas=false; renderPost(post); fetchPanoramas(post); } if(posts[currentIndex])updateQuery(posts[currentIndex]); });
 $('baseSearch').addEventListener('input',e=>{baseResultLimit=30;renderBaseCities(e.target.value)});
 $('baseCountry').addEventListener('change',e=>{baseCountryFilter=e.target.value;baseResultLimit=30;userInteracted=true;renderBaseCities($('baseSearch').value);updateQuery(posts[currentIndex]);});
 $('baseCityList').addEventListener('click',e=>{if(e.target.closest('[data-more-base]')){baseResultLimit+=60;const y=$('baseCityList').scrollTop;renderBaseCities($('baseSearch').value);$('baseCityList').scrollTop=y;return;}const b=e.target.closest('[data-base]');if(b)changeBase(b.dataset.base);});
