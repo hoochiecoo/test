@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090909">
+<title>Город ↔ город — поделиться точной панорамой</title>
+<meta name="description" content="Сравнивайте панорамы городов мира: выберите исходный город, страну и допустимую разницу населения.">
+<link rel="preconnect" href="https://maps.googleapis.com">
+<link rel="preconnect" href="https://streetviewpixels-pa.googleapis.com">
+<style>
+:root{--bg:#090909;--card:#151515;--line:#333;--text:#fff;--muted:#a0a0a0;--accent:#b8e84a;--accent-dark:#26351a}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#000;color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior-y:none}body{overflow-x:hidden}button,input{font:inherit}button{border:0;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{position:relative;width:min(100%,430px);margin:0 auto;height:100dvh;min-height:550px;background:#090909;overflow:hidden;box-shadow:0 0 0 1px #252525}
+.feed{height:100%;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.feed::-webkit-scrollbar,.sheet-body::-webkit-scrollbar{display:none}.feed-list{display:grid;gap:10px;padding:0 0 calc(94px + env(safe-area-inset-bottom))}
+.post{margin:0;background:#080808;min-height:0}.image-area{position:relative;background:#111;overflow:hidden;touch-action:pan-y}.stage{position:relative;width:100%;aspect-ratio:1200/1650;overflow:hidden;background:#151515}.pano-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;touch-action:pan-y}.pano-incoming{transform:translateX(100%);pointer-events:none}.pano-labels{pointer-events:none;position:absolute;z-index:2;inset:0}.half-title{position:absolute;left:15px;right:15px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;color:#fff;text-shadow:0 1px 7px #000;pointer-events:none}.half-title.top{top:14px}.half-title.bottom{top:calc(50% + 14px)}.half-title strong{display:block;font-size:16px;font-weight:850;letter-spacing:-.03em}.half-title small{display:block;font-size:11px;color:#f3f3f3;margin-top:4px}.half-title .pill{font-size:9px;border:1px solid #ffffff66;background:#0007;border-radius:999px;padding:6px 7px;white-space:nowrap}.vertical-divider{height:3px;position:absolute;top:calc(50% - 1.5px);left:0;right:0;background:#101010}
+.swipe-hint{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:18px;color:#fff9;font-size:17px;z-index:3;pointer-events:none;text-shadow:0 1px 5px #000}.swipe-hint span{width:26px;height:26px;border:1px solid #ffffff4d;border-radius:50%;display:grid;place-items:center;background:#0003}.image-area.is-loading:after{content:'Подбираем панорамы…';position:absolute;z-index:4;inset:0;background:#111a;color:#ddd;display:grid;place-items:center;font-size:12px}.image-area.is-loading:after{pointer-events:none}.image-area .visual-note{position:absolute;right:12px;bottom:43px;background:#0a0a0aba;border:1px solid #ffffff3a;color:#eee;padding:5px 8px;border-radius:99px;z-index:2;font-size:9px;pointer-events:none}.post-social{padding:12px 14px 14px;color:#fff}.post-social-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.post-account{display:flex;gap:9px;min-width:0;align-items:center}.avatar{display:grid;place-items:center;width:30px;height:30px;background:var(--accent);color:var(--accent-dark);border-radius:50%;font-size:15px;font-weight:800;flex:none}.account-copy{min-width:0}.account-copy strong{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.account-copy small{font-size:10px;display:block;color:#929292;margin-top:3px}.post-actions{display:flex;gap:6px;flex:none}.round{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;border:1px solid #393939;background:#191919;color:#eee;font-size:16px}.post-social-caption{font-size:11px;line-height:1.45;color:#c7c7c7;margin:10px 0 0}.post-caption-note{color:#8f8f8f}.post-number{font-weight:800;font-size:10px;color:#929292}
+.location-card{position:absolute;z-index:15;bottom:0;left:50%;transform:translateX(-50%);width:100%;height:calc(79px + env(safe-area-inset-bottom));overflow:hidden;margin:0;border-top:1px solid #292929;border-radius:20px 20px 0 0;background:#090909;box-shadow:0 -8px 30px #0008;transition:height .28s ease;padding:6px 9px calc(7px + env(safe-area-inset-bottom))}.location-card.open{height:min(84dvh,720px);padding:7px 13px calc(12px + env(safe-area-inset-bottom))}.grab{width:38px;height:4px;border-radius:99px;background:#5d5d5d;margin:0 auto 5px;touch-action:none}.bottom-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}.tab{display:grid;place-items:center;align-content:center;gap:3px;height:52px;border-radius:11px;background:transparent;color:#999;font-size:10px}.tab b{font-size:20px;color:#eee;font-weight:450;line-height:1}.tab.active,.tab.active b{color:var(--accent)}.tab:active{background:#222}.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 1px 12px}.sheet-head strong{font-size:14px}.sheet-head small{font-size:10px;color:#8a8a8a}.sheet-close{height:31px;width:31px;border-radius:50%;background:#1c1c1c;font-size:20px}.sheet-body{height:calc(100% - 121px);overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;padding:2px 0 20px}.location-card:not(.open) .sheet-head,.location-card:not(.open) .sheet-body{display:none}.panel{display:none}.panel.active{display:block}.pane-title{font-size:19px;line-height:1.15;letter-spacing:-.04em;margin:5px 0 9px}.eyebrow{margin:7px 0;color:var(--accent);font-size:10px;font-weight:750;letter-spacing:.09em;text-transform:uppercase}.muted{color:#a5a5a5;font-size:11px;line-height:1.5}.hero{margin:4px 0 13px;border:1px solid #3f4e2b;border-radius:15px;background:#1b2017;padding:13px}.hero-pair{display:grid;grid-template-columns:minmax(0,1fr) 23px minmax(0,1fr);align-items:center;gap:6px}.hero-pair b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hero-pair small{display:block;color:#aaa;font-size:10px;margin-top:5px}.hero-pair i{color:var(--accent);font-style:normal;text-align:center}.hero-meta{margin-top:12px;display:flex;justify-content:space-between;gap:6px;align-items:center}.hero-meta span{color:#bdd794;font-size:11px}.btn{min-height:42px;border-radius:11px;padding:0 14px;background:var(--accent);color:var(--accent-dark);font-weight:780;font-size:12px}.btn.secondary{background:#202020;color:#ddd;border:1px solid #353535}.btn.sm{min-height:34px;font-size:11px}.controls{display:flex;gap:8px;flex-wrap:wrap}.controls .btn{flex:1}.range-card,.field-card{border:1px solid #333;border-radius:13px;padding:13px;background:#171717;margin:13px 0}.range-head{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:14px}.range-head span{color:var(--accent)}.range{width:100%;accent-color:var(--accent)}.field-label{display:block;font-size:11px;font-weight:650;color:#ddd;margin-bottom:8px}.search,.key-input{background:#141414;border:1px solid #363636;outline:0;color:#eee;border-radius:11px;min-height:42px;padding:0 12px;width:100%;font-size:12px}.search{margin:3px 0 9px}.key-input{margin-bottom:10px}.list{display:grid;gap:6px}.city-row{display:flex;align-items:center;justify-content:space-between;text-align:left;gap:10px;min-height:52px;border:1px solid #303030;border-radius:12px;background:#171717;padding:9px 11px;width:100%}.city-row.selected{border-color:var(--accent);background:#22291b}.city-row strong{font-size:12px}.city-row small{display:block;margin-top:4px;color:#999;font-size:10px}.city-row em{font-size:11px;font-style:normal;color:var(--accent);white-space:nowrap}.count{font-size:10px;color:#888;margin:8px 0 13px}.map{height:335px;border:1px solid #343434;border-radius:13px;overflow:hidden;background:#17232c;position:relative}.map .leaflet-control-attribution{font-size:8px}.map .leaflet-popup-content{font-size:12px;line-height:1.5}.map-fallback{display:none;width:100%;height:100%;position:relative}.map-fallback svg{display:block;width:100%;height:100%}.map-legend{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin:12px 0 5px;font-size:11px;color:#ccc}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-right:5px}.dot.ru{background:#64b8ee}.map-options{display:flex;gap:8px;margin:11px 0}.map-options button{flex:1}.source{font-size:10px;color:#858585;line-height:1.5;margin:10px 0}.source a{color:#b8e84a}.notice{border:1px solid #3a3a3a;border-radius:11px;background:#161616;padding:11px 12px;color:#999;font-size:11px;line-height:1.5;margin:12px 0}.notice strong{color:#eee}.toast{position:absolute;bottom:calc(94px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,12px);z-index:50;width:max-content;max-width:92%;padding:11px 15px;color:#fff;background:#283020;border:1px solid #465c2b;border-radius:99px;box-shadow:0 8px 24px #0008;font-size:11px;pointer-events:none;opacity:0;transition:opacity .23s,transform .23s;text-align:center}.toast.on{opacity:1;transform:translate(-50%,0)}.backdrop{display:none;position:absolute;inset:0;z-index:14;background:#0007}.backdrop.visible{display:block}.sheet-link{color:var(--accent)}.gap-top{margin-top:12px}
+@media(max-height:670px){.location-card.open{height:90dvh}.map{height:240px}}
+@media(min-width:700px){.app{box-shadow:0 0 0 1px #282828,0 0 120px #181818}}
+</style>
+<style>
+/* Direct link to the exact selected panorama, always in the query string. */
+.top-share{position:absolute;z-index:47;top:13px;right:13px;display:flex;align-items:center;gap:7px;min-height:42px;padding:0 14px;border-radius:12px;background:#b8e84a;color:#1e2f13;font-weight:800;font-size:12px;box-shadow:0 5px 18px #000b}
+@media(min-width:700px){.top-share{right:195px}}
+.app.desktop-split .top-share{display:none}
+.app:not(.desktop-split) .half-title.top{top:56px}
+.app .top-share:focus-visible,.app .desktop-toolbar button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.share-fallback[hidden]{display:none!important}
+.share-fallback{position:absolute;inset:0;z-index:90;display:grid;place-items:center;background:#000c;padding:17px}
+.share-fallback-card{background:#191919;border:1px solid #464646;box-shadow:0 24px 80px #0009;border-radius:18px;padding:22px;width:min(100%,480px)}
+.share-fallback-card h2{font-size:18px;margin:0 0 8px}
+.share-fallback-card p{font-size:12px;color:#aaa;line-height:1.5;margin:0 0 14px}
+.share-fallback-card input{width:100%;font-size:12px;color:#f7f7f7;background:#101010;border:1px solid #555;border-radius:9px;padding:12px}
+.share-fallback-actions{display:flex;gap:9px;margin-top:13px}
+.share-fallback-actions button{flex:1;min-height:42px;padding:0 11px;border-radius:9px;background:#b8e84a;color:#233119;font-size:12px;font-weight:750}
+.share-fallback-actions button:last-child{background:#2b2b2b;color:#fff}
+@media(max-width:699px){.top-share{min-height:37px;top:9px;right:9px;padding:0 12px;font-size:11px}}
+</style>
+<style>
+.google-links{display:flex;gap:6px;padding:0 11px 12px;background:#080808;flex-wrap:wrap}
+.google-links a{flex:1;min-width:145px;display:flex;min-height:35px;align-items:center;justify-content:center;border-radius:9px;border:1px solid #343f38;background:#18221c;color:#cce5c5;text-decoration:none;font-weight:700;font-size:11px}
+.google-links a:focus-visible{outline:2px solid #b8e84a;outline-offset:2px}
+.field-card code{color:#b8e84a}
+</style>
+
+<style>
+select{font:inherit;color:var(--text)}.choice-select{display:block;width:100%;min-height:42px;padding:0 12px;background:#141414;border:1px solid #363636;border-radius:11px;color:#fff;outline:0;font-size:12px}
+.choice-select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.base-city-selected{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:12px;padding:11px 12px;border:1px solid #465a37;border-radius:12px;background:#19221a}
+.base-city-selected strong{font-size:13px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.base-city-selected small{display:block;color:#abb8a5;font-size:10px;margin-top:4px}.base-city-selected .tag{font-size:10px;color:#cfeea5;white-space:nowrap}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.filter-grid label{font-size:11px;color:#ddd}.field-label{margin-bottom:7px}
+.city-row{cursor:pointer}.city-row .city-country{color:#9f9f9f;font-size:10px;margin-top:3px}
+.subsection-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;margin:19px 0 10px}
+.subsection-heading strong{font-size:12px}.subsection-heading small{color:#999;font-size:10px}
+.match-summary{padding:12px;border:1px solid #364629;background:#1b2418;border-radius:12px;margin:12px 0 10px;font-size:11px;line-height:1.5;color:#d1e5b8}
+.match-summary.empty{border-color:#5c4735;background:#2b211a;color:#f3cda5}
+.catalog-status{padding:9px 11px;color:#9a9a9a;background:#151515;border:1px dashed #333;border-radius:10px;font-size:10px;line-height:1.5}
+.empty-feed{display:grid;align-content:center;justify-items:center;min-height:300px;text-align:center;padding:30px 20px;color:#e1e1e1;gap:10px}.empty-feed p{font-size:12px;line-height:1.5;color:#a5a5a5;margin:0}
+.post-number{color:#a3c578}.choice-tag{display:inline-flex;align-items:center;padding:3px 7px;border-radius:99px;background:#26371e;color:#b8e84a;font-size:10px}
+@media(max-width:350px){.filter-grid{grid-template-columns:1fr}.location-card.open{height:92dvh}.post-social{padding:9px 9px 11px}.google-links a{min-width:112px;font-size:9px}}
+</style>
+
+<style>
+/* Two-step entry selector. The existing feed, sheet, map and pan gestures stay untouched. */
+.setup-overlay{position:absolute;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(0,0,0,.84);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.setup-overlay.open{display:flex}
+.setup-dialog{display:flex;flex-direction:column;width:min(100%,426px);max-height:min(95dvh,830px);border:1px solid #40473a;border-radius:24px;overflow:hidden;background:linear-gradient(150deg,#1b2018 0%,#0e110e 31%,#111 70%);box-shadow:0 24px 100px #000d,0 0 45px #28371b55;color:#fff}
+.setup-dialog:focus{outline:none}
+.setup-top{padding:21px 20px 14px;flex:none;background:radial-gradient(circle at 100% -30%,#425c2a77 0%,transparent 63%);border-bottom:1px solid #2d3727}
+.setup-kicker{display:flex;align-items:center;justify-content:space-between;color:#b8e84a;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.09em}
+.setup-dismiss{width:28px;height:28px;border:1px solid #3b4832;background:#191f18;border-radius:50%;font-size:18px;color:#ccc}
+.setup-title{font-size:26px;line-height:1.08;letter-spacing:-.055em;margin:13px 0 7px;font-weight:850}
+.setup-subtitle{margin:0;color:#adb5a6;font-size:12px;line-height:1.45}
+.setup-steps{display:flex;align-items:center;gap:7px;margin-top:18px}
+.setup-steps span{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 5px;background:#20271d;border-radius:9px;color:#829278;font-size:10px;font-weight:700}
+.setup-steps span.active{background:#b8e84a;color:#26351a}
+.setup-content{min-height:0;overflow-y:auto;padding:17px 20px 20px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#405132 transparent}
+.setup-panel{display:none}.setup-panel.active{display:block}
+.setup-label{display:block;margin:0 0 7px;color:#d4d7d1;font-size:11px;font-weight:700}
+.setup-select,.setup-search{display:block;width:100%;height:44px;color:#f5f5f5;background:#171b16;border:1px solid #3b4933;border-radius:11px;padding:0 12px;font-size:13px;outline:none}
+.setup-select:focus-visible,.setup-search:focus-visible{outline:2px solid #b8e84a;outline-offset:2px}
+.setup-row{display:grid;grid-template-columns:1fr;gap:12px;margin:13px 0 10px}
+.setup-current{margin:0 0 11px;background:#27321f;border:1px solid #536943;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.setup-current strong{font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.setup-current small{font-size:10px;color:#bac3b5;display:block;margin-top:5px}.setup-current b{color:#d1f3a5;font-size:10px;white-space:nowrap}
+.setup-result-list{display:grid;gap:6px;max-height:min(30dvh,236px);overflow-y:auto;overscroll-behavior:contain;padding:1px}
+.setup-result{display:flex;width:100%;min-height:53px;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid #333f2b;background:#191d17;color:#fff;text-align:left;border-radius:11px}
+.setup-result.active,.setup-result:focus-visible{border-color:#b8e84a;background:#26351a}.setup-result strong{font-size:12px;display:block}.setup-result small{font-size:10px;color:#a5b09d;display:block;margin-top:5px}.setup-result em{font-size:10px;color:#b8e84a;font-style:normal}
+.setup-meta{margin:8px 0 2px;color:#97a591;font-size:10px;line-height:1.4}
+.setup-shortcuts{display:flex;gap:6px;flex-wrap:wrap;margin:11px 0 16px}
+.setup-chip{padding:8px 11px;min-height:33px;border-radius:99px;border:1px solid #35412f;background:#192016;color:#bfceb3;font-size:10px}
+.setup-chip.active{border-color:#b8e84a;background:#2b3e1e;color:#edffd6;font-weight:750}
+.setup-range-block{background:#171c15;border:1px solid #3b4934;border-radius:14px;padding:14px 13px;margin:14px 0 12px}
+.setup-range-head{display:flex;justify-content:space-between;align-items:center;gap:9px;margin-bottom:12px;font-size:12px}.setup-range-head strong{font-size:12px}.setup-range-head output{font-weight:800;color:#b8e84a;font-size:18px}
+.setup-tolerance{width:100%;accent-color:#b8e84a;cursor:pointer}
+.setup-range-limits{display:flex;justify-content:space-between;color:#899584;font-size:10px;margin:7px 0 0}
+.setup-matching{margin:12px 0 3px;border-radius:13px;background:#23301d;border:1px solid #4c6337;padding:12px;font-size:12px;line-height:1.55;color:#d2e6c2}
+.setup-matching.empty{background:#2d231b;border-color:#65452d;color:#ffd6a5}
+.setup-matching strong{color:#fff;font-weight:800}
+.setup-footer{display:flex;gap:8px;align-items:center;flex:none;padding:13px 20px calc(17px + env(safe-area-inset-bottom));border-top:1px solid #2d3727;background:#131710}
+.setup-back{min-width:84px;min-height:45px;border:1px solid #394432;border-radius:12px;background:#20281b;color:#cbd8bd;font-size:12px}
+.setup-go{flex:1;min-height:45px;background:#b8e84a;color:#223119;font-size:13px;font-weight:850;border-radius:12px}
+.setup-go:disabled{opacity:.45;cursor:not-allowed}
+.setup-footer .setup-back[hidden]{display:none}
+.setup-note{font-size:10px;color:#899384;line-height:1.4;margin:10px 0 0}
+@media(max-height:650px){.setup-top{padding:13px 16px 9px}.setup-title{font-size:22px;margin:8px 0 6px}.setup-steps{margin-top:9px}.setup-content{padding:10px 16px}.setup-result-list{max-height:25dvh}.setup-footer{padding:9px 16px calc(9px + env(safe-area-inset-bottom))}}
+@media(max-width:340px){.setup-overlay{padding:7px}.setup-dialog{border-radius:18px}.setup-top{padding:13px 13px 10px}.setup-content{padding:12px 13px}.setup-title{font-size:23px}.setup-footer{padding:10px 13px calc(10px + env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){.setup-overlay{backdrop-filter:none}}
+/* IP-based default city status in the initial selector. */
+.setup-geo-status{display:flex;align-items:center;gap:8px;margin:-3px 0 13px;padding:9px 11px;border:1px solid #384935;border-radius:10px;background:#172016;color:#b9d7a4;font-size:11px;line-height:1.45}
+.setup-geo-status[data-state="loading"]{color:#bec7bb}
+.setup-geo-status[data-state="error"]{color:#f0c9a5;border-color:#594634;background:#241b16}
+.setup-geo-status[data-state="link"],.setup-geo-status[data-state="manual"]{color:#a8afa7}
+.setup-geo-status .geo-icon{font-size:15px;flex:none}
+.setup-geo-footnote{margin:-6px 0 12px;font-size:10px;color:#7e8b79;line-height:1.45}
+</style>
+<style>
+/* Desktop immersive view: two equal screen halves, with the same original feed. */
+.desktop-trigger,.desktop-toolbar{display:none}
+.desktop-trigger,.desktop-toolbar button{align-items:center;justify-content:center;gap:7px;border:1px solid #627c3e;background:#23311c;color:#e2ffc2;border-radius:12px;box-shadow:0 5px 22px #000b;padding:11px 14px;font-size:12px;font-weight:750}
+.desktop-trigger{position:absolute;z-index:45;top:13px;right:13px}
+.desktop-toolbar{position:absolute;z-index:46;left:50%;top:13px;transform:translateX(-50%);align-items:center;gap:7px;white-space:nowrap}
+.desktop-toolbar button{display:flex;min-height:40px;background:#101915eb;color:#fff;border-color:#576d42;box-shadow:0 5px 20px #0009}
+.desktop-toolbar .desktop-exit{background:#b8e84a;color:#213219;border-color:#b8e84a}
+.catalog-retry{display:block;min-height:30px;padding:7px 12px;margin:8px 0 2px;border-radius:9px;border:1px solid #708e42;background:#23311d;color:#d8f4b2;font-size:11px;font-weight:700}.catalog-retry[hidden]{display:none}
+.browse-more{display:block;width:100%;padding:13px 12px;margin:6px 0 9px;border-radius:11px;border:1px solid #5c7540;background:#26321f;color:#def7be;font-weight:700;font-size:12px;text-align:center}
+@media(min-width:700px){.desktop-trigger{display:flex}}
+.app.desktop-split{width:100vw;max-width:none;height:100dvh;min-height:0;margin:0;box-shadow:none}
+/* The *same* button stays in the top-right corner in either split mode. */
+.app.desktop-split .desktop-trigger{display:flex;background:#101915eb;color:#fff;border-color:#576d42;right:13px;top:13px;z-index:48}
+.app.desktop-split .desktop-toolbar{left:13px;transform:none;max-width:calc(100% - 220px);justify-content:flex-start}
+.app.desktop-split .desktop-toolbar{display:flex}
+.app.desktop-split .location-card,.app.desktop-split .backdrop{display:none!important}
+.app.desktop-split .feed{height:100dvh;scroll-snap-type:y mandatory}
+.app.desktop-split .feed-list{gap:0;padding:0}
+.app.desktop-split .post{height:100dvh;min-height:0;scroll-snap-align:start;overflow:hidden}
+.app.desktop-split .image-area,.app.desktop-split .stage{height:100dvh;min-height:0;width:100%;aspect-ratio:auto;overflow:hidden}
+.app.desktop-split .pano-canvas{width:100%;height:100%}
+.app.desktop-split .post-social,.app.desktop-split .google-links{display:none!important}
+.app.desktop-split .half-title{top:71px;left:20px;right:20px;max-width:calc(50% - 45px);pointer-events:none}
+.app.desktop-split .half-title.top{left:24px;right:auto}
+.app.desktop-split .half-title.bottom{left:calc(50% + 24px);right:auto}
+.app.desktop-split .half-title strong{font-size:clamp(16px,1.55vw,27px);line-height:1.1}
+.app.desktop-split .half-title small{font-size:12px}
+.app.desktop-split .vertical-divider{width:3px;height:100%;left:calc(50% - 1.5px);right:auto;top:0;background:#fff7}
+/* Second immersive mode: two horizontal 50/50 panels (top and bottom). */
+.app.desktop-split.desktop-stack .half-title{max-width:calc(100% - 48px);left:24px;right:24px}
+.app.desktop-split.desktop-stack .half-title.top{top:71px;left:24px;right:24px}
+.app.desktop-split.desktop-stack .half-title.bottom{top:calc(50% + 20px);left:24px;right:24px}
+.app.desktop-split.desktop-stack .vertical-divider{height:3px;width:100%;top:calc(50% - 1.5px);left:0;right:0}
+.app.desktop-split.desktop-stack .image-area .visual-note{right:12px;transform:none;bottom:64px}
+.app.desktop-split .desktop-toolbar{max-width:calc(100% - 16px);flex-wrap:wrap;justify-content:center}
+.app.desktop-split .swipe-hint{bottom:18px}
+.app.desktop-split .image-area .visual-note{right:50%;transform:translateX(50%);bottom:64px}
+.app.desktop-split:fullscreen{background:#000}
+@media(max-width:950px){.app.desktop-split .desktop-toolbar{top:7px;gap:4px}.app.desktop-split .desktop-toolbar button{font-size:10px;padding:9px}.app.desktop-split .half-title{top:56px}.app.desktop-split.desktop-stack .half-title.top{top:56px}.app.desktop-split.desktop-stack .half-title.bottom{top:calc(50% + 16px)}}
+</style>
+</head>
+<body>
+<main class="app" id="appRoot">
+ <div class="feed" id="feed" aria-label="Лента сравнений городов"><div class="feed-list" id="feedList"></div></div>
+ <button class="top-share" id="topShare" type="button" aria-label="Поделиться текущим видом и точными панорамами" title="Поделиться текущим сравнением и панорамами">↗ <span>Поделиться</span></button>
+ <button class="desktop-trigger" id="desktopToggle" type="button" title="Две панорамы на всю ширину и высоту экрана">⛶ Экран 50/50</button>
+ <div class="desktop-toolbar" id="desktopToolbar" aria-label="Режим экран 50/50">
+  <button type="button" id="desktopPrevious" title="Предыдущая пара">↑ Назад</button>
+  <button type="button" id="desktopNext" title="Следующая случайная пара">↓ Следующий город</button>
+  <button type="button" id="desktopSettings" title="Сменить город, страну и диапазон">⚙ Выбор городов</button>
+  <button type="button" id="desktopShare" title="Поделиться конкретными панорамами и этим экраном">↗ Отправить</button>
+  <button type="button" class="desktop-exit" id="desktopExit" title="Вернуться к обычной ленте">✕ Выйти из 50/50</button>
+ </div>
+ <div class="share-fallback" id="shareFallback" hidden role="dialog" aria-modal="true" aria-label="Ссылка на текущее сравнение">
+  <div class="share-fallback-card"><h2>Ссылка на текущие панорамы</h2><p>Скопируйте и отправьте эту ссылку — она откроет тот же ракурс и пару городов.</p>
+   <input type="text" id="shareFallbackUrl" readonly aria-label="Ссылка на текущий вид">
+   <div class="share-fallback-actions"><button type="button" id="shareFallbackCopy">⧉ Копировать</button><button type="button" id="shareFallbackClose">Закрыть</button></div>
+  </div>
+ </div>
+ <div class="backdrop" id="backdrop"></div>
+ <section class="location-card" id="locationCard" aria-label="Настройки сравнения">
+  <div class="grab" id="sheetGrab"></div>
+  <nav class="bottom-tabs" aria-label="Настройки сравнения">
+   <button class="tab" id="tabRadius" type="button" data-panel="radius"><b>◌</b><span>Радиус</span></button>
+   <button class="tab" id="tabRandom" type="button" data-panel="random"><b>↯</b><span>Рандом</span></button>
+   <button class="tab" id="tabCities" type="button" data-panel="cities"><b>⌂</b><span>Города</span></button>
+   <button class="tab" id="tabMap" type="button" data-panel="map"><b>⌖</b><span>Карта</span></button>
+  </nav>
+  <header class="sheet-head"><div><strong>Город ↔ город</strong><small id="panelSubline"> · ±20% населения</small></div><button class="sheet-close" type="button" id="closeSheet" aria-label="Закрыть настройки">×</button></header>
+  <div class="sheet-body" id="sheetBody">
+   <div class="hero"><p class="eyebrow">Текущая пара городов</p><div class="hero-pair" id="heroPair"></div><div class="hero-meta"><span id="heroDiff"></span><div class="controls"><button class="btn secondary sm" type="button" id="heroSetup">⚙ Выбрать</button><button class="btn secondary sm" type="button" id="heroMap">⌖ Карта</button></div></div></div>
+   <section class="panel" id="panelRadius"><h2 class="pane-title">Радиус панорам</h2><p class="muted">В каждом городе выбирается случайная точка около центра. Горизонтальный свайп поворачивает обе панорамы, вертикальная прокрутка переключает города. На компьютере нажмите «Экран 50/50», затем повторно нажимайте ту же кнопку в правом верхнем углу для циклического переключения: слева/справа → сверху/снизу → слева/справа. Каждая панорама займёт ровно половину экрана, угол обзора — 120°.</p><div class="range-card"><div class="range-head"><strong>Радиус поиска точки</strong><span id="radiusValue">3 км</span></div><input id="radiusInput" class="range" type="range" min="1" max="10" step="1" value="3"></div><div class="field-card"><p class="source">Схема исходного приложения: Google Street View Service → panoId → снимок Google. Ключ вручную вводить не нужно. Доступность встроенного API зависит от браузера и Google; под каждым постом есть ссылки на открытие панорам в Google Maps.</p><p id="apiStatus" class="source" aria-live="polite">Ищем Google-панорамы…</p></div></section>
+   <section class="panel" id="panelRandom"><p class="eyebrow">Быстрый подбор</p><h2 class="pane-title">Следующий случайный город</h2><p class="muted" id="randomInfo">Город выбирается случайно в выбранной стране и в заданном диапазоне населения.</p><div class="field-card"><div class="hero-pair"><div><b id="randomBaseName">—</b><small id="randomBasePop">—</small></div><i>↔</i><div><b id="randomCityName">—</b><small id="randomCityPop">—</small></div></div><p class="source" id="randomDifference"></p></div><div class="controls"><button class="btn secondary" type="button" id="reroll">↻ Другой город</button><button class="btn" type="button" id="acceptRandom">✓ Сравнить</button></div><p class="source">Чтобы поменять исходный город, страну сравнения или диапазон, откройте «Города».</p></section>
+   <section class="panel" id="panelCities"><h2 class="pane-title">Какие города сравнивать</h2>
+     <p class="muted">Любой город исходного каталога — слева. Справа автоматически подбирается город с похожим населением из выбранной страны или со всего мира.</p>
+     <p class="field-label">Исходный город (A)</p>
+     <div class="base-city-selected" id="selectedBase"></div>
+     <div class="filter-grid"><label>Страна поиска исходного города<select class="choice-select" id="baseCountry"></select></label><label>Найти исходный город<input class="search" type="search" id="baseSearch" placeholder="Балашов, Subotica…" autocomplete="off"></label></div>
+     <div class="list" id="baseCityList" style="max-height:220px;overflow:auto"></div>
+     <div class="subsection-heading"><strong>Автоматический подбор (B)</strong><small>Для каждого нового поста</small></div>
+     <label class="field-label" for="targetCountry">Страна сравнения</label><select class="choice-select" id="targetCountry"></select>
+     <div class="range-card"><div class="range-head"><strong>Допуск по населению</strong><span id="toleranceValue">±20%</span></div><input id="toleranceInput" class="range" type="range" min="0" max="100" step="5" value="20"><p class="source" id="populationBand"></p></div>
+     <div class="match-summary" id="matchingSummary" role="status">Подбираем города…</div>
+     <div class="catalog-status" id="catalogStatus">Проверяем полный каталог GeoNames (населённые пункты от 500 человек)…</div><button id="catalogRetry" type="button" class="catalog-retry" hidden>↻ Загрузить полный каталог ещё раз</button>
+     <div class="subsection-heading"><strong>Подходящие города</strong><small id="cityCount"></small></div>
+     <input class="search" id="citySearch" placeholder="Найти среди подходящих" type="search"><div class="list" id="cityList"></div>
+   </section>
+   <section class="panel" id="panelMap"><h2 class="pane-title">Города на карте</h2><p class="muted">Зелёный маркер — исходный город, голубой — случайный город текущего поста. Можно показать другие подходящие города.</p><div class="map" id="cityMap"><div class="map-fallback" id="mapFallback"></div></div><div class="map-legend"><span><i class="dot"></i>Исходный город</span><span><i class="dot ru"></i>Город сравнения</span></div><div class="map-options"><button class="btn secondary sm" type="button" id="showAll">○ Подходящие города</button><button class="btn secondary sm" type="button" id="openOsm">↗ OpenStreetMap</button></div><div class="source">© OpenStreetMap contributors. При широком диапазоне на карте показаны до 200 подходящих городов; весь список доступен с кнопкой «Показать ещё». GeoNames содержит населённые пункты от 500 жителей.</div></section>
+  </div>
+ </section>
+
+ <div class="setup-overlay open" id="setupOverlay">
+  <section class="setup-dialog" role="dialog" aria-modal="true" aria-labelledby="setupTitle" aria-describedby="setupSubtitle" tabindex="-1" id="setupDialog">
+   <div class="setup-top">
+    <div class="setup-kicker"><span>🌍 Город ↔ город · начало сравнения</span><button type="button" id="setupDismiss" class="setup-dismiss" aria-label="Закрыть окно выбора" hidden>×</button></div>
+    <h1 class="setup-title" id="setupTitle">С какого города начнём?</h1>
+    <p class="setup-subtitle" id="setupSubtitle">Выберите город, который будет оставаться на каждом сравнении.</p>
+    <div class="setup-steps"><span id="setupProgress1" class="active">1 · Основной город</span><span id="setupProgress2">2 · С кем сравниваем</span></div>
+   </div>
+   <div class="setup-content" id="setupContent">
+    <section id="setupStep1" class="setup-panel active" aria-label="Выбрать основной город">
+     <div class="setup-current" id="setupCurrentCity"></div>
+     <p class="setup-geo-status" id="setupGeoStatus" data-state="loading" role="status" aria-live="polite"><span class="geo-icon">⌖</span><span id="setupGeoText">Определяем ближайший город по IP…</span></p>
+     <p class="setup-geo-footnote">По IP определяется примерный район, без запроса GPS. Для этого браузер обращается к ipwho.is (при недоступности — к ipapi.co). Город можно изменить вручную.</p>
+     <div class="setup-row">
+      <label><span class="setup-label">Страна для поиска города</span><select id="setupBaseCountry" class="setup-select"></select></label>
+      <label><span class="setup-label">Поиск города</span><input id="setupBaseSearch" class="setup-search" type="search" autocomplete="off" placeholder="Например, Балашов или Суботица"></label>
+     </div>
+     <div class="setup-result-list" id="setupCityResults" aria-label="Результаты поиска городов"></div>
+     <p class="setup-meta" id="setupCatalogStatus" role="status">Подключаем GeoNames: населённые пункты от 500 жителей, без предварительного ограничения по размеру.</p><button id="setupRetryCatalog" type="button" class="catalog-retry" hidden>↻ Повторить загрузку полного каталога</button>
+    </section>
+    <section id="setupStep2" class="setup-panel" aria-label="Выбрать страну сравнения">
+     <div class="setup-current" id="setupCompareBase"></div>
+     <label for="setupTargetCountry" class="setup-label">С кем сравниваем? Страна или весь мир</label>
+     <select id="setupTargetCountry" class="setup-select"></select>
+     <div id="setupShortcutCountries" class="setup-shortcuts" aria-label="Быстрый выбор страны"></div>
+     <div class="setup-range-block">
+      <div class="setup-range-head"><strong>Разница по населению</strong><output id="setupToleranceValue" for="setupToleranceInput">±20%</output></div>
+      <input id="setupToleranceInput" class="setup-tolerance" type="range" min="0" max="100" step="5" value="20" aria-label="Допуск по населению в процентах">
+      <div class="setup-range-limits"><span>Одинаковый размер · 0%</span><span>До ±100%</span></div>
+      <p class="setup-note" id="setupRangePopulation"></p>
+     </div>
+     <div class="setup-matching" id="setupMatching" role="status" aria-live="polite"></div>
+     <p class="setup-note">Основной город останется прежним, а при вертикальной прокрутке будет появляться случайный город из выбранного диапазона.</p>
+    </section>
+   </div>
+   <div class="setup-footer"><button id="setupBack" class="setup-back" type="button" hidden>← Назад</button><button id="setupContinue" class="setup-go" type="button">Далее →</button></div>
+  </section>
+ </div>
+ <div class="toast" role="status" id="toast"></div>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const fmt=n=>Number(n).toLocaleString('ru-RU');
+const sceneNames=['Жилые улицы','Городские площади','Маршрут к школе'];
+const countryRows=[
+ ['RU','Россия'],['RS','Сербия'],['AT','Австрия'],['NL','Нидерланды'],['US','США'],['CA','Канада'],
+ ['AL','Албания'],['AD','Андорра'],['BY','Беларусь'],['BE','Бельгия'],['BA','Босния и Герцеговина'],
+ ['BG','Болгария'],['HR','Хорватия'],['CY','Кипр'],['CZ','Чехия'],['DK','Дания'],['EE','Эстония'],
+ ['FI','Финляндия'],['FR','Франция'],['DE','Германия'],['GR','Греция'],['HU','Венгрия'],
+ ['IS','Исландия'],['IE','Ирландия'],['IT','Италия'],['LV','Латвия'],['LI','Лихтенштейн'],
+ ['LT','Литва'],['LU','Люксембург'],['MT','Мальта'],['MD','Молдова'],['MC','Монако'],
+ ['ME','Черногория'],['MK','Северная Македония'],['NO','Норвегия'],['PL','Польша'],
+ ['PT','Португалия'],['RO','Румыния'],['SM','Сан-Марино'],['SK','Словакия'],['SI','Словения'],
+ ['ES','Испания'],['SE','Швеция'],['CH','Швейцария'],['UA','Украина'],['GB','Великобритания'],
+ ['VA','Ватикан'],['KR','Южная Корея'],['JP','Япония'],['BR','Бразилия'],['AR','Аргентина']
+];
+const countryLookup=Object.fromEntries(countryRows);
+const countryIntl=typeof Intl.DisplayNames==='function'?new Intl.DisplayNames(['ru'],{type:'region'}):null;
+function countryName(code){return countryLookup[code]||(countryIntl?countryIntl.of(code):code)||code;}
+function flag(code){return /^[A-Z]{2}$/.test(code)?String.fromCodePoint(...[...code].map(c=>127397+c.charCodeAt(0))):'🌍';}
+const SUBOTICA={name:'Суботица',code:'RS',population:88752,lat:46.0982,lng:19.6700};
+const RUSSIAN_CITIES=[
+ ['Орехово-Зуево',105745,55.806,38.966],['Арзамас',104908,55.389,43.815],
+ ['Ногинск',103891,55.855,38.442],['Новошахтинск',103480,47.759,39.935],
+ ['Бердск',102850,54.759,83.107],['Элиста',102583,46.308,44.271],
+ ['Сергиев Посад',101756,56.310,38.133],['Видное',101490,55.557,37.710],
+ ['Ачинск',100621,56.265,90.495],['Тобольск',100352,58.201,68.253],
+ ['Ноябрьск',100188,63.201,75.451],['Елец',99875,52.624,38.503],
+ ['Зеленодольск',99137,55.842,48.518],['Новокуйбышевск',98306,53.100,49.947],
+ ['Воткинск',97471,57.050,53.987],['Железногорск',97038,52.338,35.353],
+ ['Междуреченск',96174,53.686,88.070],['Воскресенск',95495,55.316,38.679],
+ ['Гатчина',94377,59.567,30.128],['Серов',94211,59.604,60.578],
+ ['Саров',93357,54.935,43.322],['Ленинск-Кузнецкий',92244,54.662,86.173],
+ ['Сарапул',91115,56.462,53.806],['Магадан',90757,59.568,150.808],
+ ['Мичуринск',90451,52.894,40.500],['Соликамск',89473,59.649,56.771],
+ ['Мурино',89083,60.046,30.454],['Чехов',89025,55.152,37.477],
+ ['Клин',88511,56.335,36.724],['Бузулук',88341,52.781,52.262],
+ ['Глазов',87762,58.140,52.669],['Канск',86816,56.205,95.706],
+ ['Великие Луки',86711,56.343,30.525],['Каменск-Шахтинский',86365,48.321,40.269],
+ ['Губкин',85225,51.282,37.544],['Киселёвск',83431,54.006,86.636],
+ ['Ейск',82943,46.711,38.277],['Ивантеевка',82827,55.971,37.923],
+ ['Лобня',82764,56.014,37.477],['Азов',81924,47.112,39.423],
+ ['Анапа',81863,44.895,37.316],['Бугульма',81677,54.536,52.800],
+ ['Геленджик',80204,44.560,38.078],['Ухта',79899,63.567,53.683],
+ ['Юрга',79693,55.722,84.890],['Усть-Илимск',79570,58.005,102.662],
+ ['Всеволожск',79038,60.020,30.654],['Кузнецк',78390,53.118,46.605],
+ ['Бор',78372,56.358,44.065],['Кинешма',77694,57.442,42.169],
+ ['Новотроицк',75960,51.194,58.302],['Кропоткин',75858,45.434,40.574],
+ ['Чайковский',75837,56.770,54.114],['Черногорск',75745,53.823,91.284],
+ ['Усолье-Сибирское',74762,52.751,103.646],['Дубна',74183,56.744,37.173],
+ ['Балашов',74057,51.550,43.169],['Елабуга',73630,55.752,52.056],
+ ['Новоалтайск',73049,53.412,83.935],['Выборг',72530,60.713,28.741],
+ ['Егорьевск',71686,55.383,39.032],['Верхняя Пышма',71335,56.970,60.582],
+ ['Наро-Фоминск',71121,55.386,36.735]
+].map(([name,population,lat,lng])=>({name,population,lat,lng,country:'Россия',code:'RU',flag:'🇷🇺'}));
+
+const fallbackRows=[
+ ['RU','Владимир',350000,56.129,40.407],['RU','Петрозаводск',280000,61.784,34.347],
+ ['RU','Челябинск',1180000,55.154,61.429],['RU','Москва',13000000,55.752,37.618],
+ ['RU','Санкт-Петербург',5600000,59.938,30.315],['RU','Новосибирск',1630000,55.030,82.920],
+ ['RU','Екатеринбург',1500000,56.839,60.605],['RU','Казань',1300000,55.791,49.121],
+ ['RU','Нижний Новгород',1250000,56.329,44.002],['RU','Самара',1170000,53.196,50.102],
+ ['RS','Панчево',76300,44.870,20.642],['RS','Зренянин',67800,45.381,20.389],
+ ['RS','Чачак',73000,43.891,20.349],['RS','Кралево',67000,43.727,20.685],
+ ['RS','Нови-Пазар',71000,43.136,20.517],['RS','Смедерево',63000,44.663,20.928],
+ ['RS','Сомбор',41500,45.774,19.113],['RS','Валево',59000,44.274,19.890],
+ ['RS','Кикинда',38600,45.830,20.465],['RS','Ниш',183000,43.320,21.896],
+ ['RS','Нови-Сад',307000,45.267,19.833],['RS','Белград',1197000,44.817,20.456],
+ ['AT','Вельс',64500,48.157,14.026],['AT','Филлах',65400,46.615,13.850],
+ ['AT','Клагенфурт',104000,46.624,14.308],['AT','Зальцбург',157000,47.801,13.046],
+ ['AT','Инсбрук',131000,47.268,11.393],['AT','Санкт-Пёльтен',56000,48.204,15.624],
+ ['AT','Винер-Нойштадт',48000,47.814,16.243],['AT','Линц',211000,48.306,14.286],
+ ['AT','Грац',298000,47.071,15.439],['AT','Вена',1960000,48.208,16.373],
+ ['NL','Херлен',86500,50.888,5.980],['NL','Хилверсюм',91000,52.229,5.178],
+ ['NL','Гауда',75000,52.016,4.710],['NL','Алкмар',110000,52.631,4.753],
+ ['NL','Харлем',162000,52.380,4.636],['NL','Бреда',185000,51.588,4.776],
+ ['NL','Неймеген',180000,51.842,5.854],['NL','Тилбург',225000,51.556,5.091],
+ ['NL','Гаага',565000,52.076,4.299],['NL','Эйндховен',245000,51.441,5.478],
+ ['NL','Утрехт',370000,52.091,5.121],['NL','Роттердам',650000,51.924,4.478],
+ ['NL','Амстердам',930000,52.372,4.895],
+ ['US','Санта-Фе',87500,35.687,-105.938],['US','Ашвилл',95000,35.596,-82.551],
+ ['US','Санта-Моника',93000,34.019,-118.491],['US','Беллингхем',92000,48.749,-122.478],
+ ['US','Бока-Ратон',98000,26.359,-80.084],['US','Бенд',100000,44.059,-121.315],
+ ['US','Форт-Майерс',86000,26.641,-81.872],['US','Эри',94000,42.129,-80.085],
+ ['US','Боулдер',107000,40.015,-105.270],['US','Фарго',125000,46.878,-96.789],
+ ['US','Нью-Йорк',8400000,40.713,-74.006],['US','Лос-Анджелес',3900000,34.052,-118.243],
+ ['US','Чикаго',2700000,41.878,-87.630],
+ ['CA','Принс-Джордж',76000,53.918,-122.749],['CA','Нью-Вестминстер',79000,49.207,-122.911],
+ ['CA','Камлупс',98000,50.675,-120.327],['CA','Нанаймо',99000,49.165,-123.940],
+ ['CA','Летбридж',106000,49.696,-112.846],['CA','Сент-Джон',70000,45.273,-66.064],
+ ['CA','Келоуна',144000,49.888,-119.496],['CA','Кингстон',132000,44.230,-76.481],
+ ['CA','Торонто',3000000,43.653,-79.383],['CA','Монреаль',1800000,45.502,-73.567],
+ ['CA','Калгари',1300000,51.047,-114.070],
+ ['DE','Штутгарт',635000,48.775,9.183],['DE','Дрезден',570000,51.051,13.738],
+ ['DE','Нюрнберг',530000,49.454,11.078],['DE','Берлин',3700000,52.520,13.405],
+ ['DE','Гамбург',1900000,53.551,9.993],
+ ['SE','Норрчёпинг',145000,58.589,16.192],['SE','Мальмё',365000,55.605,13.004],
+ ['SE','Уппсала',245000,59.858,17.639],['SE','Стокгольм',980000,59.330,18.068],
+ ['SE','Вестерос',130000,59.611,16.545],
+ ['BR','Сан-Паулу',12300000,-23.551,-46.633],['BR','Рио-де-Жанейро',6700000,-22.906,-43.173],
+ ['AR','Буэнос-Айрес',3100000,-34.604,-58.382]
+];
+const CITIES_JSON_URL='https://raw.githubusercontent.com/lmfmaier/cities-json/master/cities500.json';
+const CITIES_JSON_VERSION='lmfmaier-cities500-v2025-11';
+const normalizeText=s=>String(s||'').toLocaleLowerCase('ru').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim();
+const translit=s=>normalizeText(s).split('').map(c=>({'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'}[c]??c)).join('');
+function city(code,name,population,lat,lng,id=''){
+ return {code,name,population:Number(population),lat:Number(lat),lng:Number(lng),id:String(id||''),country:countryName(code),flag:flag(code),key:String(code)+'|'+String(id||name)};
+}
+const fallbackCities=[city('RS',SUBOTICA.name,SUBOTICA.population,SUBOTICA.lat,SUBOTICA.lng,'subotica-city'),
+ ...RUSSIAN_CITIES.map(c=>city(c.code,c.name,c.population,c.lat,c.lng)),
+ ...fallbackRows.map(r=>city(...r))];
+let allCities=[],matchingPool=[],baseCity=fallbackCities[0],tolerance=20;
+let targetCountry='RU',baseCountryFilter='ALL',catalogMode='fallback',initialSnapshot=new URLSearchParams(location.search),userInteracted=false;
+let posts=[],currentIndex=0,postSequence=0,lastCities=[],radius=3,appending=false,scrollScheduled=false,feedEpoch=0;
+let panel=null,pendingRandom=null,map=null,mapLayer=null,showAll=false,touch=null,dragWasTurn=false,toastTimer=null;
+let apiReady=false,apiLoading=false,apiError='',googleScriptPromise=null;
+let desktopSplit=false,desktopLayoutMode="side",baseResultLimit=30,targetResultLimit=70,setupResultLimit=30,setupResultTotal=0,setupDisplayedTotal=0;
+let catalogLoadEpoch=0;
+let onboardingComplete=false;
+try{radius=Math.min(10,Math.max(1,Number(localStorage.getItem('city-compare-radius'))||3));}catch(e){}
+$('radiusInput').value=radius;$('radiusValue').textContent=radius+' км';
+function toast(s){$('toast').textContent=s;$('toast').classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('on'),2100)}
+function citySearchMatch(c,q){return normalizeText(c.name).includes(normalizeText(q))||translit(c.name).includes(translit(q));}
+function cityKey(c){return c.code+'|'+(c.id||c.name)}
+function findCity(name,code,list=allCities,id=''){
+ if(id){const byId=list.find(c=>c.code===code&&c.id===String(id));if(byId)return byId;}
+ if(!name)return null;
+ const target=normalizeText(name);let res=list.find(c=>c.code===code&&normalizeText(c.name)===target);
+ if(res)return res;
+ res=list.find(c=>c.code===code&&translit(c.name)===translit(name));
+ return res||null;
+}
+// Capture specific locations, snapshot of each city and viewport from URL.
+const VIEW_PARAMS=['post','aPano','bPano','aYaw','bYaw','aLat','aLng','bLat','bLng','fov','layout'];
+const CITY_SNAPSHOT_PARAMS=['aPop','bPop','aCenterLat','aCenterLng','bCenterLat','bCenterLng'];
+function validLat(value){const n=Number(value);return value!==null&&value!==''&&Number.isFinite(n)&&n>=-90&&n<=90?n:null;}
+function validLng(value){const n=Number(value);return value!==null&&value!==''&&Number.isFinite(n)&&n>=-180&&n<=180?n:null;}
+function sharedCityFromParams(q,prefix){
+ const name=q.get(prefix),code=q.get(prefix+'Country');
+ const pop=Number(q.get(prefix+'Pop'));
+ const lat=validLat(q.get(prefix+'CenterLat')),lng=validLng(q.get(prefix+'CenterLng'));
+ if(!name||name.length>200||!code||!/^[A-Z]{2}$/.test(code)||!Number.isFinite(pop)||pop<=0||pop>=1e9||lat===null||lng===null)return null;
+ return city(code,name,pop,lat,lng,q.get(prefix+'Id')||'');
+}
+function parseSharedView(q){
+ const legacy=new URLSearchParams(location.hash.replace(/^#/,''));
+ const get=k=>q.has(k)?q.get(k):legacy.get(k);
+ const hasSpecific=Boolean(q.get('share')==='1'||get('aPano')||get('bPano'));
+ if(!hasSpecific||!q.get('a')||!q.get('b'))return null;
+ const pano=k=>String(get(k)||'').slice(0,600);
+ const rawYaw=get('aYaw');
+ const yawValue=rawYaw===null||rawYaw===''?NaN:Number(rawYaw);
+ const angle=Number.isFinite(yawValue)?((Math.round(yawValue)%360)+360)%360:178;
+ const requestedPost=Number(get('post'));
+ const post=Number.isSafeInteger(requestedPost)&&requestedPost>0&&requestedPost<1000000?requestedPost:1;
+ const layout=get('layout');
+ const point=prefix=>{
+  const lat=validLat(get(prefix+'Lat')),lng=validLng(get(prefix+'Lng'));
+  return lat===null||lng===null?null:{lat,lng};
+ };
+ return {
+  post,angle,layout:['feed','side','stack'].includes(layout)?layout:'feed',
+  panoIds:[pano('aPano'),pano('bPano')],points:[point('a'),point('b')],
+  cities:[sharedCityFromParams(q,'a'),sharedCityFromParams(q,'b')]
+ };
+}
+const initialSharedView=parseSharedView(initialSnapshot);
+let sharedRestoreUsed=false;
+function mergeCities(cities){
+ // Prefer the original (manually labelled) city names for easy Cyrillic search.
+ const byKey=new Set(),out=[];
+ for(const c of [...(initialSharedView?.cities||[]).filter(Boolean),...fallbackCities,...cities]){
+  if(!c||!c.code||!c.name||!(c.population>0)||!Number.isFinite(c.lat)||!Number.isFinite(c.lng))continue;
+  // Never discard two legitimate neighbouring cities just because their centre points are close.
+  // Distinct same-name settlements in one country must both remain selectable.
+  const k=c.code+'|'+normalizeText(c.name)+'|'+Math.round(c.lat*1000)+'|'+Math.round(c.lng*1000);
+  if(byKey.has(k))continue;
+  byKey.add(k);out.push(c);
+ }
+ return out;
+}
+function readParams(){
+ const p=initialSnapshot;
+ const r=Number(p.get('tolerance')??p.get('range'));
+ if((p.has('tolerance')||p.has('range'))&&Number.isFinite(r))tolerance=Math.min(100,Math.max(0,Math.round(r/5)*5));
+ const linkRadius=p.get('radius');
+ if(linkRadius!==null&&Number.isFinite(Number(linkRadius))&&Number(linkRadius)>=1&&Number(linkRadius)<=10){
+  radius=Math.round(Number(linkRadius));$('radiusInput').value=String(radius);$('radiusValue').textContent=radius+' км';
+ }
+ targetCountry=p.get('targetCountry')||p.get('bCountry')||'RU';
+ baseCountryFilter=p.get('baseCountry')||'ALL';
+}
+function diff(c,reference=baseCity){const p=(c.population/reference.population-1)*100;return (p>=0?'+':'')+p.toFixed(1).replace('.',',')+'%';}
+function refreshMatching(){
+ const low=baseCity.population*(1-tolerance/100),high=baseCity.population*(1+tolerance/100);
+ matchingPool=allCities.filter(c=>c.population>=low&&c.population<=high&&
+  (targetCountry==='ALL'||c.code===targetCountry)&&
+  !(c.code===baseCity.code&&Math.abs(c.lat-baseCity.lat)<.025&&Math.abs(c.lng-baseCity.lng)<.025));
+ $('toleranceInput').value=String(tolerance);
+ $('toleranceValue').textContent='±'+tolerance+'%';
+ $('populationBand').textContent=fmt(Math.ceil(low))+' — '+fmt(Math.floor(high))+' жителей';
+ $('selectedBase').innerHTML='<span><strong>'+escapeHtml(flag(baseCity.code)+' '+baseCity.name)+'</strong><small>'+escapeHtml(countryName(baseCity.code))+' · '+fmt(baseCity.population)+' жителей</small></span><span class="tag">ГОРОД A</span>';
+ const summary=$('matchingSummary');
+ summary.classList.toggle('empty',matchingPool.length===0);
+ summary.textContent=matchingPool.length
+  ? 'Подходит '+fmt(matchingPool.length)+' городов из '+(targetCountry==='ALL'?'всего мира':countryName(targetCountry))+'. Каждый следующий пост — случайный город из этого списка (±'+tolerance+'%).'
+  : 'Нет городов в этом диапазоне в '+(targetCountry==='ALL'?'мире':countryName(targetCountry))+'. Увеличьте допуск или выберите другую страну.';
+ $('catalogStatus').textContent=(catalogMode==='full'?'Полный каталог GeoNames':'Временный встроенный набор')+' · '+fmt(allCities.length)+' городов от 500 жителей (GeoNames) · население в странах относится к разным годам'+(catalogMode==='loading'?' · загружаем полный каталог…':catalogMode==='full'?'':' · полный каталог пока недоступен');
+}
+function chooseRandomCity(exclude=''){
+ if(!matchingPool.length)return null;
+ const recent=new Set([...lastCities.slice(-5),exclude]);
+ let pool=matchingPool.filter(c=>!recent.has(cityKey(c)));
+ if(!pool.length)pool=matchingPool.filter(c=>cityKey(c)!==exclude);
+ if(!pool.length)pool=matchingPool;
+ return pool[Math.floor(Math.random()*pool.length)]||null;
+}
+function restoreBase(p=initialSnapshot,list=allCities){return findCity(p.get('a'),p.get('aCountry')||'RS',list,p.get('aId'));}
+function restoreTarget(p=initialSnapshot,list=matchingPool){return findCity(p.get('b'),p.get('bCountry')||targetCountry,list,p.get('bId'));}
+function buildViewUrl(post){
+ const url=new URL(location.href),params=url.searchParams;
+ const a=post?.base||baseCity,b=post?.city;
+ params.set('a',a.name);params.set('aCountry',a.code);
+ params.set('targetCountry',targetCountry);params.set('tolerance',String(tolerance));
+ params.set('baseCountry',baseCountryFilter);params.set('radius',String(radius));
+ if(a.id)params.set('aId',a.id);else params.delete('aId');
+ if(b){params.set('b',b.name);params.set('bCountry',b.code);
+  if(b.id)params.set('bId',b.id);else params.delete('bId');
+ }else{params.delete('b');params.delete('bCountry');params.delete('bId');}
+ const putCity=(prefix,c)=>{
+  params.set(prefix+'Pop',String(c.population));
+  params.set(prefix+'CenterLat',String(c.lat));
+  params.set(prefix+'CenterLng',String(c.lng));
+ };
+ putCity('a',a);
+ if(b)putCity('b',b);else for(const key of ['bPop','bCenterLat','bCenterLng'])params.delete(key);
+ if(post){
+  params.set('share','1');params.set('post',String(post.number));
+  params.set('aPano',post.panoIds[0]||'');params.set('bPano',post.panoIds[1]||'');
+  params.set('aYaw',String(post.angle));params.set('bYaw',String(post.angle));
+  for(const [prefix,point] of [['a',post.points[0]],['b',post.points[1]]]){
+   if(point&&Number.isFinite(point.lat)&&Number.isFinite(point.lng)){
+    params.set(prefix+'Lat',String(point.lat));params.set(prefix+'Lng',String(point.lng));
+   }else{params.delete(prefix+'Lat');params.delete(prefix+'Lng');}
+  }
+  params.set('fov','120');
+  params.set('layout',!desktopSplit?'feed':desktopLayoutMode);
+ }else{
+  params.delete('share');for(const key of VIEW_PARAMS)params.delete(key);
+ }
+ // Remove only the legacy panorama hash; preserve unrelated anchors.
+ const oldHash=new URLSearchParams(url.hash.replace(/^#/,''));
+ if(oldHash.has('aPano')||oldHash.has('bPano'))url.hash='';
+ return url;
+}
+function updateQuery(post){
+ const url=buildViewUrl(post);
+ try{history.replaceState(null,'',url.href)}catch(error){}
+}
+function streetViewBrowserUrl(c,post,i){
+ const pano=post?.panoIds?.[i]||'';
+ const found=post?.points?.[i];const lat=found?.lat??c.lat,lng=found?.lng??c.lng;
+ const params=new URLSearchParams({api:'1',map_action:'pano',viewpoint:lat+','+lng,
+  heading:String(post?.angle??178),pitch:'0',fov:'120'});
+ if(pano)params.set('pano',pano);
+ return 'https://www.google.com/maps/@?'+params.toString();
+}
+function updateBrowserLinks(post){
+ if(!post.el)return;
+ [post.base,post.city].forEach((c,i)=>{
+  const a=post.el.querySelector('[data-google-link="'+i+'"]');
+  if(a)a.href=streetViewBrowserUrl(c,post,i);
+ });
+}
+function newPost(compareCity){
+ const p={number:++postSequence,base:baseCity,city:compareCity,
+  category:sceneNames[(postSequence-1)%sceneNames.length],angle:178,views:[null,null],
+  panoIds:['',''],points:[null,null],ready:false,loading:false,el:null,
+  swipeRunning:false,epoch:feedEpoch};
+ lastCities.push(cityKey(compareCity));if(lastCities.length>10)lastCities.shift();return p;
+}
+function postMarkup(p,index){
+ const a=p.base,b=p.city;
+ return `<article class="post" data-post="${index}">
+ <div class="image-area" aria-label="Панорамы ${escapeHtml(a.name)} и ${escapeHtml(b.name)}">
+ <div class="stage"><canvas class="pano-canvas pano-current" width="1200" height="1650"></canvas><canvas class="pano-canvas pano-incoming" width="1200" height="1650"></canvas>
+ <div class="pano-labels"><div class="half-title top"><div><strong>${escapeHtml(flag(a.code)+' '+a.name)}</strong><small>${fmt(a.population)} жителей · ${escapeHtml(countryName(a.code))}</small></div><span class="pill">A</span></div><div class="vertical-divider"></div><div class="half-title bottom"><div><strong>${escapeHtml(flag(b.code)+' '+b.name)}</strong><small>${fmt(b.population)} жителей · ${escapeHtml(countryName(b.code))}</small></div><span class="pill">B</span></div></div>
+ <div class="swipe-hint" aria-hidden="true"><span>‹</span><span>›</span></div></div>
+ <span class="visual-note" data-visual-note>Ищем Street View…</span></div>
+ <div class="post-social"><div class="post-social-head"><div class="post-account"><span class="avatar">↔</span><div class="account-copy"><strong>${escapeHtml(a.name)} · ${escapeHtml(b.name)}</strong><small>${escapeHtml(countryName(a.code))} · ${escapeHtml(countryName(b.code))} · пост ${String(p.number).padStart(2,'0')}</small></div></div>
+ <div class="post-actions"><button class="round" type="button" data-action="map" aria-label="Карта пары" title="Показать города на карте">⌖</button><button class="round" type="button" data-action="copy" aria-label="Скопировать ссылку" title="Скопировать ссылку">↗</button></div></div>
+ <p class="post-social-caption">${fmt(a.population)} ↔ ${fmt(b.population)} жителей · разница ${diff(b,a)} <span class="post-caption-note">· ${escapeHtml(p.category)}</span></p>
+ <div class="google-links"><a data-google-link="0" target="_blank" rel="noopener noreferrer" href="${streetViewBrowserUrl(a,p,0)}">↗ ${escapeHtml(a.name)} в Google</a><a data-google-link="1" target="_blank" rel="noopener noreferrer" href="${streetViewBrowserUrl(b,p,1)}">↗ ${escapeHtml(b.name)} в Google</a></div></div></article>`;
+}
+function appendPost(c,sharedView=null){
+ if(!c)return null;
+ const p=newPost(c),idx=posts.length,holder=document.createElement('div');
+ if(sharedView){
+  p.number=sharedView.post;postSequence=p.number;
+  p.category=sceneNames[(p.number-1)%sceneNames.length];
+  p.angle=sharedView.angle;
+  p.panoIds=sharedView.panoIds.slice();
+  p.points=sharedView.points.map(x=>x?{...x}:null);
+  p.pinnedPanoramas=true;
+ }
+ holder.innerHTML=postMarkup(p,idx);p.el=holder.firstElementChild;
+ posts.push(p);$('feedList').appendChild(p.el);renderPost(p);fetchPanoramas(p);return p;
+}
+function resetFeed(preferred,sharedView=null){
+ feedEpoch++;posts=[];currentIndex=0;postSequence=0;lastCities=[];
+ $('feedList').replaceChildren();$('feed').scrollTop=0;
+ const selected=preferred&&matchingPool.some(c=>cityKey(c)===cityKey(preferred))?preferred:chooseRandomCity();
+ if(!selected){$('feedList').innerHTML='<div class="empty-feed"><strong>Подходящих городов нет</strong><p>Откройте «Города» и увеличьте допуск по населению или выберите другую страну.</p><button class="btn" type="button" id="emptySettings">Изменить настройки</button></div>';
+  $('emptySettings').onclick=()=>openPanel('cities');updateQuery(null);updateHero();return;}
+ appendPost(selected,sharedView);
+ for(let i=0;i<3;i++)appendPost(chooseRandomCity(lastCities[lastCities.length-1]));
+ setActivePost(0,true);renderCityList($('citySearch').value);refreshMap();
+}
+function ensureMorePosts(){if(appending||!matchingPool.length)return;appending=true;try{appendPost(chooseRandomCity(lastCities[lastCities.length-1]));}finally{appending=false;}}
+function setActivePost(index,force=false){
+ if(!posts[index]||(!force&&currentIndex===index))return;
+ currentIndex=index;updateQuery(posts[index]);updateHero();refreshMap();
+}
+function detectActivePost(){
+ const rect=$('feed').getBoundingClientRect();let nearest=0,d=Infinity;
+ posts.forEach((post,i)=>{if(!post.el)return;const y=Math.abs(post.el.getBoundingClientRect().top-rect.top);if(y<d){d=y;nearest=i;}});
+ setActivePost(nearest);
+ if($('feed').scrollTop+$('feed').clientHeight>=$('feed').scrollHeight-400)ensureMorePosts();
+}
+function updateHero(){
+ const post=posts[currentIndex],left=post?.base||baseCity,right=post?.city;
+ $('heroPair').innerHTML='<div><b>'+escapeHtml(flag(left.code)+' '+left.name)+'</b><small>'+fmt(left.population)+' жителей</small></div><i>↔</i><div><b>'+(right?escapeHtml(flag(right.code)+' '+right.name):'—')+'</b><small>'+(right?fmt(right.population)+' жителей':'Нет совпадений')+'</small></div>';
+ $('heroDiff').textContent=right?'Разница: '+diff(right,left):'Выберите другой диапазон';
+ $('panelSubline').textContent=' · '+(post?'пост '+post.number+' · ':'')+'±'+tolerance+'% · '+(targetCountry==='ALL'?'Весь мир':countryName(targetCountry));
+}
+function chooseTarget(key){const c=matchingPool.find(x=>cityKey(x)===key);if(!c)return;userInteracted=true;resetFeed(c);closeSheet();toast(leftRight(c));}
+function leftRight(c){return baseCity.name+' ↔ '+c.name;}
+function reroll(){
+ pendingRandom=chooseRandomCity(pendingRandom?cityKey(pendingRandom):posts[currentIndex]?cityKey(posts[currentIndex].city):'');
+ $('randomBaseName').textContent=flag(baseCity.code)+' '+baseCity.name;
+ $('randomBasePop').textContent=fmt(baseCity.population)+' жителей';
+ $('randomInfo').textContent=targetCountry==='ALL'?'Из всех стран мира, в пределах ±'+tolerance+'%':countryName(targetCountry)+' · допуск ±'+tolerance+'%';
+ $('randomCityName').textContent=pendingRandom?flag(pendingRandom.code)+' '+pendingRandom.name:'Нет совпадений';
+ $('randomCityPop').textContent=pendingRandom?fmt(pendingRandom.population)+' жителей':'';
+ $('randomDifference').textContent=pendingRandom?'Разница населения: '+diff(pendingRandom):'Измените страну или допуск во вкладке «Города».';
+ $('acceptRandom').disabled=!pendingRandom;
+}
+/* Paginated browsing: the catalogue is never reduced to the first 25/30/70 cities. */
+function matchingQueryCities(source,query){
+ const needle=normalizeText(query),latin=translit(query);
+ if(!needle)return source;
+ return source.filter(c=>{
+  const norm=c._normalizedName||(c._normalizedName=normalizeText(c.name));
+  if(norm.includes(needle))return true;
+  const transliterated=c._translitName||(c._translitName=translit(c.name));
+  return transliterated.includes(latin);
+ });
+}
+function renderCityList(query=''){
+ const found=matchingQueryCities(matchingPool,query);
+ const sorted=found.slice().sort((a,b)=>Math.abs(a.population-baseCity.population)-Math.abs(b.population-baseCity.population));
+ const shown=sorted.slice(0,targetResultLimit),active=posts[currentIndex]?.city;
+ $('cityCount').textContent='Показано '+fmt(shown.length)+' из '+fmt(found.length)+' · всего соответствует фильтру '+fmt(matchingPool.length);
+ $('cityList').innerHTML=shown.map(c=>'<button class="city-row '+(active&&cityKey(c)===cityKey(active)?'selected':'')+'" type="button" data-target="'+escapeHtml(cityKey(c))+'"><span><strong>'+escapeHtml(flag(c.code)+' '+c.name)+'</strong><small>'+fmt(c.population)+' жителей</small><small class="city-country">'+escapeHtml(countryName(c.code))+'</small></span><em>'+diff(c)+'</em></button>').join('')||'<p class="muted">Нет совпадений.</p>';
+ if(shown.length<found.length)$('cityList').insertAdjacentHTML('beforeend','<button type="button" class="browse-more" data-more-target>Показать ещё ('+fmt(found.length-shown.length)+' осталось) ↓</button>');
+}
+function renderBaseCities(q=''){
+ const source=baseCountryFilter==='ALL'?allCities:allCities.filter(c=>c.code===baseCountryFilter);
+ const searched=matchingQueryCities(source,q);
+ let results;
+ if(!q.trim()){
+  const featured=[['RS','Суботица'],['RU','Балашов'],['RU','Владимир'],['AT','Вена'],['NL','Амстердам'],['CA','Торонто'],['US','Нью-Йорк']];
+  const pinned=featured.map(([code,name])=>findCity(name,code,searched)).filter(Boolean);
+  const pins=new Set(pinned.map(cityKey));
+  results=[...pinned,...searched.filter(c=>!pins.has(cityKey(c))).sort((a,b)=>b.population-a.population)];
+ }else results=searched.slice().sort((a,b)=>{
+  const x=normalizeText(q),aa=normalizeText(a.name).startsWith(x)?0:1,bb=normalizeText(b.name).startsWith(x)?0:1;
+  return aa-bb||b.population-a.population;
+ });
+ const visible=results.slice(0,baseResultLimit);
+ $('baseCityList').innerHTML=visible.map(c=>'<button class="city-row '+(cityKey(c)===cityKey(baseCity)?'selected':'')+'" type="button" data-base="'+escapeHtml(cityKey(c))+'"><span><strong>'+escapeHtml(flag(c.code)+' '+c.name)+'</strong><small>'+escapeHtml(countryName(c.code))+' · '+fmt(c.population)+' жителей</small></span><em>'+(cityKey(c)===cityKey(baseCity)?'✓':'Выбрать')+'</em></button>').join('')||'<p class="muted">Город не найден. Попробуйте другое написание или дождитесь загрузки полного каталога.</p>';
+ if(results.length>visible.length)$('baseCityList').insertAdjacentHTML('beforeend','<button type="button" class="browse-more" data-more-base>Показать ещё ('+fmt(results.length-visible.length)+' осталось) ↓</button>');
+}
+function renderCountries(){
+ const counts={};allCities.forEach(c=>counts[c.code]=(counts[c.code]||0)+1);
+ const known=new Set(countryRows.map(r=>r[0]));
+ const codes=[...new Set([...known,...Object.keys(counts),targetCountry,baseCountryFilter].filter(c=>/^[A-Z]{2}$/.test(c)))].filter(c=>counts[c]>0||known.has(c)||c===targetCountry||c===baseCountryFilter);
+ const opts=['<option value="ALL">🌍 Весь мир ('+fmt(allCities.length)+' городов)</option>',...codes.sort((a,b)=>countryName(a).localeCompare(countryName(b),'ru')).map(c=>'<option value="'+escapeHtml(c)+'">'+escapeHtml(flag(c)+' '+countryName(c))+' ('+fmt(counts[c]||0)+')</option>')];
+ $('targetCountry').innerHTML=opts.join('');$('baseCountry').innerHTML=opts.join('');
+ if(targetCountry!=='ALL'&&!codes.includes(targetCountry))targetCountry='ALL';
+ if(baseCountryFilter!=='ALL'&&!codes.includes(baseCountryFilter))baseCountryFilter='ALL';
+ $('targetCountry').value=targetCountry;$('baseCountry').value=baseCountryFilter;
+}
+function applyFilters(preferred){
+ targetResultLimit=70;baseResultLimit=30;
+ refreshMatching();renderCountries();renderBaseCities($('baseSearch').value);
+ resetFeed(preferred);renderCityList($('citySearch').value);reroll();
+}
+function changeBase(key){
+ const c=allCities.find(x=>cityKey(x)===key);if(!c)return;
+ userInteracted=true;baseCity=c;$('baseSearch').value='';applyFilters();toast('Исходный город: '+c.name);
+}
+function openPanel(name){
+ panel=name;$('locationCard').classList.add('open');$('backdrop').classList.add('visible');
+ document.querySelectorAll('.panel').forEach(el=>el.classList.toggle('active',el.id==='panel'+name[0].toUpperCase()+name.slice(1)));
+ document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.panel===name));
+ $('sheetBody').scrollTop=0;updateHero();
+ if(name==='random')reroll();
+ if(name==='cities'){renderBaseCities($('baseSearch').value);renderCityList($('citySearch').value);}
+ if(name==='map')setTimeout(()=>{initMap();refreshMap()},100);
+}
+function closeSheet(){panel=null;$('locationCard').classList.remove('open');$('backdrop').classList.remove('visible');document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));}
+function copyText(value){
+ if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(value);
+ const node=document.createElement('textarea');node.value=value;node.style.cssText='position:fixed;left:-2000px;top:-2000px';document.body.appendChild(node);node.select();
+ let ok=false;try{ok=document.execCommand('copy')}catch(e){}node.remove();return ok?Promise.resolve():Promise.reject(new Error('copy unavailable'));
+}
+function showShareFallback(url){
+ $('shareFallbackUrl').value=url;
+ $('shareFallback').hidden=false;
+ const input=$('shareFallbackUrl');input.focus();input.select();
+}
+async function copyPostLink(post){
+ if(!post)return;
+ const url=buildViewUrl(post).href;
+ try{await copyText(url);toast(post.panoIds.every(Boolean)?'Точный ракурс скопирован в ссылку':'Скопирована пара городов · панорамы ещё недоступны');}
+ catch(error){showShareFallback(url);}
+}
+async function shareCurrentView(){
+ const post=posts[currentIndex];
+ if(!post){toast('Сначала выберите пару городов');return;}
+ // Query params are live and always correspond to the visible post.
+ updateQuery(post);
+ const url=buildViewUrl(post).href;
+ if(!post.panoIds.every(Boolean))toast('Панорамы ещё не загружены: точный ракурс может не сохраниться');
+ if(navigator.share){
+  try{
+   await navigator.share({title:post.base.name+' ↔ '+post.city.name,
+    text:'Сравнение панорам: '+post.base.name+' и '+post.city.name,
+    url});
+   return;
+  }catch(error){if(error?.name==='AbortError')return;}
+ }
+ try{await copyText(url);toast('Ссылка на текущий вид скопирована');}
+ catch(error){showShareFallback(url);}
+}
+$('topShare').addEventListener('click',shareCurrentView);
+$('desktopShare').addEventListener('click',shareCurrentView);
+$('shareFallbackClose').addEventListener('click',()=>$('shareFallback').hidden=true);
+$('shareFallbackCopy').addEventListener('click',async()=>{
+ try{await copyText($('shareFallbackUrl').value);$('shareFallback').hidden=true;toast('Ссылка скопирована');}
+ catch(error){$('shareFallbackUrl').focus();$('shareFallbackUrl').select();}
+});
+$('shareFallback').addEventListener('click',e=>{if(e.target===$('shareFallback'))$('shareFallback').hidden=true;});
+function openMapForPost(i){setActivePost(i,true);openPanel('map');}
+/* Original side-by-side canvas layout. Both halves always use real Google
+   Street View thumbnails when available; no generated street art. */
+function imageUrl(pano,yaw){return 'https://streetviewpixels-pa.googleapis.com/v1/thumbnail?cb_client=maps_sv.tactile&w=1200&h=825&panoid='+encodeURIComponent(pano)+'&yaw='+encodeURIComponent(yaw)+'&pitch=0&thumbfov=120'}
+function getImage(src){return new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=src})}
+function drawCover(ctx,img,x,y,width,height){
+ const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+ if(!iw||!ih)return;
+ const dst=width/height,src=iw/ih;
+ if(src>dst){const sw=ih*dst;ctx.drawImage(img,(iw-sw)/2,0,sw,ih,x,y,width,height);}
+ else{const sh=iw/dst;ctx.drawImage(img,0,(ih-sh)/2,iw,sh,x,y,width,height);}
+}
+function renderCanvas(canvas,post,angle){
+ if(!canvas)return;
+ const wide=desktopSplit;
+ const stacked=desktopSplit&&desktopLayoutMode==="stack";
+ // Sharp pixels for either 50/50 layout; all existing panorama images are reused.
+ const dpr=wide?Math.min(window.devicePixelRatio||1,2):1;
+ const width=wide?Math.max(800,Math.round(($('appRoot').clientWidth||window.innerWidth)*dpr)):1200;
+ const height=wide?Math.max(500,Math.round(($('appRoot').clientHeight||window.innerHeight)*dpr)):1650;
+ if(canvas.width!==width)canvas.width=width;
+ if(canvas.height!==height)canvas.height=height;
+ const ctx=canvas.getContext('2d');if(!ctx)return;
+ ctx.clearRect(0,0,width,height);
+ [post.base,post.city].forEach((c,i)=>{
+  const rect=wide?(stacked?{x:0,y:i*height/2,w:width,h:height/2}:{x:i*width/2,y:0,w:width/2,h:height}):{x:0,y:i*825,w:1200,h:825};
+  const img=post.views[i]&&post.views[i][((angle%360)+360)%360];
+  if(img){if(wide)drawCover(ctx,img,rect.x,rect.y,rect.w,rect.h);else ctx.drawImage(img,rect.x,rect.y,rect.w,rect.h)}
+  else{
+   ctx.fillStyle=i===0?'#121a1e':'#182019';ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+   ctx.textAlign='center';ctx.fillStyle='#d9dfdf';ctx.font='bold '+Math.round(wide?Math.min(34*dpr,rect.w/14):34)+'px system-ui, sans-serif';
+   ctx.fillText(c.name,rect.x+rect.w/2,rect.y+rect.h/2,Math.max(50,rect.w-50));
+   ctx.fillStyle='#91b3c4';ctx.font=Math.round(wide?19*dpr:23)+'px system-ui, sans-serif';
+   ctx.fillText('Street View · ссылка в обычном режиме',rect.x+rect.w/2,rect.y+rect.h/2+50*dpr,Math.max(50,rect.w-40));
+  }
+ });
+}
+function renderPost(post){
+ if(!post.el)return;renderCanvas(post.el.querySelector('.pano-current'),post,post.angle);
+ const actual=post.views.every((v,i)=>Boolean(v&&v[post.angle]));
+ const note=post.el.querySelector('[data-visual-note]');
+ if(note)note.textContent=actual?'Google Street View':'Google Street View · откройте по ссылкам ниже';
+ updateBrowserLinks(post);
+}
+async function fetchMissingAngle(post,angle){
+ if(!post.panoIds.some(Boolean))return;
+ const ang=(angle+360)%360;
+ await Promise.all(post.panoIds.map(async(pano,i)=>{
+  if(!pano)return;post.views[i]=post.views[i]||{};
+  if(post.views[i][ang])return;
+  const img=await getImage(imageUrl(pano,ang));
+  if(img){post.views[i][ang]=img;if(!post.swipeRunning)renderPost(post)}
+ }));
+}
+function resetIncoming(post){const el=post.el;if(!el)return;el.querySelector('.pano-current').style.transform='translateX(0)';const next=el.querySelector('.pano-incoming');next.style.transform='translateX(100%)';next.style.transition='none';}
+function turnPost(index,delta,direction=delta>0?-1:1){
+ const post=posts[index];if(!post||post.swipeRunning)return;
+ post.swipeRunning=true;const stage=post.el.querySelector('.stage');const curr=stage.querySelector('.pano-current'),incoming=stage.querySelector('.pano-incoming');
+ const nextAngle=(post.angle+delta+360)%360;renderCanvas(incoming,post,nextAngle);
+ curr.style.transition='none';incoming.style.transition='none';curr.style.transform='translateX(0)';incoming.style.transform=`translateX(${direction<0?'100%':'-100%'})`;
+ void curr.offsetWidth;requestAnimationFrame(()=>{
+  curr.style.transition='transform .21s ease';incoming.style.transition='transform .21s ease';
+  curr.style.transform=`translateX(${direction<0?'-100%':'100%'})`;incoming.style.transform='translateX(0)';
+ });
+ setTimeout(()=>{post.angle=nextAngle;renderCanvas(curr,post,post.angle);curr.style.transition='none';incoming.style.transition='none';curr.style.transform='translateX(0)';incoming.style.transform='translateX(100%)';post.swipeRunning=false;if(index===currentIndex)updateQuery(post);fetchMissingAngle(post,nextAngle);},240);
+}
+function touchStart(event){const stage=event.target.closest('.stage');if(!stage)return;const postEl=stage.closest('.post');const t=event.changedTouches[0];touch={x:t.screenX,y:t.screenY,post:Number(postEl.dataset.post),axis:null,stage};}
+function touchMove(event){if(!touch)return;const t=event.changedTouches[0],dx=t.screenX-touch.x,dy=t.screenY-touch.y;
+ if(!touch.axis&&Math.hypot(dx,dy)>11)touch.axis=Math.abs(dx)>Math.abs(dy)?'x':'y';
+ if(touch.axis!=='x')return;
+ const curr=touch.stage.querySelector('.pano-current'),incoming=touch.stage.querySelector('.pano-incoming');
+ const angle=posts[touch.post].angle+(dx<0?60:-60);renderCanvas(incoming,posts[touch.post],(angle+360)%360);
+ curr.style.transition='none';incoming.style.transition='none';curr.style.transform=`translateX(${dx}px)`;incoming.style.transform=`translateX(calc(${dx<0?'100%':'-100%'} + ${dx}px))`;
+}
+function touchEnd(event){
+ if(!touch)return;
+ const active=touch;touch=null;
+ const t=event.changedTouches[0],dx=t.screenX-active.x,dy=t.screenY-active.y;
+ const post=posts[active.post];if(!post)return;
+ const curr=active.stage.querySelector('.pano-current');
+ const inc=active.stage.querySelector('.pano-incoming');
+ const accept=active.axis==='x'&&Math.abs(dx)>35&&Math.abs(dx)>Math.abs(dy);
+ [curr,inc].forEach(c=>{c.style.transition='transform .2s ease'});
+ if(!accept){curr.style.transform='translateX(0)';inc.style.transform='translateX(100%)';return;}
+ dragWasTurn=true;setTimeout(()=>{dragWasTurn=false},310);
+ const direction=dx<0?-1:1,nextAngle=(post.angle+(direction<0?60:-60)+360)%360;
+ post.swipeRunning=true;
+ // Complete the actual drag instead of snapping to another image.
+ curr.style.transform=`translateX(${direction<0?'-100%':'100%'})`;
+ inc.style.transform='translateX(0)';
+ setTimeout(()=>{
+  post.angle=nextAngle;renderPost(post);
+  curr.style.transition='none';inc.style.transition='none';
+  curr.style.transform='translateX(0)';inc.style.transform='translateX(100%)';
+  post.swipeRunning=false;
+  if(active.post===currentIndex)updateQuery(post);
+  fetchMissingAngle(post,nextAngle);
+ },220);
+}
+/* Same panorama lookup and thumbnail pipeline as in the original HTML:
+   Google Maps JS StreetViewService -> getPanorama near random point ->
+   streetviewpixels-pa.googleapis.com/v1/thumbnail with panoId and yaw.
+   The original embedded API script is used unchanged, with no extra UI key gate.
+   Actual service availability/authorization is outside this HTML file's control.
+   Browser Maps URLs below remain available without any key. */
+function googleReady(){return Boolean(window.google&&google.maps&&google.maps.StreetViewService)}
+function startGoogleMaps(){
+ if(googleReady())return Promise.resolve(true);
+ if(googleScriptPromise)return googleScriptPromise;
+ googleScriptPromise=new Promise(resolve=>{
+  let done=false;
+  const complete=ok=>{
+   if(done)return;done=true;apiReady=ok;
+   apiError=ok?'':'Встроенные панорамы недоступны; Google Maps откроется по ссылкам под постом';
+   $('apiStatus').textContent=ok?'Источник: Google Street View · проверяем панорамы':apiError;
+   resolve(ok);
+  };
+  // This is the exact browser-loaded JavaScript source pattern used in the
+  // original comparator. Do not gate this behind an API key input.
+  const src='https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY';
+  const existing=[...document.scripts].find(script=>script.src===src);
+  if(existing){
+   if(googleReady()){complete(true);return;}
+   existing.addEventListener('load',()=>complete(googleReady()),{once:true});
+   existing.addEventListener('error',()=>complete(false),{once:true});
+  }else{
+   const script=document.createElement('script');script.async=true;script.src=src;
+   script.onload=()=>complete(googleReady());
+   script.onerror=()=>complete(false);
+   document.head.appendChild(script);
+  }
+  setTimeout(()=>complete(googleReady()),12000);
+ });
+ return googleScriptPromise;
+}
+function streetviewSearch(city){
+ return new Promise(resolve=>{
+  if(!googleReady()){resolve(null);return;}
+  const point={
+   lat:city.lat+(Math.random()-.5)*Math.min(10,radius)*.012,
+   lng:city.lng+(Math.random()-.5)*Math.min(10,radius)*.016
+  };
+  try{
+   const service=new google.maps.StreetViewService();
+   // Use the unrestricted search and 350m neighbourhood from the original.
+   service.getPanorama({location:point,radius:350},(data,status)=>{
+    if(status==='OK'&&data&&data.location&&data.location.pano){
+     const p=data.location.latLng;
+     resolve({pano:data.location.pano,lat:p&&p.lat?p.lat():point.lat,lng:p&&p.lng?p.lng():point.lng});
+    }else resolve(null);
+   });
+  }catch(e){resolve(null);}
+ });
+}
+async function fetchPanoramas(post){
+ if(post.loading||post.ready)return;
+ post.loading=true;
+ // A shared pano ID is exact: never replace it with a new random Street View location.
+ // Shared links load thumbnails directly even if the Maps JS service is not available.
+ const needsLookup=post.panoIds.some(id=>!id);
+ const ok=needsLookup?await startGoogleMaps():false;
+ await Promise.all([post.base,post.city].map(async(city,i)=>{
+  if(post.epoch!==feedEpoch)return;
+  if(post.panoIds[i]){
+   const fixedPano=post.panoIds[i],angle=(post.angle+360)%360;
+   const image=await getImage(imageUrl(fixedPano,angle));
+   if(post.epoch!==feedEpoch)return;
+   post.views[i]=post.views[i]||{};
+   if(image)post.views[i][angle]=image;
+   renderPost(post);
+   await Promise.all([-60,60].map(async delta=>{
+    const ang=(angle+delta+360)%360;
+    const im=await getImage(imageUrl(fixedPano,ang));
+    if(im&&post.epoch===feedEpoch){post.views[i][ang]=im;renderPost(post);}
+   }));
+   return;
+  }
+  if(!ok)return;
+  for(let attempt=0;attempt<10;attempt++){
+   if(post.epoch!==feedEpoch)return;
+   const found=await streetviewSearch(city);
+   if(!found)continue;
+   const angle=(post.angle+360)%360;
+   const image=await getImage(imageUrl(found.pano,angle));
+   if(!image)continue;
+   if(post.epoch!==feedEpoch)return;
+   post.panoIds[i]=found.pano;
+   post.points[i]={lat:found.lat,lng:found.lng};
+   post.views[i]=post.views[i]||{};
+   post.views[i][angle]=image;
+   renderPost(post);
+   if(posts[currentIndex]===post)updateQuery(post);
+   await Promise.all([-60,60].map(async delta=>{
+    const ang=(angle+delta+360)%360;
+    const im=await getImage(imageUrl(found.pano,ang));
+    if(im&&post.epoch===feedEpoch){post.views[i][ang]=im;renderPost(post);}
+   }));
+   return;
+  }
+ }));
+ if(post.epoch!==feedEpoch)return;
+ post.loading=false;post.ready=true;renderPost(post);
+ if(posts[currentIndex]===post)updateQuery(post);
+}
+function loadLeaflet(){
+ if(window.L)return Promise.resolve(true);
+ return new Promise(resolve=>{
+  const existing=document.getElementById('leaflet-script');if(existing){resolve(!!window.L);return;}
+  const link=document.createElement('link');link.rel='stylesheet';link.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(link);
+  const script=document.createElement('script');script.id='leaflet-script';script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  let done=false;const finish=ok=>{if(done)return;done=true;resolve(ok)};
+  script.onload=()=>finish(!!window.L);script.onerror=()=>finish(false);
+  document.head.appendChild(script);setTimeout(()=>finish(!!window.L),6500);
+ });
+}
+async function initMap(){
+ if(map){setTimeout(()=>{map.invalidateSize();refreshMap()},30);return;}
+ const ok=await loadLeaflet();if(panel!=='map')return;
+ if(!ok){drawMapFallback();return;}
+ const div=$('cityMap');$('mapFallback').style.display='none';
+ map=L.map(div,{scrollWheelZoom:false,worldCopyJump:true}).setView([52,40],3);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenStreetMap contributors'}).addTo(map);
+ mapLayer=L.layerGroup().addTo(map);refreshMap();
+}
+function mapPoints(){
+ const post=posts[currentIndex];if(!post)return [];
+ const selected=showAll?matchingPool.slice().sort((a,b)=>Math.abs(a.population-baseCity.population)-Math.abs(b.population-baseCity.population)).slice(0,199):[];
+ const rest=showAll?selected:[post.city];
+ if(showAll&&!rest.some(c=>cityKey(c)===cityKey(post.city)))rest.push(post.city);
+ return [post.base,...rest];
+}
+function drawMapFallback(){
+ const pts=mapPoints();if(pts.length===0)return;
+ const proj=c=>[36+(c.lng+180)/360*828,322-(c.lat+60)/140*273];
+ const dots=pts.map((c,i)=>{
+  const [x,y]=proj(c);
+  return `<g><circle cx="${x}" cy="${y}" r="${i===0?9:6}" fill="${i===0?'#b8e84a':'#64b8ee'}" stroke="#fff" stroke-width="1.5"><title>${escapeHtml(countryName(c.code)+' · '+c.name)}: ${fmt(c.population)}</title></circle>${(i<2||!showAll)?`<text x="${x+9}" y="${y-9}" fill="white" font-size="14">${escapeHtml(c.name)}</text>`:''}</g>`;
+ }).join('');
+ let grid='';for(let lat=-60;lat<=80;lat+=20){const y=proj({lat,lng:0})[1];grid+=`<path d="M36 ${y}H865" stroke="#496777" stroke-dasharray="4 7"/><text x="3" y="${y+4}" font-size="11" fill="#91aebc">${lat}°</text>`}
+ for(let lon=-150;lon<=150;lon+=30){const x=proj({lat:0,lng:lon})[0];grid+=`<path d="M${x} 35V325" stroke="#496777" stroke-dasharray="4 7"/>`}
+ $('mapFallback').innerHTML=`<svg viewBox="0 0 900 370" xmlns="http://www.w3.org/2000/svg"><rect width="900" height="370" fill="#172936"/>${grid}${dots}<text x="17" y="23" font-size="16" font-weight="700" fill="#e0e6ed">Схема точек по координатам (без подложки)</text></svg>`;
+ $('mapFallback').style.display='block';
+}
+function refreshMap(){
+ if(panel!=='map')return;const pts=mapPoints();if(!pts.length)return;
+ if(!map||!mapLayer){drawMapFallback();return;}
+ map.invalidateSize();mapLayer.clearLayers();
+ const locations=[];
+ pts.forEach((c,i)=>{
+  const ll=[c.lat,c.lng];locations.push(ll);
+  const active=i===0||cityKey(c)===cityKey(posts[currentIndex].city);
+  const mark=L.circleMarker(ll,{radius:active?9:4,color:'#fff',weight:active?2:1,fillColor:i===0?'#b8e84a':'#64b8ee',fillOpacity:active?1:.65}).addTo(mapLayer);
+  mark.bindPopup('<b>'+escapeHtml(flag(c.code)+' '+c.name)+'</b><br>'+escapeHtml(countryName(c.code))+'<br>'+fmt(c.population)+' жителей'+(i===0?'':'<br>Разница: '+diff(c)));
+ });
+ map.fitBounds(L.latLngBounds(locations),{padding:[23,23],maxZoom:7,animate:false});
+}
+// Populate the source catalog from the original app's GeoNames URL and same IndexedDB key.
+function convertRows(rows){
+ if(!Array.isArray(rows))return [];
+ return rows.map(r=>{
+  if(!r)return null;
+  const code=r.countryCode||r.country||'',name=r.city||r.name||'',population=Number(r.population??r.pop),lat=Number(r.lat),lng=Number(r.lng??r.lon);
+  return /^[A-Z]{2}$/.test(code)&&name&&population>0&&Number.isFinite(lat)&&Number.isFinite(lng)?city(code,name,population,lat,lng,r.id):null;
+ }).filter(Boolean);
+}
+function openCitiesDb(){
+ return new Promise((resolve,reject)=>{
+  if(!window.indexedDB){resolve(null);return;}
+  const req=indexedDB.open('cityCompareGeoNames',1);
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('catalog'))req.result.createObjectStore('catalog');};
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+}
+async function readCitiesDb(){
+ const db=await openCitiesDb();if(!db)return null;
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction('catalog','readonly'),req=tx.objectStore('catalog').get(CITIES_JSON_VERSION);
+  req.onsuccess=()=>{const val=req.result;db.close();resolve(val||null);};req.onerror=()=>{db.close();reject(req.error);};
+ });
+}
+async function writeCitiesDb(data){
+ const db=await openCitiesDb();if(!db)return;
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction('catalog','readwrite'),req=tx.objectStore('catalog').put(data,CITIES_JSON_VERSION);
+  req.onsuccess=()=>{db.close();resolve();};req.onerror=()=>{db.close();reject(req.error);};
+ });
+}
+function adoptCatalog(cities,source){
+ const incoming=convertRows(cities);
+ if(!incoming.length)return;
+ const previousBase=baseCity,previousPost=posts[currentIndex]||null;
+ allCities=mergeCities(incoming);catalogMode=source;
+ // Recheck the nearest city after the FULL catalog arrives. A partial fallback
+ // must not permanently determine the IP default while more cities download.
+ if(ipApproxLocation&&ipDefaultAllowed())applyNearestIpCity(ipApproxLocation);
+ if(!userInteracted){
+  const restored=restoreBase(initialSnapshot,allCities);
+  if(restored)baseCity=restored;
+ }
+ refreshMatching();renderCountries();
+ const prefer=!userInteracted?restoreTarget(initialSnapshot):previousPost?.city;
+ // Loading the complete catalog must not unexpectedly jump a person back to post 1.
+ // Rebuild only when the query's base city changed or the active pair became invalid.
+ if(!onboardingComplete){
+  // Catalog may finish while the entry modal is open. It must update
+  // available choices, not start or reset the panorama feed.
+  if(!setupTouched)setupBase=baseCity;
+  renderBaseCities($('baseSearch').value);
+  setupRefreshCatalog();
+  return;
+ }
+ const keepFeed=previousPost&&previousBase===baseCity&&
+   matchingPool.some(c=>cityKey(c)===cityKey(previousPost.city))&&
+   (!prefer||cityKey(prefer)===cityKey(previousPost.city)||userInteracted);
+ if(keepFeed){updateQuery(previousPost);updateHero();refreshMap();}
+ else resetFeed(prefer);
+ renderBaseCities($('baseSearch').value);renderCityList($('citySearch').value);reroll();
+ toast('Каталог городов · '+fmt(allCities.length));
+}
+async function loadOriginalCatalog(){
+ $('catalogRetry').hidden=true;$('setupRetryCatalog').hidden=true;
+ try{
+  const cached=await readCitiesDb();
+  if(Array.isArray(cached)&&cached.length){adoptCatalog(cached,'full');return;}
+ }catch(err){console.warn('City database cache:',err);}
+ const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),75000);
+ try{
+  const resp=await fetch(CITIES_JSON_URL,{signal:controller.signal});
+  if(!resp.ok)throw new Error('GeoNames HTTP '+resp.status);
+  const rows=await resp.json();clearTimeout(timeout);
+  // Only one download needed; convert to the compact format understood by the original app.
+  const compact=convertRows(rows).map(c=>({id:c.id,city:c.name,countryCode:c.code,population:c.population,lat:c.lat,lng:c.lng}));
+  adoptCatalog(compact,'full');
+  writeCitiesDb(compact).catch(err=>console.warn('Could not cache cities:',err));
+ }catch(err){
+  console.warn('GeoNames catalog unavailable:',err);
+  if(catalogMode!=='full'){
+   catalogMode='fallback';
+   $('catalogStatus').textContent='⚠ Полный каталог GeoNames недоступен. Показан только встроенный набор ('+fmt(allCities.length)+' городов). Нажмите «Загрузить полный каталог ещё раз».';
+   $('catalogRetry').hidden=false;$('setupRetryCatalog').hidden=false;
+   setupUpdateCatalogStatus();
+  }
+ }finally{clearTimeout(timeout);}
+}
+/* Immersive side-by-side split is opt-in on desktop; no Google API changes.
+   120 degrees is requested in thumbnails and in Google Maps links above. */
+function redrawDesktopPosts(){
+ const start=Math.max(0,currentIndex-2),end=Math.min(posts.length,currentIndex+4);
+ for(let i=start;i<end;i++){
+  const p=posts[i];if(!p?.el)continue;
+  renderCanvas(p.el.querySelector('.pano-current'),p,p.angle);
+  renderCanvas(p.el.querySelector('.pano-incoming'),p,(p.angle+60)%360);
+ }
+}
+function exitDesktopSplit(fromBrowser=false){
+ if(!desktopSplit)return;
+ desktopSplit=false;$('appRoot').classList.remove('desktop-split','desktop-stack');
+ updateDesktopLayoutControl();
+ if(posts[currentIndex])updateQuery(posts[currentIndex]);
+ if(!fromBrowser&&document.fullscreenElement&&document.exitFullscreen){
+  document.exitFullscreen().catch(()=>{});
+ }
+ requestAnimationFrame(()=>{redrawDesktopPosts();detectActivePost();});
+}
+function updateDesktopLayoutControl(){
+ const stacked=desktopLayoutMode==='stack';
+ const button=$('desktopToggle');
+ button.textContent=!desktopSplit?'⛶ Экран 50/50':stacked?'↕ Сверху / снизу ⇄':'↔ Слева / справа ⇄';
+ button.title=!desktopSplit?'Открыть сравнение на весь экран (две колонки)':stacked?'Переключить на две колонки слева / справа':'Переключить на две строки сверху / снизу';
+ button.setAttribute('aria-label',button.title);
+ button.setAttribute('aria-pressed',String(desktopSplit));
+}
+function toggleDesktopLayout(){
+ if(!desktopSplit){enterDesktopSplit();return;}
+ desktopLayoutMode=desktopLayoutMode==='side'?'stack':'side';
+ $('appRoot').classList.toggle('desktop-stack',desktopLayoutMode==='stack');
+ updateDesktopLayoutControl();
+ if(posts[currentIndex])updateQuery(posts[currentIndex]);
+ requestAnimationFrame(()=>{redrawDesktopPosts();scrollToDesktopPost(currentIndex,false);});
+}
+function enterDesktopSplit(){
+ if(window.innerWidth<700){toast('Режим 50/50 доступен на компьютере');return;}
+ desktopLayoutMode='side';
+ desktopSplit=true;$('appRoot').classList.add('desktop-split');
+ $('appRoot').classList.remove('desktop-stack');
+ updateDesktopLayoutControl();
+ if(posts[currentIndex])updateQuery(posts[currentIndex]);
+ closeSheet();
+ requestAnimationFrame(()=>{redrawDesktopPosts();scrollToDesktopPost(currentIndex,false);});
+ // Fullscreen is requested only from a direct click. If denied, viewport 50/50 remains.
+ try{
+  const el=$('appRoot');
+  if(el.requestFullscreen){const result=el.requestFullscreen({navigationUI:'hide'});if(result?.catch)result.catch(()=>{});}
+ }catch(error){/* The fullscreen API is optional; CSS 50/50 still works. */}
+}
+function restoreSharedLayout(sharedView){
+ if(!sharedView||window.innerWidth<700||sharedView.layout==='feed')return;
+ // Browsers disallow auto-entering native fullscreen without a gesture;
+ // this CSS viewport mode restores the actual arrangement without permission.
+ desktopSplit=true;desktopLayoutMode=sharedView.layout;
+ $('appRoot').classList.add('desktop-split');
+ $('appRoot').classList.toggle('desktop-stack',desktopLayoutMode==='stack');
+ updateDesktopLayoutControl();
+ requestAnimationFrame(()=>{redrawDesktopPosts();scrollToDesktopPost(currentIndex,false);});
+}
+function scrollToDesktopPost(index,smooth=true){
+ if(!posts[index])return;
+ const feed=$('feed');
+ feed.scrollTo({top:feed.scrollTop+posts[index].el.getBoundingClientRect().top-feed.getBoundingClientRect().top,behavior:smooth?'smooth':'instant'});
+ setActivePost(index,true);
+ redrawDesktopPosts();
+}
+function navigateDesktopPost(delta){
+ let next=currentIndex+delta;
+ if(next<0)return;
+ if(next>=posts.length)ensureMorePosts();
+ if(posts[next])scrollToDesktopPost(next);
+}
+function splitOpenSettings(){
+ if(desktopSplit)exitDesktopSplit();
+ openPanel('cities');
+}
+$('desktopToggle').addEventListener('click',toggleDesktopLayout);
+$('desktopExit').addEventListener('click',()=>exitDesktopSplit());
+$('desktopNext').addEventListener('click',()=>navigateDesktopPost(1));
+$('desktopPrevious').addEventListener('click',()=>navigateDesktopPost(-1));
+$('desktopSettings').addEventListener('click',splitOpenSettings);
+document.addEventListener('fullscreenchange',()=>{
+ if(desktopSplit&&!document.fullscreenElement)exitDesktopSplit(true);
+ requestAnimationFrame(()=>{redrawDesktopPosts();detectActivePost();});
+});
+window.addEventListener('resize',()=>{if(desktopSplit)requestAnimationFrame(redrawDesktopPosts);});
+document.addEventListener('keydown',e=>{
+ if(!desktopSplit||setupIsOpen||panel!==null||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;
+ if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();navigateDesktopPost(1)}
+ else if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();navigateDesktopPost(-1)}
+});
+// User interaction and startup.
+$('feed').addEventListener('scroll',()=>{if(scrollScheduled)return;scrollScheduled=true;requestAnimationFrame(()=>{scrollScheduled=false;detectActivePost()})},{passive:true});
+$('feedList').addEventListener('click',e=>{
+ const btn=e.target.closest('[data-action]');
+ if(btn){const i=Number(btn.closest('.post').dataset.post);if(btn.dataset.action==='map')openMapForPost(i);else if(btn.dataset.action==='copy')copyPostLink(posts[i]);return;}
+ if(dragWasTurn)return;const stage=e.target.closest('.stage');if(!stage)return;
+ const i=Number(stage.closest('.post').dataset.post),rect=stage.getBoundingClientRect();
+ const right=e.clientX>=rect.left+rect.width/2;turnPost(i,right?60:-60,right?-1:1);
+});
+$('feedList').addEventListener('touchstart',touchStart,{passive:true});
+$('feedList').addEventListener('touchmove',touchMove,{passive:true});
+$('feedList').addEventListener('touchend',touchEnd,{passive:true});
+$('feedList').addEventListener('touchcancel',()=>{touch=null},{passive:true});
+document.querySelectorAll('[data-panel]').forEach(btn=>btn.addEventListener('click',()=>openPanel(btn.dataset.panel)));
+$('backdrop').addEventListener('click',closeSheet);$('closeSheet').addEventListener('click',closeSheet);
+$('heroMap').addEventListener('click',()=>openPanel('map'));
+$('radiusInput').addEventListener('input',e=>{radius=Number(e.target.value);$('radiusValue').textContent=radius+' км';try{localStorage.setItem('city-compare-radius',String(radius))}catch(e){}});
+$('baseSearch').addEventListener('input',e=>{baseResultLimit=30;renderBaseCities(e.target.value)});
+$('baseCountry').addEventListener('change',e=>{baseCountryFilter=e.target.value;baseResultLimit=30;userInteracted=true;renderBaseCities($('baseSearch').value);updateQuery(posts[currentIndex]);});
+$('baseCityList').addEventListener('click',e=>{if(e.target.closest('[data-more-base]')){baseResultLimit+=60;const y=$('baseCityList').scrollTop;renderBaseCities($('baseSearch').value);$('baseCityList').scrollTop=y;return;}const b=e.target.closest('[data-base]');if(b)changeBase(b.dataset.base);});
+$('targetCountry').addEventListener('change',e=>{targetCountry=e.target.value;userInteracted=true;applyFilters();});
+$('toleranceInput').addEventListener('input',e=>{
+ tolerance=Number(e.target.value);refreshMatching();renderCityList($('citySearch').value);updateHero();
+});
+$('toleranceInput').addEventListener('change',()=>{userInteracted=true;applyFilters();});
+$('citySearch').addEventListener('input',e=>{targetResultLimit=70;renderCityList(e.target.value)});
+$('cityList').addEventListener('click',e=>{if(e.target.closest('[data-more-target]')){targetResultLimit+=100;const y=$('sheetBody').scrollTop;renderCityList($('citySearch').value);$('sheetBody').scrollTop=y;return;}const b=e.target.closest('[data-target]');if(b)chooseTarget(b.dataset.target);});
+$('reroll').addEventListener('click',reroll);
+$('acceptRandom').addEventListener('click',()=>{if(pendingRandom)chooseTarget(cityKey(pendingRandom));});
+$('showAll').addEventListener('click',()=>{showAll=!showAll;$('showAll').textContent=(showAll?'●':'○')+' Подходящие города';refreshMap();});
+$('openOsm').addEventListener('click',()=>{const c=posts[currentIndex]?.city||baseCity;window.open('https://www.openstreetmap.org/#map=8/'+c.lat+'/'+c.lng,'_blank','noopener');});
+let grabY=null;
+$('sheetGrab').addEventListener('touchstart',e=>{grabY=e.changedTouches[0].screenY},{passive:true});
+$('sheetGrab').addEventListener('touchend',e=>{if(grabY!==null&&e.changedTouches[0].screenY-grabY>28)closeSheet();grabY=null},{passive:true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();if(panel!==null||setupIsOpen)return;if(e.key==='ArrowRight'||e.key==='ArrowLeft')turnPost(currentIndex,e.key==='ArrowRight'?60:-60,e.key==='ArrowRight'?-1:1);});
+readParams();allCities=mergeCities([]);catalogMode='loading';
+const initialBase=restoreBase();if(initialBase)baseCity=initialBase;
+refreshMatching();renderCountries();renderBaseCities();
+
+// Initial two-stage setup: draft values do not touch the current feed until Start.
+let setupStep=1,setupBase=null,setupBaseCountry='ALL',setupCountry='RU',setupTolerance=20;
+let setupTouched=false,setupIsOpen=true,setupCatalogTimeout=null;
+
+// IP location is used ONLY to suggest the initial city. It is never written to
+// a query string, localStorage or IndexedDB. Shared links and manual input win.
+const ipHasSharedBase=initialSnapshot.has('a')||initialSnapshot.has('aId');
+let ipApproxLocation=null;
+let ipWasApplied=false;
+function setIpHint(state,message){
+ const el=$('setupGeoStatus');
+ if(!el)return;
+ el.dataset.state=state;
+ $('setupGeoText').textContent=message;
+}
+function ipDefaultAllowed(){
+ return !ipHasSharedBase&&!setupTouched&&!userInteracted&&!onboardingComplete;
+}
+function geographicDistanceKm(lat1,lng1,lat2,lng2){
+ const rad=Math.PI/180;
+ const aLat=(lat2-lat1)*rad,aLng=(lng2-lng1)*rad;
+ const h=Math.sin(aLat/2)**2+Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(aLng/2)**2;
+ return 12742*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+function findNearestCatalogCity(geo){
+ if(!geo||!allCities.length)return null;
+ let closest=null,closestDistance=Infinity;
+ let exactCity=null,exactDistance=Infinity;
+ for(const c of allCities){
+  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng))continue;
+  const distance=geographicDistanceKm(geo.lat,geo.lng,c.lat,c.lng);
+  if(distance<closestDistance){closest=c;closestDistance=distance;}
+  // IP providers often report the name of the city more reliably than its
+  // centre coordinates. Prefer that very city if its coordinates are nearby.
+  if(distance<=65&&distance<exactDistance&&geo.countryCode&&c.code===geo.countryCode&&geo.city&&
+      (normalizeText(c.name)===normalizeText(geo.city)||translit(c.name)===translit(geo.city))){
+   exactCity=c;exactDistance=distance;
+  }
+ }
+ return exactCity?{city:exactCity,distance:exactDistance}:{city:closest,distance:closestDistance};
+}
+function applyNearestIpCity(geo){
+ if(!ipDefaultAllowed())return false;
+ const result=findNearestCatalogCity(geo);
+ if(!result?.city)return false;
+ baseCity=result.city;
+ setupBase=result.city;
+ ipWasApplied=true;
+ const nearestKm=Math.round(result.distance);
+ setIpHint('found','По IP ('+(geo.city||countryName(geo.countryCode)||'район')+') ближайший город в каталоге — '+
+  result.city.name+' (около '+fmt(nearestKm)+' км от примерной точки IP). Можно изменить.');
+ // The location is only a default for the first step. No feed reset happens.
+ refreshMatching();
+ renderBaseCities($('baseSearch').value);
+ if(setupIsOpen)setupRefreshCatalog();
+ return true;
+}
+async function getIpLocationFrom(endpoint,parse){
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),6500);
+ try{
+  const response=await fetch(endpoint,{method:'GET',mode:'cors',credentials:'omit',cache:'no-store',signal:controller.signal});
+  if(!response.ok)throw new Error('IP service HTTP '+response.status);
+  const result=parse(await response.json());
+  if(!result||!Number.isFinite(result.lat)||!Number.isFinite(result.lng)||
+   Math.abs(result.lat)>90||Math.abs(result.lng)>180)throw new Error('Invalid IP location');
+  return result;
+ }finally{clearTimeout(timeout);}
+}
+async function discoverIpDefaultCity(){
+ if(ipHasSharedBase){
+  setIpHint('link','Основной город указан в ссылке. Автоопределение по IP отключено.');
+  return;
+ }
+ setIpHint('loading','Определяем ближайший город по примерному местоположению IP…');
+ const services=[
+  ['https://ipwho.is/',data=>data.success===false?null:{lat:Number(data.latitude),lng:Number(data.longitude),city:data.city||'',countryCode:data.country_code||''}],
+  ['https://ipapi.co/json/',data=>data.error?null:{lat:Number(data.latitude),lng:Number(data.longitude),city:data.city||'',countryCode:data.country_code||data.country||''}]
+ ];
+ for(const [endpoint,parse] of services){
+  try{
+   const result=await getIpLocationFrom(endpoint,parse);
+   // The visitor may have selected a city while the request was pending.
+   if(!ipDefaultAllowed())return;
+   ipApproxLocation=result;
+   if(!applyNearestIpCity(result))setIpHint('error','По IP не удалось найти город в каталоге. Выберите его вручную.');
+   return;
+  }catch(error){console.info('Approximate IP location not available:',endpoint,error);}
+ }
+ if(ipDefaultAllowed())setIpHint('error','Не получилось определить расположение по IP. Выберите основной город вручную.');
+}
+function setupCountryOptions(){
+ const countryCodes=new Set([...countryRows.map(row=>row[0]),...allCities.map(c=>c.code)]);
+ const cityCounts={};allCities.forEach(c=>{cityCounts[c.code]=(cityCounts[c.code]||0)+1;});
+ if(setupCountry!=='ALL')countryCodes.add(setupCountry);
+ if(setupBaseCountry!=='ALL')countryCodes.add(setupBaseCountry);
+ const opts=['<option value="ALL">🌍 Весь мир ('+fmt(allCities.length)+')</option>'];
+ [...countryCodes].sort((a,b)=>countryName(a).localeCompare(countryName(b),'ru')).forEach(code=>{
+  opts.push('<option value="'+escapeHtml(code)+'">'+escapeHtml(flag(code)+' '+countryName(code))+' ('+fmt(cityCounts[code]||0)+')</option>');
+ });
+ $('setupTargetCountry').innerHTML=opts.join('');$('setupBaseCountry').innerHTML=opts.join('');
+ $('setupTargetCountry').value=setupCountry;$('setupBaseCountry').value=setupBaseCountry;
+}
+function setupSearchCities(){
+ const query=$('setupBaseSearch').value.trim();
+ const source=setupBaseCountry==='ALL'?allCities:allCities.filter(c=>c.code===setupBaseCountry);
+ const searched=matchingQueryCities(source,query);
+ let list=[];
+ if(!query){
+  const featured=[['RS','Суботица'],['RU','Балашов'],['RU','Владимир'],['AT','Вена'],['NL','Амстердам'],['CA','Торонто'],['US','Нью-Йорк']];
+  const picks=[setupBase,...featured.map(([code,name])=>findCity(name,code,searched))].filter(Boolean);
+  const unique=new Set(),pinned=picks.filter(c=>{const k=cityKey(c);if(unique.has(k))return false;unique.add(k);return true;});
+  list=[...pinned,...searched.filter(c=>!unique.has(cityKey(c))).sort((a,b)=>b.population-a.population)];
+ }else{
+  list=searched.slice().sort((a,b)=>{
+   const x=normalizeText(query),aa=normalizeText(a.name).startsWith(x)?0:1,bb=normalizeText(b.name).startsWith(x)?0:1;
+   return aa-bb||b.population-a.population;
+  });
+ }
+ const visible=list.slice(0,setupResultLimit);
+ setupResultTotal=list.length;setupDisplayedTotal=visible.length;
+ $('setupCityResults').innerHTML=visible.map(c=>'<button class="setup-result '+(setupBase&&cityKey(setupBase)===cityKey(c)?'active':'')+'" type="button" data-setup-city="'+escapeHtml(cityKey(c))+'"><span><strong>'+escapeHtml(flag(c.code)+' '+c.name)+'</strong><small>'+escapeHtml(countryName(c.code))+' · '+fmt(c.population)+' жителей'+(c.id?' · '+c.lat.toFixed(2)+'°, '+c.lng.toFixed(2)+'°':'')+'</small></span><em>'+(setupBase&&cityKey(setupBase)===cityKey(c)?'✓ Выбран':'Выбрать')+'</em></button>').join('')||'<div class="setup-note">Город не найден. Попробуйте другое название или дождитесь загрузки полного каталога.</div>';
+ if(list.length>visible.length)$('setupCityResults').insertAdjacentHTML('beforeend','<button type="button" class="browse-more" data-more-setup>Показать ещё ('+fmt(list.length-visible.length)+' осталось) ↓</button>');
+ setupUpdateCatalogStatus();
+}
+function setupUpdateCatalogStatus(){
+ $('setupCatalogStatus').textContent=(catalogMode==='full'?'Полный каталог GeoNames':catalogMode==='fallback'?'⚠ Полный каталог не загрузился — пока только встроенный набор':'Загружаем полный каталог GeoNames')+' · '+fmt(allCities.length)+' населённых пунктов · найдено '+fmt(setupResultTotal)+' · показано '+fmt(setupDisplayedTotal)+' · порог базы: от 500 жителей';
+}
+function setupMatchingList(){
+ if(!setupBase)return [];
+ const low=setupBase.population*(1-setupTolerance/100),high=setupBase.population*(1+setupTolerance/100);
+ return allCities.filter(c=>c.population>=low&&c.population<=high&&
+  (setupCountry==='ALL'||c.code===setupCountry)&&
+  !(c.code===setupBase.code&&Math.abs(c.lat-setupBase.lat)<.025&&Math.abs(c.lng-setupBase.lng)<.025));
+}
+function setupUpdateMatches(){
+ if(!setupBase)return;
+ const low=setupBase.population*(1-setupTolerance/100),high=setupBase.population*(1+setupTolerance/100);
+ $('setupCompareBase').innerHTML='<div><strong>'+escapeHtml(flag(setupBase.code)+' '+setupBase.name)+'</strong><small>'+fmt(setupBase.population)+' жителей · основной город</small></div><b>ГОРОД A</b>';
+ $('setupToleranceInput').value=setupTolerance;
+ $('setupToleranceValue').textContent='±'+setupTolerance+'%';
+ $('setupRangePopulation').textContent='Диапазон: '+fmt(Math.ceil(low))+'–'+fmt(Math.floor(high))+' жителей';
+ const count=setupMatchingList().length;
+ const status=$('setupMatching');status.classList.toggle('empty',count===0);
+ status.innerHTML=count
+   ?'<strong>✓ '+fmt(count)+' подходящих городов</strong><br>Выбираем случайно '+(setupCountry==='ALL'?'со всего мира':'из страны «'+escapeHtml(countryName(setupCountry))+'»')+'.'
+   :'<strong>Подходящих городов пока нет.</strong><br>'+(catalogMode==='loading'?'Загружаем остальные города. ':'')+'Можно увеличить допуск или выбрать другую страну.';
+ $('setupContinue').disabled=setupStep===2&&count===0;
+ for(const btn of $('setupShortcutCountries').querySelectorAll('[data-setup-country]')){
+  btn.classList.toggle('active',btn.dataset.setupCountry===setupCountry);
+ }
+}
+function setupRefreshCatalog(){
+ if(!setupIsOpen)return;
+ setupCountryOptions();setupSearchCities();setupUpdateMatches();
+ if(setupBase)$('setupCurrentCity').innerHTML='<div><strong>'+escapeHtml(flag(setupBase.code)+' '+setupBase.name)+'</strong><small>'+escapeHtml(countryName(setupBase.code))+' · '+fmt(setupBase.population)+' жителей</small></div><b>✓ ГОРОД A</b>';
+ setupUpdateCatalogStatus();
+}
+function setupShowStep(step){
+ setupStep=step;
+ $('setupStep1').classList.toggle('active',step===1);$('setupStep2').classList.toggle('active',step===2);
+ $('setupProgress1').classList.toggle('active',step===1);$('setupProgress2').classList.toggle('active',step===2);
+ $('setupTitle').textContent=step===1?'С какого города начнём?':'С кем будем сравнивать?';
+ $('setupSubtitle').textContent=step===1?'Выберите основной город. Он останется в каждом посте.':'Укажите страну или весь мир. Похожие по населению города будут сменяться случайно.';
+ $('setupBack').hidden=step===1;
+ $('setupContinue').textContent=step===1?'Далее →':'Начать сравнение →';
+ $('setupContent').scrollTop=0;
+ if(step===2)setupUpdateMatches();
+ else{setupSearchCities();$('setupContinue').disabled=!setupBase;}
+}
+function setupSelectCity(key){
+ const c=allCities.find(x=>cityKey(x)===key);if(!c)return;
+ setupBase=c;setupTouched=true;
+ setIpHint('manual','Основной город выбран вручную. Геолокация по IP не изменит его.');
+ $('setupBaseSearch').value='';
+ $('setupCurrentCity').innerHTML='<div><strong>'+escapeHtml(flag(c.code)+' '+c.name)+'</strong><small>'+escapeHtml(countryName(c.code))+' · '+fmt(c.population)+' жителей</small></div><b>✓ ГОРОД A</b>';
+ setupShowStep(2);
+}
+function setupOpenWizard(){
+ setupIsOpen=true;setupTouched=false;
+ setupBase=baseCity;setupCountry=targetCountry;setupTolerance=tolerance;setupBaseCountry=baseCountryFilter;setupResultLimit=30;
+ $('setupBaseSearch').value='';
+ $('setupOverlay').classList.add('open');$('setupDismiss').hidden=!onboardingComplete;
+ $('feed').inert=true;$('locationCard').inert=true;
+ setupRefreshCatalog();
+ $('setupCurrentCity').innerHTML='<div><strong>'+escapeHtml(flag(setupBase.code)+' '+setupBase.name)+'</strong><small>'+escapeHtml(countryName(setupBase.code))+' · '+fmt(setupBase.population)+' жителей</small></div><b>✓ ГОРОД A</b>';
+ setupShowStep(1);
+ requestAnimationFrame(()=>$('setupDialog').focus({preventScroll:true}));
+}
+function setupCloseWizard(){
+ if(!onboardingComplete)return;
+ setupIsOpen=false;$('setupOverlay').classList.remove('open');
+ $('feed').inert=false;$('locationCard').inert=false;
+}
+// Previous hash-based shares are accepted by parseSharedView(),
+// while new links are fully stored in URL query parameters.
+function setupStart(){
+ if(!setupBase||!setupMatchingList().length)return;
+ const oldSignature=cityKey(baseCity)+'|'+targetCountry+'|'+tolerance;
+ baseCity=setupBase;targetCountry=setupCountry;tolerance=setupTolerance;baseCountryFilter=setupBaseCountry;
+ const changed=oldSignature!==cityKey(baseCity)+'|'+targetCountry+'|'+tolerance;
+ const preferred=(!setupTouched&&!changed)?restoreTarget(initialSnapshot):null;
+ userInteracted=true;onboardingComplete=true;
+ refreshMatching();renderCountries();renderBaseCities($('baseSearch').value);
+ setupCloseWizard();
+ closeSheet();
+ // Panorama-specific hashes are invalid when the city comparison changes.
+ if(changed&&new URLSearchParams(location.hash.replace(/^#/,'')).has('aPano')){
+  history.replaceState(null,'',location.pathname+location.search);
+ }
+ const shareState=(!sharedRestoreUsed&&!changed&&!setupTouched)?initialSharedView:null;
+ sharedRestoreUsed=true;
+ resetFeed(preferred,shareState);reroll();
+ if(shareState)restoreSharedLayout(shareState);
+ startGoogleMaps().then(ok=>{if(ok)posts.forEach(fetchPanoramas);});
+}
+$('setupBaseCountry').addEventListener('change',e=>{setupBaseCountry=e.target.value;setupResultLimit=30;setupTouched=true;setIpHint('manual','Выбираете город вручную — автоматическая подстановка по IP отключена.');setupSearchCities();});
+$('setupBaseSearch').addEventListener('input',()=>{setupTouched=true;setIpHint('manual','Выбираете город вручную — автоматическая подстановка по IP отключена.');setupResultLimit=30;setupSearchCities();});
+$('setupCityResults').addEventListener('click',e=>{if(e.target.closest('[data-more-setup]')){setupResultLimit+=60;const y=$('setupCityResults').scrollTop;setupSearchCities();$('setupCityResults').scrollTop=y;return;}const b=e.target.closest('[data-setup-city]');if(b)setupSelectCity(b.dataset.setupCity);});
+$('setupTargetCountry').addEventListener('change',e=>{setupCountry=e.target.value;setupTouched=true;setupUpdateMatches();});
+$('setupToleranceInput').addEventListener('input',e=>{setupTolerance=Number(e.target.value);setupTouched=true;setupUpdateMatches();});
+function retryFullCatalog(){catalogMode='loading';setupUpdateCatalogStatus();loadOriginalCatalog();}
+$('setupRetryCatalog').addEventListener('click',retryFullCatalog);
+$('catalogRetry').addEventListener('click',retryFullCatalog);
+$('setupShortcutCountries').addEventListener('click',e=>{
+ const b=e.target.closest('[data-setup-country]');if(!b)return;
+ setupCountry=b.dataset.setupCountry;setupTouched=true;$('setupTargetCountry').value=setupCountry;setupUpdateMatches();
+});
+$('setupBack').addEventListener('click',()=>setupShowStep(1));
+$('setupContinue').addEventListener('click',()=>{if(setupStep===1)setupShowStep(2);else setupStart();});
+$('setupDismiss').addEventListener('click',setupCloseWizard);
+$('heroSetup').addEventListener('click',()=>{closeSheet();setupOpenWizard();});
+document.addEventListener('keydown',e=>{
+ if(!setupIsOpen)return;
+ if(e.key==='Escape'){if(onboardingComplete)setupCloseWizard();e.preventDefault();return;}
+ if(e.key!=='Tab')return;
+ // Keep keyboard focus inside the modal, even if the old feed is still mounted.
+ const items=[...$('setupOverlay').querySelectorAll('button:not([hidden]):not(:disabled),input:not([hidden]):not(:disabled),select:not([hidden]):not(:disabled)')].filter(el=>el.getClientRects().length>0);
+ if(!items.length)return;
+ const first=items[0],last=items[items.length-1];
+ if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}
+ else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}
+});
+
+$('setupShortcutCountries').innerHTML=[['ALL','🌍 Весь мир'],['RU','🇷🇺 Россия'],['RS','🇷🇸 Сербия'],['AT','🇦🇹 Австрия'],['NL','🇳🇱 Нидерланды'],['US','🇺🇸 США'],['CA','🇨🇦 Канада']].map(([code,label])=>'<button class="setup-chip" type="button" data-setup-country="'+code+'">'+label+'</button>').join('');
+// Opening an exact shared URL must immediately restore the exact post and its
+// camera framing, rather than showing the initial two-step chooser.
+const sharedBase=initialSharedView?.cities?.[0]||restoreBase(initialSnapshot,allCities);
+const sharedTarget=restoreTarget(initialSnapshot,matchingPool);
+if(initialSharedView&&sharedBase&&sharedTarget&&matchingPool.some(c=>cityKey(c)===cityKey(sharedTarget))){
+ baseCity=sharedBase;
+ setupBase=baseCity;setupCountry=targetCountry;setupTolerance=tolerance;
+ setupIsOpen=false;onboardingComplete=true;userInteracted=true;sharedRestoreUsed=true;
+ $('setupOverlay').classList.remove('open');
+ $('feed').inert=false;$('locationCard').inert=false;
+ refreshMatching();renderCountries();renderBaseCities();
+ resetFeed(restoreTarget(initialSnapshot,matchingPool),initialSharedView);
+ reroll();restoreSharedLayout(initialSharedView);
+}else setupOpenWizard();
+// Run concurrently with the catalog download; the fuller dataset refines the match.
+discoverIpDefaultCity();
+loadOriginalCatalog();
+
+</script>
+</body>
+</html>
